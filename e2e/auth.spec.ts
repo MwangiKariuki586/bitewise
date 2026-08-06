@@ -30,3 +30,15 @@ test("password recovery uses neutral account messaging", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Send reset link" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Back to sign in" })).toBeVisible();
 });
+
+test("users can recover an unconfirmed signup", async ({ page }) => {
+  await page.goto("/auth/sign-up");
+  await expect(page.getByRole("link", { name: "Resend the email" })).toBeVisible();
+  await page.getByRole("link", { name: "Resend the email" }).click();
+
+  await expect(page).toHaveURL(/\/auth\/resend-confirmation$/);
+  await expect(page.getByLabel("Email address")).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Resend confirmation" }),
+  ).toBeVisible();
+});

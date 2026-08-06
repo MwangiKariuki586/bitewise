@@ -3,7 +3,12 @@ import Link from "next/link";
 import type { ActionResult } from "@/lib/action-result";
 import { AuthForm } from "@/features/auth/auth-form";
 
-type AuthMode = "sign-in" | "sign-up" | "forgot-password" | "update-password";
+type AuthMode =
+  | "sign-in"
+  | "sign-up"
+  | "forgot-password"
+  | "resend-confirmation"
+  | "update-password";
 
 interface AuthCardProps {
   action: (state: ActionResult, formData: FormData) => Promise<ActionResult>;
@@ -46,6 +51,24 @@ export function AuthCard({ action, description, mode, title }: AuthCardProps) {
         <p className="mt-6 text-center text-sm">
           <Link href="/auth/sign-in" className="font-semibold text-primary hover:underline">
             Back to sign in
+          </Link>
+        </p>
+      ) : null}
+      {mode === "resend-confirmation" ? (
+        <p className="mt-6 text-center text-sm">
+          <Link href="/auth/sign-in" className="font-semibold text-primary hover:underline">
+            Back to sign in
+          </Link>
+        </p>
+      ) : null}
+      {mode === "sign-up" ? (
+        <p className="mt-3 text-center text-sm text-muted-foreground">
+          Waiting for confirmation?{" "}
+          <Link
+            href="/auth/resend-confirmation"
+            className="font-semibold text-primary hover:underline"
+          >
+            Resend the email
           </Link>
         </p>
       ) : null}

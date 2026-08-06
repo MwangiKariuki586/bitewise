@@ -15,6 +15,10 @@ import {
   signUpSchema,
   updatePasswordSchema,
 } from "@/features/auth/schemas";
+import {
+  emailSendRateLimitMessage,
+  isEmailSendRateLimit,
+} from "@/features/auth/errors";
 
 const genericAuthError =
   "We could not complete that request. Check your details and try again.";
@@ -77,7 +81,14 @@ export async function signUpAction(
     },
   });
 
-  if (error) return { status: "error", message: genericAuthError };
+  if (error) {
+    return {
+      status: "error",
+      message: isEmailSendRateLimit(error)
+        ? emailSendRateLimitMessage
+        : genericAuthError,
+    };
+  }
   if (data.session) redirect("/onboarding");
 
   return {
@@ -139,6 +150,41 @@ export async function forgotPasswordAction(
     status: "success",
     message:
       "If an account exists for that email, a secure password reset link is on its way.",
+  };
+}
+
+export async function resendConfirmationAction(
+  _previousState: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const parsed = forgotPasswordSchema.safeParse(formValues(formData));
+  if (!parsed.success) return validationError(parsed.error);
+
+  if (!(await isAllowed("auth.resend-confirmation", parsed.data.email, 3, 3600))) {
+    return {
+      status: "error",
+      message: "Too many confirmation requests. Please wait before trying again.",
+    };
+  }
+
+  const supabase = await createClient();
+  const { NEXT_PUBLIC_SITE_URL } = getPublicEnv();
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: parsed.data.email,
+    options: {
+      emailRedirectTo: `${NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/onboarding`,
+    },
+  });
+
+  if (error && isEmailSendRateLimit(error)) {
+    return { status: "error", message: emailSendRateLimitMessage };
+  }
+
+  return {
+    status: "success",
+    message:
+      "If an unconfirmed account exists for that email, a new confirmation link is on its way.",
   };
 }
 

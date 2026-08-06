@@ -10,7 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type AuthMode = "sign-in" | "sign-up" | "forgot-password" | "update-password";
+type AuthMode =
+  | "sign-in"
+  | "sign-up"
+  | "forgot-password"
+  | "resend-confirmation"
+  | "update-password";
 
 interface AuthFormProps {
   action: (state: ActionResult, formData: FormData) => Promise<ActionResult>;
@@ -21,6 +26,7 @@ const submitLabels: Record<AuthMode, string> = {
   "sign-in": "Sign in",
   "sign-up": "Create my account",
   "forgot-password": "Send reset link",
+  "resend-confirmation": "Resend confirmation",
   "update-password": "Update password",
 };
 
@@ -36,7 +42,7 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
 export function AuthForm({ action, mode }: AuthFormProps) {
   const [state, formAction, pending] = useActionState(action, initialActionResult);
   const showEmail = mode !== "update-password";
-  const showPassword = mode !== "forgot-password";
+  const showPassword = mode !== "forgot-password" && mode !== "resend-confirmation";
   const showName = mode === "sign-up";
   const showConfirmPassword = mode === "update-password";
 
