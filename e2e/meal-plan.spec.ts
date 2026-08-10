@@ -129,7 +129,7 @@ test.describe("weekly meal planning", () => {
     );
   });
 
-  test("generates, swaps, resizes, removes, and manually restores a full week", async ({ page }) => {
+  test("generates, swaps, resizes, removes, and manually restores a full week", async ({ page }, testInfo) => {
     test.setTimeout(60_000);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
@@ -139,10 +139,13 @@ test.describe("weekly meal planning", () => {
 
     await page.goto("/meal-plan?week=2026-08-10");
     await expect(page.getByRole("heading", { name: "Make the week feel lighter." })).toBeVisible();
-    await expect(page.getByText("Open meal slot")).toHaveCount(21);
+    const visibleSlotCount = testInfo.project.name === "mobile-chromium" ? 3 : 21;
+    const visibleOpenSlots = page.getByText("Open meal slot").filter({ visible: true });
+    const visibleSwapButtons = page.getByRole("button", { name: "Swap" }).filter({ visible: true });
+    await expect(visibleOpenSlots).toHaveCount(visibleSlotCount);
     await page.getByRole("button", { name: "Generate complete week" }).click();
 
-    await expect(page.getByRole("button", { name: "Swap" })).toHaveCount(21);
+    await expect(visibleSwapButtons).toHaveCount(visibleSlotCount);
     await expect(page.getByText("21 of 21 meals")).toBeVisible();
     await expect(page.getByText(/without repeating a recipe/)).toBeVisible();
 
@@ -159,7 +162,7 @@ test.describe("weekly meal planning", () => {
         .single(),
     );
 
-    await clickCentered(page.getByRole("button", { name: "Swap" }).first());
+    await clickCentered(visibleSwapButtons.first());
     await expect(page.getByText("Meal swapped within your constraints.")).toBeVisible();
     const afterSwap = await retryCloudRead<{ recipe_id: number }>(() =>
       admin
@@ -172,14 +175,14 @@ test.describe("weekly meal planning", () => {
     );
     expect(afterSwap.recipe_id).not.toBe(beforeSwap.recipe_id);
 
-    await page.getByLabel("Breakfast servings").first().fill("3");
-    await clickCentered(page.getByRole("button", { name: "Update" }).first());
+    await page.getByLabel("Breakfast servings").filter({ visible: true }).first().fill("3");
+    await clickCentered(page.getByRole("button", { name: "Update" }).filter({ visible: true }).first());
     await expect(page.getByText("Serving count updated.")).toBeVisible();
 
-    await clickCentered(page.getByRole("button", { name: "Remove" }).first());
-    await expect(page.getByText("Open meal slot")).toHaveCount(1);
-    await clickCentered(page.getByRole("button", { name: "Add meal" }));
-    await expect(page.getByRole("button", { name: "Swap" })).toHaveCount(21);
+    await clickCentered(page.getByRole("button", { name: "Remove" }).filter({ visible: true }).first());
+    await expect(visibleOpenSlots).toHaveCount(1);
+    await clickCentered(page.getByRole("button", { name: "Add meal" }).filter({ visible: true }));
+    await expect(visibleSwapButtons).toHaveCount(visibleSlotCount);
 
     const storedPlan = await retryCloudRead<{
       budget_limit_minor: number;

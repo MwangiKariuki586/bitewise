@@ -33,5 +33,7 @@ describe("DiscoverSearchCard", () => {
     );
     expect(screen.getByText("55 min")).toBeVisible();
     expect(screen.getByText("KES 100")).toBeVisible();
+    expect(screen.getByText("easy")).toBeVisible();
+    expect(screen.queryByText(/filling maize and bean meal/i)).not.toBeInTheDocument();
   });
 });

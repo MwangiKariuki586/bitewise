@@ -75,12 +75,12 @@ export function AppShell({ children }: AppShellProps) {
       </aside>
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border/60 bg-background/85 px-4 backdrop-blur-xl lg:px-8">
+        <header className="sticky top-0 z-30 flex h-[4.5rem] items-center justify-between border-b border-border/45 bg-card/82 px-4 backdrop-blur-xl lg:h-16 lg:px-8">
           <Link
             href="/"
-            className="flex items-center gap-2 font-display text-lg font-semibold lg:hidden"
+            className="flex items-center gap-2.5 font-display text-xl font-semibold lg:hidden"
           >
-            <span className="grid size-8 place-items-center rounded-xl bg-primary text-primary-foreground">
+            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
               <Leaf className="size-4" aria-hidden="true" />
             </span>
             BiteWise
@@ -97,14 +97,15 @@ export function AppShell({ children }: AppShellProps) {
           </Link>
         </header>
 
-        <main id="main-content" className="mx-auto w-full max-w-[92rem] px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8">
+        <main id="main-content" className="mx-auto w-full max-w-[92rem] px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pb-10 lg:pt-8">
           {children}
         </main>
       </div>
 
       <nav
         aria-label="Main navigation"
-        className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 rounded-[1.4rem] border border-border/60 bg-card/95 p-1.5 shadow-[0_16px_48px_-16px_rgba(45,39,27,0.4)] backdrop-blur-xl lg:hidden"
+        data-slot="bottom-navigation"
+        className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 grid grid-cols-5 rounded-[1.35rem] border border-border/55 bg-card/96 p-1.5 shadow-[0_14px_40px_-18px_rgba(91,23,51,0.38)] backdrop-blur-xl lg:hidden"
       >
         {productAreas.map((area) => {
           const active = pathname.startsWith(area.href);
@@ -116,8 +117,8 @@ export function AppShell({ children }: AppShellProps) {
               aria-label={area.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-2xl px-1 text-[0.66rem] font-semibold text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active && "bg-primary text-primary-foreground",
+                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[0.64rem] font-semibold text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                active && "bg-primary text-primary-foreground shadow-sm",
               )}
             >
               <Icon className="size-5" aria-hidden="true" />

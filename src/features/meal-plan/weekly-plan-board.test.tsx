@@ -1,4 +1,5 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { WeeklyPlanBoard } from "@/features/meal-plan/weekly-plan-board";
@@ -28,7 +29,8 @@ const candidates: CandidatesByMealType = {
 };
 
 describe("WeeklyPlanBoard", () => {
-  it("renders a complete seven-day, three-meal manual planning grid", () => {
+  it("keeps one mobile day editable and offers a condensed whole-week view", async () => {
+    const user = userEvent.setup();
     render(
       <WeeklyPlanBoard
         weekStart="2026-08-10"
@@ -43,9 +45,19 @@ describe("WeeklyPlanBoard", () => {
       "aria-valuenow",
       "0",
     );
-    expect(screen.getByRole("heading", { name: "Monday" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Sunday" })).toBeInTheDocument();
-    expect(screen.getAllByText("Open meal slot")).toHaveLength(21);
+    const mobilePlan = screen.getByRole("region", { name: "Mobile meal plan" });
+    const desktopPlan = screen.getByRole("region", { name: "Seven-day meal plan" });
+    const daySelector = screen.getByRole("group", { name: "Choose a day" });
+    expect(within(mobilePlan).getByRole("heading", { name: "Monday" })).toBeInTheDocument();
+    expect(within(mobilePlan).getAllByText("Open meal slot")).toHaveLength(3);
+    expect(within(desktopPlan).getAllByText("Open meal slot")).toHaveLength(21);
+
+    await user.click(within(daySelector).getByRole("button", { name: "Tue 11" }));
+    expect(within(mobilePlan).getByRole("heading", { name: "Tuesday" })).toBeInTheDocument();
+
+    await user.click(within(mobilePlan).getByRole("button", { name: "View whole week" }));
+    expect(within(mobilePlan).getByRole("button", { name: "Edit Sunday 16 Aug" })).toBeInTheDocument();
+    expect(within(mobilePlan).getByRole("button", { name: "Back to selected day" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Generate complete week" })).toBeEnabled();
   });
 });

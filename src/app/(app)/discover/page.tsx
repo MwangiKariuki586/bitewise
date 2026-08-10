@@ -32,15 +32,14 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
     ? await searchPublicRecipes(input)
     : { recipes: [], total: 0 };
   const pageCount = Math.max(1, Math.ceil(results.total / discoverPageSize));
-  const resultStart = results.total ? (input.page - 1) * discoverPageSize + 1 : 0;
-  const resultEnd = Math.min(input.page * discoverPageSize, results.total);
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 sm:space-y-7">
       <PageIntro
-        eyebrow="Discover local favourites"
+        eyebrow="Discover"
         title="Find a meal that fits the kitchen you have."
-        description="Search practical Kenyan recipes by time, budget, equipment, dietary needs, cuisine, or ingredient."
+        description="Browse practical Kenyan recipes by time, budget, equipment, dietary needs, cuisine and more."
+        variant="standard"
       />
 
       <DiscoverSearchForm input={input} />
@@ -56,15 +55,12 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
           <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-muted-foreground">You have made several searches in the last minute. Wait briefly, then try again.</p>
         </Card>
       ) : results.recipes.length ? (
-        <section aria-labelledby="discover-results" className="space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{results.total} recipe{results.total === 1 ? "" : "s"}</p>
-              <h2 id="discover-results" className="mt-1 font-display text-3xl font-semibold">Meals worth opening</h2>
-            </div>
-            <p className="text-sm text-muted-foreground">Showing {resultStart}–{resultEnd}</p>
+        <section aria-labelledby="discover-results" className="space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="discover-results" className="text-xs font-bold text-muted-foreground">{results.total} recipe{results.total === 1 ? "" : "s"}</h2>
+            <p className="text-xs text-muted-foreground">Sort: <span className="font-bold text-primary">Relevance</span></p>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
             {results.recipes.map((recipe) => <DiscoverSearchCard key={recipe.id} recipe={recipe} />)}
           </div>
         </section>

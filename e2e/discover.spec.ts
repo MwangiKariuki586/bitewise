@@ -5,9 +5,9 @@ test.describe("public recipe discovery", () => {
   test("a signed-out visitor searches and opens a complete public recipe", async ({ page }) => {
     await page.goto("/discover");
 
-    await expect(page.getByRole("heading", { name: /find a meal that fits/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Find a meal that fits the kitchen you have." })).toBeVisible();
     await page.getByLabel("Search recipes").fill("chapati");
-    await page.getByRole("button", { name: "Search recipes" }).click();
+    await page.getByLabel("Search recipes").press("Enter");
 
     await expect(page).toHaveURL(/\/discover\?q=chapati/);
     const firstRecipe = page.locator('a[href^="/recipes/"]').filter({ hasText: /chapati/i }).first();

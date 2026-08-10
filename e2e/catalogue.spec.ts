@@ -110,12 +110,12 @@ test.describe("curated recipe catalogue", () => {
       {
         path: "/eat-now",
         title: "A confident meal decision, in minutes.",
-        task: () => page.getByRole("heading", { name: "What fits right now?" }),
+        task: () => page.getByRole("button", { name: "Find meals that fit" }),
       },
       {
         path: "/meal-plan?week=2026-08-10",
         title: "Make the week feel lighter.",
-        task: () => page.getByRole("navigation", { name: "Choose planning week" }),
+        task: () => page.getByRole("group", { name: "Choose a day" }),
       },
       {
         path: "/discover",
@@ -125,7 +125,7 @@ test.describe("curated recipe catalogue", () => {
       {
         path: "/cook",
         title: "One clear step. Then the next.",
-        task: () => page.getByRole("heading", { name: /Nothing waiting on the stove|Resume cooking/ }),
+        task: () => page.getByRole("button", { name: "Start cooking" }).first(),
       },
     ];
 
@@ -138,11 +138,41 @@ test.describe("curated recipe catalogue", () => {
 
         const intro = page.locator("[data-slot='page-intro']");
         await expect(intro).toBeVisible();
-        expect(await intro.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(260);
+        const introLimit = route.path === "/discover" || route.path === "/cook" ? 150 : 180;
+        expect(await intro.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(introLimit);
 
         const task = route.task();
         await expect(task).toBeVisible();
-        expect(await task.evaluate((element) => element.getBoundingClientRect().top)).toBeLessThan(704);
+        const navigation = page.locator("[data-slot='bottom-navigation']");
+        const [taskBox, navigationBox, mainPaddingBottom] = await Promise.all([
+          task.boundingBox(),
+          navigation.boundingBox(),
+          page.locator("#main-content").evaluate((element) =>
+            Number.parseFloat(getComputedStyle(element).paddingBottom),
+          ),
+        ]);
+        expect(taskBox).not.toBeNull();
+        expect(navigationBox).not.toBeNull();
+        expect(
+          (taskBox?.y ?? 800) + (taskBox?.height ?? 0),
+          `${route.path} should expose its primary task above navigation`,
+        ).toBeLessThanOrEqual(
+          navigationBox?.y ?? 0,
+        );
+        expect(mainPaddingBottom).toBeGreaterThan(navigationBox?.height ?? 0);
+
+        if (route.path === "/discover") {
+          const resultCard = page.locator("[data-slot='card']").first();
+          expect(await resultCard.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(180);
+        }
+
+        if (route.path === "/cook") {
+          const starterCard = page
+            .locator("[data-slot='card']")
+            .filter({ has: page.getByRole("button", { name: "Start cooking" }) })
+            .first();
+          expect(await starterCard.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(180);
+        }
       }
     }
   });
@@ -154,6 +184,7 @@ test.describe("curated recipe catalogue", () => {
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
 
+    await page.getByText("More constraints", { exact: true }).click();
     await page.getByLabel("Gas cooker").uncheck();
     await page.getByRole("button", { name: "Find meals that fit" }).click();
 

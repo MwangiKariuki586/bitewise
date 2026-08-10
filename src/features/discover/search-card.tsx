@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, Clock3, Coins, UsersRound } from "lucide-react";
+import { Bookmark, Clock3, Coins } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -22,43 +22,53 @@ export function formatDiscoverKes(minor: number | null) {
 
 export function DiscoverSearchCard({ recipe }: DiscoverSearchCardProps) {
   return (
-    <Card className="group overflow-hidden shadow-[0_18px_52px_-38px_rgba(24,64,45,0.75)] transition-[transform,box-shadow] duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_-34px_rgba(24,64,45,0.82)] motion-reduce:transition-none">
+    <Card className="group min-h-[7.5rem] overflow-hidden shadow-[0_16px_44px_-36px_rgba(91,23,51,0.7)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_52px_-34px_rgba(91,23,51,0.75)] motion-reduce:transition-none">
       <Link
         href={`/recipes/${recipe.slug}`}
-        className="block rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        aria-label={`Open ${recipe.name} to view or save`}
+        className="grid min-h-[7.5rem] grid-cols-[7rem_minmax(0,1fr)] rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:grid-cols-[8rem_minmax(0,1fr)]"
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-secondary">
+        <div className="relative min-h-full overflow-hidden bg-secondary">
           {recipe.image ? (
             <Image
               src={recipe.image.path}
               alt={recipe.image.alt}
               fill
-              sizes="(max-width: 639px) 92vw, (max-width: 1199px) 46vw, 30vw"
+              sizes="(max-width: 639px) 112px, 128px"
               className="object-cover transition duration-500 group-hover:scale-[1.025] motion-reduce:transition-none"
             />
           ) : (
-            <div className="grid h-full place-items-center text-sm text-muted-foreground">Image unavailable</div>
-          )}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent px-5 pb-5 pt-16 text-white">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/75">
-              {formatDiscoverLabel(recipe.cuisine)}
-            </p>
-            <h2 className="mt-1 font-display text-2xl font-semibold leading-tight">{recipe.name}</h2>
-          </div>
-        </div>
-        <div className="space-y-4 p-5">
-          <p className="line-clamp-2 min-h-12 text-sm leading-6 text-muted-foreground">{recipe.summary}</p>
-          <div className="grid grid-cols-3 gap-2 rounded-2xl bg-secondary/65 p-3 text-xs font-semibold">
-            <span className="flex items-center gap-1.5"><Clock3 className="size-4 text-primary" aria-hidden="true" />{recipe.totalMinutes} min</span>
-            <span className="flex items-center gap-1.5"><UsersRound className="size-4 text-primary" aria-hidden="true" />{recipe.baseServings}</span>
-            <span className="flex items-center gap-1.5"><Coins className="size-4 text-primary" aria-hidden="true" />{formatDiscoverKes(recipe.estimatedCostPerServingMinor)}</span>
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex flex-wrap gap-2">
-              <Badge>{formatDiscoverLabel(recipe.difficulty)}</Badge>
-              {recipe.dietaryTags.slice(0, 1).map((tag) => <Badge key={tag} className="bg-accent/20 text-accent-foreground">{formatDiscoverLabel(tag)}</Badge>)}
+            <div className="grid h-full place-items-center px-2 text-center text-xs text-muted-foreground">
+              Image unavailable
             </div>
-            <span className="flex shrink-0 items-center gap-1 text-sm font-bold text-primary">View recipe<ArrowUpRight className="size-4" aria-hidden="true" /></span>
+          )}
+        </div>
+
+        <div className="relative flex min-w-0 flex-col p-3 pr-9 sm:p-3.5 sm:pr-10">
+          <Bookmark className="absolute right-3 top-3 size-4 text-primary" aria-hidden="true" />
+          <h2 className="line-clamp-2 font-display text-base font-semibold leading-tight sm:text-lg">
+            {recipe.name}
+          </h2>
+          <div className="mt-1.5 flex flex-wrap gap-x-2 gap-y-1 text-[0.68rem] font-semibold text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock3 className="size-3.5 text-primary" aria-hidden="true" />
+              {recipe.totalMinutes} min
+            </span>
+            <span className="capitalize">{formatDiscoverLabel(recipe.difficulty)}</span>
+            <span className="flex items-center gap-1">
+              <Coins className="size-3.5 text-primary" aria-hidden="true" />
+              {formatDiscoverKes(recipe.estimatedCostPerServingMinor)}
+            </span>
+          </div>
+          <div className="mt-auto flex min-w-0 flex-wrap gap-1 pt-1.5">
+              {recipe.dietaryTags.slice(0, 3).map((tag) => (
+                <Badge
+                  key={tag}
+                  className="bg-accent/15 px-1.5 py-0.5 text-[0.6rem] text-accent-foreground"
+                >
+                  {formatDiscoverLabel(tag)}
+                </Badge>
+              ))}
           </div>
         </div>
       </Link>

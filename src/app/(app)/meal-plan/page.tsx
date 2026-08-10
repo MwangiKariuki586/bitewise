@@ -38,26 +38,27 @@ export default async function MealPlanPage({ searchParams }: MealPlanPageProps) 
   const isCurrentWeek = weekStart === currentWeekStart();
 
   return (
-    <div className="space-y-5 pb-8 sm:space-y-7">
+    <div className="space-y-4 pb-8 sm:space-y-6">
       <PageIntro
         eyebrow="Meal Plan"
         title="Make the week feel lighter."
-        description="Build seven practical days around your budget, kitchen, time, and household. Swap one meal without losing the week."
+        description="Plan practical meals around your budget, kitchen, time, and household."
+        variant="standard"
       />
 
-      <nav aria-label="Choose planning week" className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 sm:gap-3">
+      <nav aria-label="Choose planning week" className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-1.5 sm:gap-3">
         <Link
           href={`/meal-plan?week=${previousWeek}`}
-          className={cn(buttonVariants({ variant: "outline" }), "px-3 sm:px-4")}
+          aria-label="Previous week"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "size-9 min-h-9 sm:h-11 sm:w-auto sm:px-4")}
         >
           <ChevronLeft className="size-4" aria-hidden="true" />
           <span className="hidden sm:inline">Previous week</span>
-          <span className="sm:hidden">Previous</span>
         </Link>
         <Link
           href="/meal-plan"
           className={cn(
-            buttonVariants({ variant: "ghost" }),
+            buttonVariants({ variant: "ghost", size: "sm" }),
             "min-w-0 flex-col gap-0 px-2 text-center",
           )}
           aria-current={isCurrentWeek ? "date" : undefined}
@@ -72,10 +73,10 @@ export default async function MealPlanPage({ searchParams }: MealPlanPageProps) 
         </Link>
         <Link
           href={`/meal-plan?week=${nextWeek}`}
-          className={cn(buttonVariants({ variant: "outline" }), "px-3 sm:px-4")}
+          aria-label="Next week"
+          className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "size-9 min-h-9 sm:h-11 sm:w-auto sm:px-4")}
         >
           <span className="hidden sm:inline">Next week</span>
-          <span className="sm:hidden">Next</span>
           <ChevronRight className="size-4" aria-hidden="true" />
         </Link>
       </nav>
