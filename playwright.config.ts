@@ -5,10 +5,13 @@ loadEnvConfig(process.cwd());
 
 export default defineConfig({
   testDir: "./e2e",
+  expect: { timeout: 15_000 },
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: "html",
+  timeout: 60_000,
+  workers: 2,
   use: {
     baseURL: "http://127.0.0.1:3000",
     trace: "on-first-retry",

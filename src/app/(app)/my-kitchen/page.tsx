@@ -8,6 +8,10 @@ import { deletePantryItemAction } from "@/features/pantry/actions";
 import { getPantryFormData, getPantryPage } from "@/features/pantry/data";
 import { PantryForm } from "@/features/pantry/pantry-form";
 import { pantryQuerySchema } from "@/features/pantry/schemas";
+import { getActiveShoppingListSummary } from "@/features/shopping-list/data";
+import { formatKes, formatShoppingWeek } from "@/features/shopping-list/format";
+import { KitchenNav } from "@/features/shopping-list/kitchen-nav";
+import { requireUser } from "@/lib/auth/session";
 
 interface MyKitchenPageProps {
   searchParams: Promise<{ edit?: string; page?: string; search?: string }>;
@@ -67,9 +71,11 @@ function PantrySection({ items, title, tone }: { items: PantryItem[]; title: str
 
 export default async function MyKitchenPage({ searchParams }: MyKitchenPageProps) {
   const parsed = pantryQuerySchema.parse(await searchParams);
-  const [{ items, total, pageSize }, { ingredients, editItem }] = await Promise.all([
+  const identity = await requireUser();
+  const [{ items, total, pageSize }, { ingredients, editItem }, shoppingList] = await Promise.all([
     getPantryPage({ page: parsed.page, search: parsed.search }),
     getPantryFormData(parsed.edit),
+    getActiveShoppingListSummary(identity.sub),
   ]);
   const today = dateKey();
   const soonCutoff = addDaysKey(3);
@@ -86,10 +92,12 @@ export default async function MyKitchenPage({ searchParams }: MyKitchenPageProps
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Keep ingredients accurate so BiteWise can spot useful food, reduce missing items, and prioritise what needs using soon.</p>
       </header>
 
-      <nav aria-label="My Kitchen sections" className="flex gap-2 rounded-2xl bg-muted/70 p-1.5 sm:w-fit">
-        <span aria-current="page" className="rounded-xl bg-card px-4 py-2 text-sm font-semibold text-primary shadow-sm">Pantry</span>
-        <Link href="/my-kitchen/leftovers" className="px-4 py-2 text-sm font-medium text-muted-foreground">Leftovers</Link>
-      </nav>
+      <KitchenNav active="pantry" />
+
+      <Link href="/my-kitchen/shopping-list" className="flex flex-col gap-3 rounded-[1.5rem] bg-primary px-5 py-4 text-primary-foreground shadow-[0_18px_45px_-30px_rgba(17,55,39,0.9)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between">
+        <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-foreground/70">Active shopping list</p><p className="mt-1 font-display text-2xl font-semibold">{shoppingList ? `${shoppingList.itemCount} items · ${formatKes(shoppingList.estimatedTotalMinor)}` : "Build one from Meal Plan"}</p></div>
+        <p className="text-sm font-semibold text-primary-foreground/80">{shoppingList ? formatShoppingWeek(shoppingList.weekStart) : "Pantry-aware and ready to check off"} →</p>
+      </Link>
 
       <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <aside className="rounded-[1.5rem] bg-card p-5 shadow-sm lg:sticky lg:top-24">
@@ -97,14 +105,18 @@ export default async function MyKitchenPage({ searchParams }: MyKitchenPageProps
             <div><p className="text-xs font-bold uppercase tracking-wide text-primary">{editItem ? "Update item" : "Add ingredient"}</p><h2 className="mt-1 font-display text-2xl font-semibold">{editItem ? "Keep it accurate" : "What’s in your kitchen?"}</h2></div>
             {editItem ? <Button asChild size="sm" variant="ghost"><Link href="/my-kitchen">Cancel</Link></Button> : null}
           </div>
-          <PantryForm ingredients={ingredients} editItem={editItem} />
+          <PantryForm
+            key={editItem ? `edit-${editItem.id}` : "new"}
+            ingredients={ingredients}
+            editItem={editItem}
+          />
         </aside>
 
         <div className="min-w-0 space-y-7">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <form className="relative w-full sm:max-w-sm">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <Input name="search" defaultValue={parsed.search} placeholder="Search your pantry" className="pl-10" />
+              <Input name="search" defaultValue={parsed.search} placeholder="Search your pantry" aria-label="Search pantry" className="pl-10" />
             </form>
             <p className="text-sm font-medium text-muted-foreground">{total} {total === 1 ? "item" : "items"}</p>
           </div>

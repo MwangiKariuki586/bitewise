@@ -33,10 +33,10 @@ importers:
         specifier: ^1.1.21
         version: 1.1.21(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@supabase/ssr':
-        specifier: ^0.12.4
+        specifier: 0.12.4
         version: 0.12.4(@supabase/supabase-js@2.112.1)
       '@supabase/supabase-js':
-        specifier: ^2.112.1
+        specifier: 2.112.1
         version: 2.112.1
       class-variance-authority:
         specifier: ^0.7.1
@@ -59,6 +59,9 @@ importers:
       react-hook-form:
         specifier: ^7.84.0
         version: 7.84.0(react@19.2.8)
+      sharp:
+        specifier: ^0.35.3
+        version: 0.35.3(@types/node@20.19.43)
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -112,7 +115,7 @@ importers:
         specifier: ^30.0.1
         version: 30.0.1(@noble/hashes@1.8.0)
       supabase:
-        specifier: ^2.111.0
+        specifier: 2.111.0
         version: 2.111.0
       tailwindcss:
         specifier: ^4
@@ -3650,8 +3653,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@img/colour@1.1.0':
-    optional: true
+  '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.35.3':
     optionalDependencies:
@@ -6143,7 +6145,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.3
       '@img/sharp-win32-x64': 0.35.3
       '@types/node': 20.19.43
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:

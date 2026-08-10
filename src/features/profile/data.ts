@@ -23,6 +23,7 @@ export async function getCurrentProfile() {
 
 export async function requireCompletedProfile() {
   const result = await getCurrentProfile();
-  if (!result.profile?.onboarding_completed) redirect("/onboarding");
-  return result;
+  const profile = result.profile;
+  if (!profile?.onboarding_completed) redirect("/onboarding");
+  return { ...result, profile };
 }

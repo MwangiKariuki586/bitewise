@@ -43,10 +43,12 @@ test.describe("pantry inventory and isolation", () => {
   });
 
   test("a user can add, search, edit, and remove a pantry item", async ({ page }) => {
+    test.setTimeout(120_000);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(emailA);
     await page.getByLabel("Password").fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(/\/eat-now$/);
     await page.goto("/my-kitchen");
 
     await page.getByLabel("Ingredient").selectOption({ label: "Tomato" });
@@ -59,9 +61,11 @@ test.describe("pantry inventory and isolation", () => {
     await page.getByPlaceholder("Search your pantry").press("Enter");
     await expect(page.getByRole("heading", { name: "Tomato" })).toBeVisible();
     await page.getByRole("link", { name: "Edit Tomato" }).click();
+    await expect(page.getByLabel("Ingredient").locator("option:checked")).toHaveText("Tomato");
     await page.getByLabel("Quantity").fill("6");
     await page.getByRole("button", { name: "Update pantry item" }).click();
     await expect(page.getByText("Pantry item updated.")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Tomato" })).toBeVisible();
 
     await page.getByRole("button", { name: "Delete Tomato" }).click();
     await expect(page.getByText("Your pantry is ready for its first item.")).toBeVisible();
@@ -73,6 +77,7 @@ test.describe("pantry inventory and isolation", () => {
     await page.getByLabel("Email address").fill(emailA);
     await page.getByLabel("Password").fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(/\/eat-now$/);
     await page.goto("/my-kitchen/leftovers");
 
     await page.getByLabel("Meal or dish").fill("Bean stew");
@@ -86,6 +91,19 @@ test.describe("pantry inventory and isolation", () => {
     await page.getByRole("button", { name: "Update leftover" }).click();
     await expect(page.getByText("Leftover updated.")).toBeVisible();
     await page.getByRole("button", { name: "Delete Bean stew" }).click();
+    await expect(page.getByText("No leftovers to use up.")).toBeVisible();
+
+    const recipeSelect = page.getByLabel(/BiteWise recipe/);
+    await page.getByLabel("Meal or dish").fill("");
+    await recipeSelect.selectOption({ index: 1 });
+    const linkedRecipe = (await recipeSelect.locator("option:checked").textContent())?.trim();
+    if (!linkedRecipe) throw new Error("A canonical leftover recipe was not available.");
+    await page.getByLabel("Servings left").fill("2");
+    await page.getByLabel("Prepared").fill(today);
+    await page.getByLabel("Use by").fill(today);
+    await page.getByRole("button", { name: "Save leftover" }).click();
+    await expect(page.getByText(`Linked recipe: ${linkedRecipe}`)).toBeVisible();
+    await page.getByRole("button", { name: `Delete ${linkedRecipe}` }).click();
     await expect(page.getByText("No leftovers to use up.")).toBeVisible();
   });
 

@@ -17,6 +17,7 @@ export async function saveLeftoverAction(_state: ActionResult, formData: FormDat
   const identity = await requireUser();
   const parsed = leftoverSchema.safeParse({
     name: formData.get("name"),
+    recipeId: formData.get("recipeId"),
     servings: formData.get("servings"),
     preparedDate: formData.get("preparedDate"),
     expiryDate: formData.get("expiryDate"),
@@ -28,7 +29,13 @@ export async function saveLeftoverAction(_state: ActionResult, formData: FormDat
   if (itemId && !itemId.success) return { status: "error", message: "That leftover is invalid." };
 
   const supabase = await createClient();
-  const values = { name: parsed.data.name, servings: parsed.data.servings, prepared_date: parsed.data.preparedDate, expiry_date: parsed.data.expiryDate, notes: parsed.data.notes };
+  const recipeResult = parsed.data.recipeId
+    ? await supabase.from("recipes").select("id,name").eq("id", parsed.data.recipeId).eq("is_active", true).maybeSingle()
+    : { data: null, error: null };
+  if (recipeResult.error || (parsed.data.recipeId && !recipeResult.data)) {
+    return { status: "error", message: "That BiteWise recipe is unavailable." };
+  }
+  const values = { name: parsed.data.name ?? recipeResult.data?.name ?? "Leftover meal", recipe_id: parsed.data.recipeId ?? null, servings: parsed.data.servings, prepared_date: parsed.data.preparedDate, expiry_date: parsed.data.expiryDate, notes: parsed.data.notes };
   const result = itemId?.success
     ? await supabase.from("leftovers").update(values).eq("id", itemId.data).eq("user_id", identity.sub).select("id").maybeSingle()
     : await supabase.from("leftovers").insert({ ...values, user_id: identity.sub }).select("id").single();

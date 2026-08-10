@@ -16,7 +16,16 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh border-r border-border/60 bg-card/75 p-5 backdrop-blur-xl lg:flex lg:flex-col">
+      <a
+        href="#main-content"
+        className="fixed left-4 top-3 z-50 -translate-y-24 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-lg transition-transform focus:translate-y-0 motion-reduce:transition-none"
+      >
+        Skip to main content
+      </a>
+      <aside
+        aria-label="BiteWise navigation"
+        className="sticky top-0 hidden h-dvh border-r border-border/60 bg-card/75 p-5 backdrop-blur-xl lg:flex lg:flex-col"
+      >
         <Link
           href="/"
           className="flex items-center gap-3 rounded-2xl px-2 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -88,7 +97,7 @@ export function AppShell({ children }: AppShellProps) {
           </Link>
         </header>
 
-        <main className="mx-auto w-full max-w-[92rem] px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8">
+        <main id="main-content" className="mx-auto w-full max-w-[92rem] px-4 pb-28 pt-6 sm:px-6 lg:px-8 lg:pb-10 lg:pt-8">
           {children}
         </main>
       </div>
