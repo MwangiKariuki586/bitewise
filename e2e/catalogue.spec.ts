@@ -96,6 +96,57 @@ test.describe("curated recipe catalogue", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
+  test("keeps each primary task above the mobile navigation at compact widths", async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name !== "mobile-chromium", "Compact layout is covered by the mobile project.");
+
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto("/auth/sign-in");
+    await page.getByLabel("Email address").fill(email);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(/\/eat-now$/);
+
+    const routes = [
+      {
+        path: "/eat-now",
+        title: "A confident meal decision, in minutes.",
+        task: () => page.getByRole("heading", { name: "What fits right now?" }),
+      },
+      {
+        path: "/meal-plan?week=2026-08-10",
+        title: "Make the week feel lighter.",
+        task: () => page.getByRole("navigation", { name: "Choose planning week" }),
+      },
+      {
+        path: "/discover",
+        title: "Find a meal that fits the kitchen you have.",
+        task: () => page.getByLabel("Search recipes"),
+      },
+      {
+        path: "/cook",
+        title: "One clear step. Then the next.",
+        task: () => page.getByRole("heading", { name: /Nothing waiting on the stove|Resume cooking/ }),
+      },
+    ];
+
+    for (const width of [360, 390]) {
+      await page.setViewportSize({ width, height: 800 });
+
+      for (const route of routes) {
+        await page.goto(route.path);
+        await expect(page.getByRole("heading", { level: 1, name: route.title })).toBeVisible();
+
+        const intro = page.locator("[data-slot='page-intro']");
+        await expect(intro).toBeVisible();
+        expect(await intro.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(260);
+
+        const task = route.task();
+        await expect(task).toBeVisible();
+        expect(await task.evaluate((element) => element.getBoundingClientRect().top)).toBeLessThan(704);
+      }
+    }
+  });
+
   test("Eat Now keeps dietary needs fixed and offers concrete no-match adjustments", async ({ page }) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(email);

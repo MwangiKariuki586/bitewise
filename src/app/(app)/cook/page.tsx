@@ -1,7 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ChefHat, Clock3, PlayCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Clock3, PlayCircle } from "lucide-react";
 
+import { PageIntro } from "@/components/product/page-intro";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -25,15 +26,12 @@ export default async function CookPage({ searchParams }: CookPageProps) {
   const starterRecipes = catalogue.filter((recipe) => !activeRecipeIds.has(recipe.id)).slice(0, 6);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-7">
-      <header className="grid gap-6 overflow-hidden rounded-[2rem] bg-primary px-5 py-7 text-primary-foreground shadow-[0_24px_65px_-36px_rgba(17,55,39,0.9)] sm:px-8 sm:py-9 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary-foreground/70">Cook with confidence</p>
-          <h1 className="mt-3 max-w-3xl font-display text-4xl font-semibold leading-tight sm:text-5xl">One clear step. Then the next.</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-primary-foreground/78">Scale ingredients for your table, keep the screen awake, and return exactly where you stopped.</p>
-        </div>
-        <Badge className="w-fit bg-white/12 px-4 py-2 text-primary-foreground ring-1 ring-white/15"><ChefHat className="mr-2 size-4" aria-hidden="true" />Guided kitchen mode</Badge>
-      </header>
+    <div className="mx-auto max-w-7xl space-y-5 sm:space-y-7">
+      <PageIntro
+        eyebrow="Cook with confidence"
+        title="One clear step. Then the next."
+        description="Scale servings, keep the screen awake, and return exactly where you stopped."
+      />
 
       {query.completed === "1" ? (
         <Card role="status" className="flex items-start gap-3 border-primary/20 bg-primary/5 p-4 text-sm text-primary">

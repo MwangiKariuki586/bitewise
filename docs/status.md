@@ -20,9 +20,11 @@ Active feature: BiteWise MVP
 
 Status: Complete
 
-Verified: 2026-08-10 – BiteWise MVP passed 65 unit/integration tests, the complete 54-test mobile/desktop Playwright suite, 163 hosted pgTAP assertions across all seven database suites, strict typecheck, lint, production build, and `git diff --check`. Hosted Supabase has 20 public tables with RLS enabled on every table, 55 policies, no anonymous table-write grants, no public `SECURITY DEFINER` functions, no function execution inherited by `PUBLIC`, and least-privilege RPC grants. Security and performance advisors report no actionable database findings; only the owner-controlled leaked-password setting and expected unused-index information remain.
+Verified: 2026-08-10 – BiteWise MVP passed 66 unit/integration tests, the complete 56-test mobile/desktop Playwright suite (55 passed and one intentional desktop skip for the mobile-only compact-layout check), 163 hosted pgTAP assertions across all seven database suites, strict typecheck, lint, production build, and `git diff --check`. Hosted Supabase has 20 public tables with RLS enabled on every table, 55 policies, no anonymous table-write grants, no public `SECURITY DEFINER` functions, no function execution inherited by `PUBLIC`, and least-privilege RPC grants. Security and performance advisors report no actionable database findings; only the owner-controlled leaked-password setting and expected unused-index information remain.
 
 Foundation and design system completed and verified.
+
+Mobile app-page density follow-up completed with one shared compact intro across Eat Now, Meal Plan, Discover, and Cook. Mobile title sizing, vertical padding, corner radius, shadow, and section gaps were reduced while the established colour and typography were preserved. Redundant Cook and Discover badges were removed, the planning-week context moved into the existing week navigation, and the Nairobi price caveat moved beside the meal-budget field with an accessible description relationship. A mobile Playwright regression visits all four routes at both 360 px and 390 px, caps the intro height, and verifies the first task remains above the bottom navigation. This presentation-only change does not alter querying, caching, invalidation, or rate limiting. Verified with 66 unit/integration tests, the complete 56-test Playwright suite (55 passed and one intentional desktop skip), strict typecheck, lint, production build, and `git diff --check`.
 
 Supabase foundation completed and verified against the hosted development project.
 

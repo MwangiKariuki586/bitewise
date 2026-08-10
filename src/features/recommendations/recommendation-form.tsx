@@ -214,8 +214,11 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-2">
             <Label htmlFor="budgetKes">Meal budget (KES)</Label>
-            <Input id="budgetKes" name="budgetKes" type="number" min="100" max="1000000" defaultValue={defaults.budgetKes} inputMode="numeric" />
+            <Input id="budgetKes" name="budgetKes" type="number" min="100" max="1000000" defaultValue={defaults.budgetKes} inputMode="numeric" aria-describedby="budgetKesHint" />
             <FieldError errors={state.fieldErrors?.budgetKes} />
+            <p id="budgetKesHint" className="text-[0.7rem] leading-4 text-muted-foreground">
+              Nairobi estimates · actual prices vary
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="servings">Servings</Label>
