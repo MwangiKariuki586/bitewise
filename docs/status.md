@@ -20,6 +20,51 @@ Active feature: BiteWise MVP
 
 Status: Complete
 
+Authentication form refinement completed with independently accessible show/hide
+controls for every password entry and password confirmation on sign-up and
+password update. Password mismatches are rejected by server-side Zod
+validation before Supabase Auth is called, and the controls expose clear labels,
+pressed state, keyboard focus, and appropriate password-manager autocomplete
+hints. This presentation and validation change does not alter authentication data
+access, caching, invalidation, or rate limiting. Verified with 70 unit/integration
+tests, all 10 authentication Playwright tests across mobile and desktop, strict
+typecheck, lint, and production build.
+
+Authentication failure recovery now maps common Supabase Auth codes to specific,
+safe next steps for incorrect credentials, unconfirmed email, duplicate accounts,
+weak passwords, delivery restrictions, request limits, and timeouts. Client-held
+form values preserve name, email, password, and confirmation entries when server
+validation or Supabase returns an error; successful non-redirect responses still
+clear sensitive values. Authentication querying, caching, invalidation, and rate
+limits are unchanged.
+
+Latest verification for the combined authentication form refinements: 72
+unit/integration tests, all 10 authentication Playwright tests across mobile and
+desktop, strict typecheck, lint, production build, and `git diff --check`.
+
+The landing route now verifies server-side Supabase claims before rendering.
+Signed-in users with a completed profile are redirected to Eat Now, while users
+with incomplete or missing profile setup resume onboarding; only signed-out
+visitors see the public landing page. The profile lookup selects only the
+onboarding completion flag, remains request-scoped and uncached, and introduces
+no mutation, invalidation, or rate-limit requirement.
+
+Latest verification including the landing-route guard: 75 unit/integration
+tests, 14 affected authentication/foundation Playwright tests across mobile and
+desktop, strict typecheck, lint, production build, and `git diff --check`.
+
+The shared product header now derives a signed-in user's initials from their
+profile name with an email fallback and exposes an accessible account card for
+Profile, Edit preferences, Saved meals, and Sign out. The menu supports keyboard
+focus, Escape and outside-click dismissal, and clear expanded state; signed-out
+public visitors receive a Sign in action instead. The request-scoped account
+summary selects only `display_name`, is uncached, and adds no mutation, cache
+invalidation, or rate-limit requirement beyond the existing sign-out action.
+
+Latest verification including the account menu: 77 unit/integration tests, all
+8 affected profile/foundation Playwright tests across mobile and desktop, strict
+typecheck, lint, production build, and `git diff --check`.
+
 Verified: 2026-08-10 – BiteWise MVP passed 67 unit/integration tests, the complete 56-test mobile/desktop Playwright suite (55 passed and one intentional desktop skip for the mobile-only compact-layout check), 163 hosted pgTAP assertions across all seven database suites, strict typecheck, lint, production build, and `git diff --check`. Hosted Supabase has 20 public tables with RLS enabled on every table, 55 policies, no anonymous table-write grants, no public `SECURITY DEFINER` functions, no function execution inherited by `PUBLIC`, and least-privilege RPC grants. Security and performance advisors report no actionable database findings; only the owner-controlled leaked-password setting and expected unused-index information remain.
 
 Foundation and design system completed and verified.

@@ -8,10 +8,11 @@ import { productAreas } from "@/features/navigation/product-areas";
 import { cn } from "@/lib/utils";
 
 interface AppShellProps {
+  accountMenu: React.ReactNode;
   children: React.ReactNode;
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ accountMenu, children }: AppShellProps) {
   const pathname = usePathname();
 
   return (
@@ -88,13 +89,7 @@ export function AppShell({ children }: AppShellProps) {
           <p className="hidden text-sm text-muted-foreground lg:block">
             Practical food decisions, shaped around your day.
           </p>
-          <Link
-            href="/profile"
-            className="grid size-10 place-items-center rounded-full bg-accent font-semibold text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            aria-label="Open profile"
-          >
-            BW
-          </Link>
+          {accountMenu}
         </header>
 
         <main id="main-content" className="mx-auto w-full max-w-[92rem] px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pb-10 lg:pt-8">

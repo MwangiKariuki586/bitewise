@@ -70,7 +70,7 @@ test.describe("curated recipe catalogue", () => {
   test("Eat Now ranks hard-filtered meals with pantry-aware explanations", async ({ page }) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(email);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(page).toHaveURL(/\/eat-now$/);
@@ -102,7 +102,7 @@ test.describe("curated recipe catalogue", () => {
     await page.setViewportSize({ width: 360, height: 800 });
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(email);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
 
@@ -180,7 +180,7 @@ test.describe("curated recipe catalogue", () => {
   test("Eat Now keeps dietary needs fixed and offers concrete no-match adjustments", async ({ page }) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(email);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
 

@@ -13,12 +13,14 @@ describe("authentication validation", () => {
       name: "  Amina  ",
       email: "  AMINA@example.com ",
       password: "Chapati#42",
+      confirmPassword: "Chapati#42",
     });
 
     expect(result).toEqual({
       name: "Amina",
       email: "amina@example.com",
       password: "Chapati#42",
+      confirmPassword: "Chapati#42",
     });
   });
 
@@ -27,6 +29,7 @@ describe("authentication validation", () => {
       name: "Amina",
       email: "amina@example.com",
       password: "password",
+      confirmPassword: "password",
     });
 
     expect(result.success).toBe(false);
@@ -48,7 +51,10 @@ describe("authentication validation", () => {
 
   it("accepts sign-in and reset emails without weakening password rules", () => {
     expect(
-      signInSchema.safeParse({ email: "user@example.com", password: "x" }).success,
+      signInSchema.safeParse({
+        email: "user@example.com",
+        password: "x",
+      }).success,
     ).toBe(true);
     expect(
       forgotPasswordSchema.safeParse({ email: "not-an-email" }).success,

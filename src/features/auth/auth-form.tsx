@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import { useActionState, useState } from "react";
+import { ArrowRight, Eye, EyeOff, LoaderCircle } from "lucide-react";
 
 import type { ActionResult } from "@/lib/action-result";
 import { initialActionResult } from "@/lib/action-result";
@@ -39,12 +39,87 @@ function FieldError({ id, errors }: { id: string; errors?: string[] }) {
   );
 }
 
+interface PasswordInputProps {
+  autoComplete: "current-password" | "new-password";
+  autoFocus?: boolean;
+  describedBy?: string;
+  id: "password" | "confirmPassword";
+  invalid: boolean;
+  name: "password" | "confirmPassword";
+  onChange: (value: string) => void;
+  toggleLabel: string;
+  value: string;
+}
+
+function PasswordInput({
+  autoComplete,
+  autoFocus,
+  describedBy,
+  id,
+  invalid,
+  name,
+  onChange,
+  toggleLabel,
+  value,
+}: PasswordInputProps) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="relative">
+      <Input
+        id={id}
+        name={name}
+        type={visible ? "text" : "password"}
+        autoComplete={autoComplete}
+        autoFocus={autoFocus}
+        className="pr-12"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-invalid={invalid}
+        aria-describedby={describedBy}
+      />
+      <button
+        type="button"
+        className="absolute inset-y-0 right-0 grid min-h-11 w-12 place-items-center rounded-r-xl text-muted-foreground outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        aria-label={`${visible ? "Hide" : "Show"} ${toggleLabel}`}
+        aria-pressed={visible}
+        onClick={() => setVisible((current) => !current)}
+      >
+        {visible ? (
+          <EyeOff className="size-4" aria-hidden="true" />
+        ) : (
+          <Eye className="size-4" aria-hidden="true" />
+        )}
+      </button>
+    </div>
+  );
+}
+
 export function AuthForm({ action, mode }: AuthFormProps) {
-  const [state, formAction, pending] = useActionState(action, initialActionResult);
+  const [values, setValues] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [state, formAction, pending] = useActionState(
+    async (previousState: ActionResult, formData: FormData) => {
+      const result = await action(previousState, formData);
+      if (result.status === "success") {
+        setValues({ name: "", email: "", password: "", confirmPassword: "" });
+      }
+      return result;
+    },
+    initialActionResult,
+  );
   const showEmail = mode !== "update-password";
   const showPassword = mode !== "forgot-password" && mode !== "resend-confirmation";
   const showName = mode === "sign-up";
-  const showConfirmPassword = mode === "update-password";
+  const showConfirmPassword = mode === "sign-up" || mode === "update-password";
+
+  function updateValue(field: keyof typeof values, value: string) {
+    setValues((current) => ({ ...current, [field]: value }));
+  }
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
@@ -56,6 +131,8 @@ export function AuthForm({ action, mode }: AuthFormProps) {
             name="name"
             autoComplete="name"
             autoFocus
+            value={values.name}
+            onChange={(event) => updateValue("name", event.target.value)}
             aria-invalid={Boolean(state.fieldErrors?.name)}
             aria-describedby={state.fieldErrors?.name ? "name-error" : undefined}
           />
@@ -73,6 +150,8 @@ export function AuthForm({ action, mode }: AuthFormProps) {
             inputMode="email"
             autoComplete="email"
             autoFocus={!showName}
+            value={values.email}
+            onChange={(event) => updateValue("email", event.target.value)}
             aria-invalid={Boolean(state.fieldErrors?.email)}
             aria-describedby={state.fieldErrors?.email ? "email-error" : undefined}
           />
@@ -95,14 +174,16 @@ export function AuthForm({ action, mode }: AuthFormProps) {
               </Link>
             ) : null}
           </div>
-          <Input
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
             autoFocus={mode === "update-password"}
-            aria-invalid={Boolean(state.fieldErrors?.password)}
-            aria-describedby={state.fieldErrors?.password ? "password-error" : undefined}
+            invalid={Boolean(state.fieldErrors?.password)}
+            describedBy={state.fieldErrors?.password ? "password-error" : undefined}
+            value={values.password}
+            onChange={(value) => updateValue("password", value)}
+            toggleLabel={mode === "update-password" ? "new password" : "password"}
           />
           <FieldError id="password-error" errors={state.fieldErrors?.password} />
           {mode !== "sign-in" ? (
@@ -115,15 +196,21 @@ export function AuthForm({ action, mode }: AuthFormProps) {
 
       {showConfirmPassword ? (
         <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm new password</Label>
-          <Input
+          <Label htmlFor="confirmPassword">
+            {mode === "update-password" ? "Confirm new password" : "Confirm password"}
+          </Label>
+          <PasswordInput
             id="confirmPassword"
             name="confirmPassword"
-            type="password"
             autoComplete="new-password"
-            aria-invalid={Boolean(state.fieldErrors?.confirmPassword)}
-            aria-describedby={
+            invalid={Boolean(state.fieldErrors?.confirmPassword)}
+            describedBy={
               state.fieldErrors?.confirmPassword ? "confirm-password-error" : undefined
+            }
+            value={values.confirmPassword}
+            onChange={(value) => updateValue("confirmPassword", value)}
+            toggleLabel={
+              mode === "update-password" ? "new password confirmation" : "password confirmation"
             }
           />
           <FieldError

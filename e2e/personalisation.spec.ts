@@ -71,7 +71,7 @@ test.describe("feedback, saved meals, and history", () => {
 
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now/);
     await page.goto(`/recipes/${recipeSlug}`);
@@ -129,7 +129,7 @@ test.describe("feedback, saved meals, and history", () => {
   test("removes a disliked Eat Now result from the next ranked shortlist", async ({ page }) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now/);
 

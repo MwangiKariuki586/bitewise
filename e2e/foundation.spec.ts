@@ -25,6 +25,7 @@ test("product shell keeps all five areas connected", async ({ page }) => {
   for (const label of ["Eat Now", "Meal Plan", "Discover", "Cook", "My Kitchen"]) {
     await expect(navigation.getByRole("link", { name: label })).toBeVisible();
   }
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();

@@ -1,12 +1,29 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ArrowRight, Check, Leaf, ShoppingBasket, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { productAreas } from "@/features/navigation/product-areas";
+import { getSessionIdentity } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const identity = await getSessionIdentity();
+
+  if (identity) {
+    const supabase = await createClient();
+    const { data: profile, error } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("user_id", identity.sub)
+      .maybeSingle();
+
+    if (error) throw new Error("Your profile could not be loaded.");
+    redirect(profile?.onboarding_completed ? "/eat-now" : "/onboarding");
+  }
+
   return (
     <main className="min-h-dvh overflow-hidden">
       <header className="mx-auto flex h-20 w-full max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">

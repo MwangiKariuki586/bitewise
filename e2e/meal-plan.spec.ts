@@ -133,7 +133,7 @@ test.describe("weekly meal planning", () => {
     test.setTimeout(60_000);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
 

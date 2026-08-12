@@ -14,15 +14,23 @@ const passwordSchema = z
   .regex(/[0-9]/, "Include at least one number.")
   .regex(/[^A-Za-z0-9]/, "Include at least one symbol.");
 
-export const signUpSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, "Enter your name.")
-    .max(80, "Use no more than 80 characters."),
-  email: emailSchema,
-  password: passwordSchema,
-});
+const passwordsMatch = {
+  message: "Passwords do not match.",
+  path: ["confirmPassword"] as ["confirmPassword"],
+};
+
+export const signUpSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, "Enter your name.")
+      .max(80, "Use no more than 80 characters."),
+    email: emailSchema,
+    password: passwordSchema,
+    confirmPassword: z.string().min(1, "Confirm your password."),
+  })
+  .refine(({ password, confirmPassword }) => password === confirmPassword, passwordsMatch);
 
 export const signInSchema = z.object({
   email: emailSchema,
@@ -34,12 +42,9 @@ export const forgotPasswordSchema = z.object({ email: emailSchema });
 export const updatePasswordSchema = z
   .object({
     password: passwordSchema,
-    confirmPassword: z.string(),
+    confirmPassword: z.string().min(1, "Confirm your new password."),
   })
-  .refine(({ password, confirmPassword }) => password === confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+  .refine(({ password, confirmPassword }) => password === confirmPassword, passwordsMatch);
 
 export function formValues(formData: FormData) {
   return Object.fromEntries(formData.entries());

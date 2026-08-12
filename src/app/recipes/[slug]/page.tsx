@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { ArrowLeft, Clock3, Coins, LockKeyhole, UsersRound } from "lucide-react";
 
 import { AppShell } from "@/components/navigation/app-shell";
+import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -47,7 +49,13 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
     : emptyRecipePersonalisation;
 
   return (
-    <AppShell>
+    <AppShell
+      accountMenu={
+        <Suspense fallback={<span className="size-10 animate-pulse rounded-full bg-muted" aria-label="Loading account menu" />}>
+          <ProfileMenu />
+        </Suspense>
+      }
+    >
       <article className="mx-auto max-w-7xl space-y-7">
         <Button asChild variant="ghost" className="-ml-2"><Link href="/discover"><ArrowLeft className="size-4" aria-hidden="true" />Back to Discover</Link></Button>
 

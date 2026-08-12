@@ -51,7 +51,7 @@ test.describe("profile onboarding and isolation", () => {
   test("a new user completes resumable onboarding", async ({ page }) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(emailA);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
 
     await expect(page).toHaveURL(/\/onboarding/);
@@ -78,6 +78,17 @@ test.describe("profile onboarding and isolation", () => {
     await page.goto("/profile");
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Wanjiku");
     await expect(page.getByText("KES 4,500 / weekly")).toBeVisible();
+
+    const accountMenu = page.getByRole("button", {
+      name: "Open account menu for Wanjiku",
+    });
+    await expect(accountMenu).toContainText("WA");
+    await accountMenu.click();
+    const accountCard = page.getByRole("region", { name: "Account menu" });
+    await expect(accountCard).toBeVisible();
+    await expect(accountCard.getByRole("link", { name: "Edit preferences" })).toBeVisible();
+    await expect(accountCard.getByRole("link", { name: "Saved meals" })).toBeVisible();
+    await expect(accountCard.getByRole("button", { name: "Sign out" })).toBeVisible();
   });
 
   test("live RLS hides profiles across users", async () => {

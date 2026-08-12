@@ -16,12 +16,10 @@ import {
   updatePasswordSchema,
 } from "@/features/auth/schemas";
 import {
+  authErrorMessage,
   emailSendRateLimitMessage,
   isEmailSendRateLimit,
 } from "@/features/auth/errors";
-
-const genericAuthError =
-  "We could not complete that request. Check your details and try again.";
 
 async function requestIdentifier(email: string) {
   const requestHeaders = await headers();
@@ -84,9 +82,7 @@ export async function signUpAction(
   if (error) {
     return {
       status: "error",
-      message: isEmailSendRateLimit(error)
-        ? emailSendRateLimitMessage
-        : genericAuthError,
+      message: authErrorMessage(error, "sign-up"),
     };
   }
   if (data.session) redirect("/onboarding");
@@ -114,7 +110,12 @@ export async function signInAction(
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error || !data.user) {
-    return { status: "error", message: genericAuthError };
+    return {
+      status: "error",
+      message: error
+        ? authErrorMessage(error, "sign-in")
+        : "Sign-in could not be completed. Please try again.",
+    };
   }
 
   const { data: profile } = await supabase
@@ -201,7 +202,9 @@ export async function updatePasswordAction(
     password: parsed.data.password,
   });
 
-  if (error) return { status: "error", message: genericAuthError };
+  if (error) {
+    return { status: "error", message: authErrorMessage(error, "update-password") };
+  }
   redirect("/profile");
 }
 
