@@ -79,6 +79,10 @@ test.describe("profile onboarding and isolation", () => {
     await expect(page.getByRole("heading", { level: 1 })).toContainText("Wanjiku");
     await expect(page.getByText("KES 4,500 / weekly")).toBeVisible();
 
+    await page.goto("/onboarding");
+    await expect(page).toHaveURL(/\/eat-now$/);
+    await page.goto("/profile");
+
     const accountMenu = page.getByRole("button", {
       name: "Open account menu for Wanjiku",
     });
@@ -86,9 +90,14 @@ test.describe("profile onboarding and isolation", () => {
     await accountMenu.click();
     const accountCard = page.getByRole("region", { name: "Account menu" });
     await expect(accountCard).toBeVisible();
-    await expect(accountCard.getByRole("link", { name: "Edit preferences" })).toBeVisible();
+    const editPreferences = accountCard.getByRole("link", { name: "Edit preferences" });
+    await expect(editPreferences).toHaveAttribute("href", "/profile/edit");
     await expect(accountCard.getByRole("link", { name: "Saved meals" })).toBeVisible();
     await expect(accountCard.getByRole("button", { name: "Sign out" })).toBeVisible();
+    await editPreferences.click();
+    await expect(page).toHaveURL(/\/profile\/edit$/);
+    await page.getByRole("button", { name: "Save and continue" }).click();
+    await expect(page).toHaveURL(/\/profile\/edit\?step=kitchen/);
   });
 
   test("live RLS hides profiles across users", async () => {

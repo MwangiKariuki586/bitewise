@@ -208,7 +208,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
             Today&apos;s constraints
           </h2>
           <Link
-            href="/onboarding?returnTo=/eat-now"
+            href="/profile/edit?returnTo=/eat-now"
             className="min-h-9 px-2 py-2 text-xs font-bold text-primary outline-none hover:underline focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-ring"
           >
             Edit
@@ -280,7 +280,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
               <div>
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm font-semibold">Saved dietary needs</p>
-                  <Link href="/onboarding?returnTo=/eat-now" className="text-xs font-bold text-primary hover:underline">Edit</Link>
+                  <Link href="/profile/edit?returnTo=/eat-now" className="text-xs font-bold text-primary hover:underline">Edit</Link>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {dietaryOptions

@@ -33,10 +33,14 @@ function returnPath(formData: FormData) {
     : "/eat-now";
 }
 
-function nextStep(step: string, returnTo: string) {
+function formPath(formData: FormData) {
+  return formData.get("formPath") === "/profile/edit" ? "/profile/edit" : "/onboarding";
+}
+
+function nextStep(step: string, returnTo: string, pathname: string) {
   const params = new URLSearchParams({ step });
   if (returnTo !== "/eat-now") params.set("returnTo", returnTo);
-  return `/onboarding?${params.toString()}`;
+  return `${pathname}?${params.toString()}`;
 }
 
 export async function saveBasicsAction(
@@ -61,7 +65,7 @@ export async function saveBasicsAction(
   if (error) return { status: "error", message: "Your changes could not be saved." };
 
   revalidatePath("/profile");
-  redirect(nextStep("kitchen", returnPath(formData)));
+  redirect(nextStep("kitchen", returnPath(formData), formPath(formData)));
 }
 
 export async function saveKitchenAction(
@@ -87,7 +91,7 @@ export async function saveKitchenAction(
   if (error) return { status: "error", message: "Your changes could not be saved." };
 
   revalidatePath("/profile");
-  redirect(nextStep("preferences", returnPath(formData)));
+  redirect(nextStep("preferences", returnPath(formData), formPath(formData)));
 }
 
 export async function savePreferencesAction(

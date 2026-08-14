@@ -24,6 +24,37 @@ describe("AuthForm password controls", () => {
     );
   });
 
+  it("preserves the requested destination through sign-in and recovery", async () => {
+    const user = userEvent.setup();
+    const destinationAction = vi.fn<
+      (state: ActionResult, formData: FormData) => Promise<ActionResult>
+    >(
+      async (): Promise<ActionResult> => ({
+        status: "error",
+        message: "Test response",
+      }),
+    );
+    render(
+      <AuthForm
+        action={destinationAction}
+        mode="sign-in"
+        nextPath="/meal-plan?week=2026-08-10"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Forgot password?" })).toHaveAttribute(
+      "href",
+      "/auth/forgot-password?next=%2Fmeal-plan%3Fweek%3D2026-08-10",
+    );
+    await user.type(screen.getByLabelText("Email address"), "amina@example.com");
+    await user.type(screen.getByLabelText("Password"), "Secret#42");
+    await user.click(screen.getByRole("button", { name: "Sign in" }));
+
+    const submittedForm = destinationAction.mock.calls[0]?.[1];
+    expect(submittedForm).toBeInstanceOf(FormData);
+    expect(submittedForm?.get("next")).toBe("/meal-plan?week=2026-08-10");
+  });
+
   it("includes password confirmation when creating an account", () => {
     render(<AuthForm action={action} mode="sign-up" />);
 

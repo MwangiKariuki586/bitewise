@@ -7,7 +7,7 @@ import { RecommendationForm } from "@/features/recommendations/recommendation-fo
 import { defaultMealBudgetMinor } from "@/features/recommendations/schemas";
 
 export default async function EatNowPage() {
-  const { profile } = await requireCompletedProfile();
+  const { profile } = await requireCompletedProfile("/eat-now");
   const catalogue = await getRecipeCatalogue();
   const mealBudgetMinor = defaultMealBudgetMinor(
     profile.budget_minor,

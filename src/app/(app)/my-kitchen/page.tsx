@@ -70,8 +70,13 @@ function PantrySection({ items, title, tone }: { items: PantryItem[]; title: str
 }
 
 export default async function MyKitchenPage({ searchParams }: MyKitchenPageProps) {
-  const parsed = pantryQuerySchema.parse(await searchParams);
-  const identity = await requireUser();
+  const rawQuery = await searchParams;
+  const parsed = pantryQuerySchema.parse(rawQuery);
+  const returnParams = new URLSearchParams();
+  if (rawQuery.edit) returnParams.set("edit", rawQuery.edit);
+  if (rawQuery.page) returnParams.set("page", rawQuery.page);
+  if (rawQuery.search) returnParams.set("search", rawQuery.search);
+  const identity = await requireUser(`/my-kitchen${returnParams.size ? `?${returnParams}` : ""}`);
   const [{ items, total, pageSize }, { ingredients, editItem }, shoppingList] = await Promise.all([
     getPantryPage({ page: parsed.page, search: parsed.search }),
     getPantryFormData(parsed.edit),

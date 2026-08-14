@@ -89,7 +89,7 @@ export function AccountMenu({ displayName, email }: AccountSummary) {
           <nav aria-label="Profile options" className="space-y-1 p-2">
             {[
               { href: "/profile", label: "Profile", icon: UserRound },
-              { href: "/onboarding?returnTo=/profile", label: "Edit preferences", icon: Settings2 },
+              { href: "/profile/edit", label: "Edit preferences", icon: Settings2 },
               { href: "/my-kitchen/saved", label: "Saved meals", icon: Heart },
             ].map(({ href, label, icon: Icon }) => (
               <Link

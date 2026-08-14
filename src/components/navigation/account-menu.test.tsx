@@ -30,7 +30,7 @@ describe("AccountMenu", () => {
     expect(screen.getByRole("link", { name: "Profile" })).toHaveAttribute("href", "/profile");
     expect(screen.getByRole("link", { name: "Edit preferences" })).toHaveAttribute(
       "href",
-      "/onboarding?returnTo=/profile",
+      "/profile/edit",
     );
     expect(screen.getByRole("link", { name: "Saved meals" })).toHaveAttribute(
       "href",

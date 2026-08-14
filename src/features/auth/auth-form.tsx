@@ -20,6 +20,7 @@ type AuthMode =
 interface AuthFormProps {
   action: (state: ActionResult, formData: FormData) => Promise<ActionResult>;
   mode: AuthMode;
+  nextPath?: string | null;
 }
 
 const submitLabels: Record<AuthMode, string> = {
@@ -95,7 +96,7 @@ function PasswordInput({
   );
 }
 
-export function AuthForm({ action, mode }: AuthFormProps) {
+export function AuthForm({ action, mode, nextPath }: AuthFormProps) {
   const [values, setValues] = useState({
     name: "",
     email: "",
@@ -123,6 +124,7 @@ export function AuthForm({ action, mode }: AuthFormProps) {
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
+      {nextPath ? <input type="hidden" name="next" value={nextPath} /> : null}
       {showName ? (
         <div className="space-y-2">
           <Label htmlFor="name">Your name</Label>
@@ -167,7 +169,7 @@ export function AuthForm({ action, mode }: AuthFormProps) {
             </Label>
             {mode === "sign-in" ? (
               <Link
-                href="/auth/forgot-password"
+                href={nextPath ? `/auth/forgot-password?${new URLSearchParams({ next: nextPath })}` : "/auth/forgot-password"}
                 className="text-sm font-semibold text-primary underline-offset-4 hover:underline"
               >
                 Forgot password?

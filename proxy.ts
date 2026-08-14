@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { updateSession } from "@/lib/supabase/proxy";
 
+// Refresh the session and preserve protected destinations across authentication.
 export async function proxy(request: NextRequest) {
   return updateSession(request);
 }

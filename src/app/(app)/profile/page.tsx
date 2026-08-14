@@ -29,7 +29,7 @@ function PreferenceGroup({ title, values }: { title: string; values: string[] })
 }
 
 export default async function ProfilePage() {
-  const { profile } = await getCurrentProfile();
+  const { profile } = await getCurrentProfile("/profile");
 
   if (!profile) {
     return (
@@ -51,7 +51,7 @@ export default async function ProfilePage() {
           <h1 className="mt-2 font-display text-4xl font-semibold sm:text-5xl">Meals shaped around {profile.display_name ?? "you"}.</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">These defaults guide recommendations and plans. You can still adjust them for a particular meal.</p>
         </div>
-        <Button asChild><Link href="/onboarding?returnTo=/profile"><Pencil className="size-4" aria-hidden="true" />Edit preferences</Link></Button>
+        <Button asChild><Link href="/profile/edit"><Pencil className="size-4" aria-hidden="true" />Edit preferences</Link></Button>
       </header>
 
       <section aria-label="Practical defaults" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

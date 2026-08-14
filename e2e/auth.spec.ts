@@ -2,9 +2,15 @@ import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test("personalized routes require authentication", async ({ page }) => {
-  await page.goto("/eat-now");
+  await page.goto("/meal-plan?week=2026-08-10");
 
-  await expect(page).toHaveURL(/\/auth\/sign-in$/);
+  await expect(page).toHaveURL(/\/auth\/sign-in\?/);
+  expect(new URL(page.url()).searchParams.get("next")).toBe(
+    "/meal-plan?week=2026-08-10",
+  );
+  await expect(page.locator('input[name="next"]')).toHaveValue(
+    "/meal-plan?week=2026-08-10",
+  );
   await expect(page.getByRole("heading", { level: 1 })).toContainText(
     "Good to have you back",
   );

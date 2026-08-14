@@ -60,6 +60,27 @@ also appears in the closing banner. Verified with 77 unit/integration tests,
 four affected mobile/desktop Playwright tests including accessibility and
 horizontal-overflow checks, strict typecheck, lint, production build, and
 `git diff --check`.
+Authenticated-action handoffs now preserve a validated local destination across
+protected-route redirects, sign-in, sign-up and email confirmation, resend
+confirmation, and password recovery. Completed profiles resume the exact
+requested page and query string; incomplete profiles finish onboarding first and
+then continue to that destination. Public recipe personalisation now returns a
+guest to the same recipe after signing in. Return paths are restricted to known
+local product and recipe routes to prevent external or auth-loop redirects. The
+existing proxy claim refresh remains in place, and protected pages also supply
+their destination to the server-side authentication guard as a reliable fallback.
+The onboarding route is now a server-enforced incomplete-profile gate: completed
+profiles requesting `/onboarding`, including by manually editing the URL, are
+sent to Eat Now. Public meal actions target Eat Now so the auth handoff only uses
+onboarding when the profile actually requires it. Existing preference editing is
+preserved on the dedicated authenticated `/profile/edit` route, including all
+three steps and the original return destination; incomplete profiles cannot use
+that edit route to bypass onboarding.
+This changes no database schema, catalogue caching, mutation invalidation, or
+rate-limit policy. Verified with 86 unit/integration tests, 10 mobile/desktop auth
+Playwright tests, two hosted mobile/desktop recipe-to-auth-to-save journey tests,
+two hosted mobile/desktop onboarding-gate and preference-edit journey tests,
+strict typecheck, warning-free lint, production build, and `git diff --check`.
 
 Authentication form refinement completed with independently accessible show/hide
 controls for every password entry and password confirmation on sign-up and

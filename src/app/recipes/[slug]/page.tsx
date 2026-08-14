@@ -78,6 +78,7 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
                 recipeId={recipe.id}
                 initialState={personalisation}
                 authenticated={Boolean(identity)}
+                returnTo={`/recipes/${recipe.slug}`}
               />
             </div>
           </div>

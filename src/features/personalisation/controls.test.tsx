@@ -23,7 +23,10 @@ describe("RecipePersonalisationControls", () => {
   });
 
   it("offers authentication instead of mutating for a guest", () => {
-    render(<RecipePersonalisationControls recipeId={7} authenticated={false} initialState={{ feedback: null, isSaved: false, lastEatenAt: null }} />);
-    expect(screen.getByRole("link", { name: "Sign in to save" })).toHaveAttribute("href", "/auth/sign-in");
+    render(<RecipePersonalisationControls recipeId={7} authenticated={false} returnTo="/recipes/githeri" initialState={{ feedback: null, isSaved: false, lastEatenAt: null }} />);
+    expect(screen.getByRole("link", { name: "Sign in to save" })).toHaveAttribute(
+      "href",
+      "/auth/sign-in?next=%2Frecipes%2Fgitheri",
+    );
   });
 });

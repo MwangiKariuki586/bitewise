@@ -23,10 +23,11 @@ interface MealPlanPageProps {
 }
 
 export default async function MealPlanPage({ searchParams }: MealPlanPageProps) {
-  const [{ identity, profile }, params] = await Promise.all([
-    requireCompletedProfile(),
-    searchParams,
-  ]);
+  const params = await searchParams;
+  const returnParams = new URLSearchParams();
+  if (params.week) returnParams.set("week", params.week);
+  const returnTo = `/meal-plan${returnParams.size ? `?${returnParams}` : ""}`;
+  const { identity, profile } = await requireCompletedProfile(returnTo);
   const requestedWeek = weekStartSchema.safeParse(params.week);
   const weekStart = requestedWeek.success ? requestedWeek.data : currentWeekStart();
   const [plan, candidates] = await Promise.all([

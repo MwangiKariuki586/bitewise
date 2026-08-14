@@ -45,6 +45,9 @@ describe("landing-page authentication boundary", () => {
     expect(screen.getByRole("heading", { name: "Whatever today looks like." })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "From decision to dinner." })).toBeInTheDocument();
     expect(screen.getAllByRole("link", { name: "Find my next meal" })).toHaveLength(2);
+    for (const link of screen.getAllByRole("link", { name: "Find my next meal" })) {
+      expect(link).toHaveAttribute("href", "/eat-now");
+    }
     expect(screen.queryByRole("contentinfo")).not.toBeInTheDocument();
     expect(mocks.createClient).not.toHaveBeenCalled();
   });

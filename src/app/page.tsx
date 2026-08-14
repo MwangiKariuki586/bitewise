@@ -110,13 +110,13 @@ export default async function HomePage() {
           <Link href="/discover">Recipes</Link>
           <Link href="/auth/sign-in">Sign in</Link>
           <Button asChild className="h-12 min-w-[142px] rounded-[10px]">
-            <Link href="/onboarding">Get started</Link>
+            <Link href="/eat-now">Get started</Link>
           </Button>
         </nav>
         <div className="hidden items-center gap-3 text-[13px] max-[760px]:flex max-[480px]:[&>a:first-child]:hidden">
           <Link href="/auth/sign-in">Sign in</Link>
           <Button asChild size="sm">
-            <Link href="/onboarding">Get started</Link>
+            <Link href="/eat-now">Get started</Link>
           </Button>
         </div>
       </header>
@@ -140,7 +140,7 @@ export default async function HomePage() {
           </p>
           <div className="mt-8 flex gap-4 max-[760px]:mt-[25px] max-[760px]:justify-center max-[760px]:[&>a]:min-w-0 max-[480px]:flex-col max-[480px]:items-stretch max-[480px]:gap-2.5 max-[480px]:[&>a]:w-full">
             <Button asChild size="lg" className="h-[52px] min-w-[186px] rounded-[9px]">
-              <Link href="/onboarding">Find my next meal</Link>
+              <Link href="/eat-now">Find my next meal</Link>
             </Button>
             <Button
               asChild
@@ -227,7 +227,7 @@ export default async function HomePage() {
             const Icon = card.icon;
             return (
               <Link
-                href="/onboarding"
+                href="/eat-now"
                 key={card.title}
                 className={`relative grid min-h-[177px] grid-cols-[55px_1fr] gap-4 rounded-[14px] border border-[rgb(105_67_73_/_8%)] px-5 pb-[18px] pt-[22px] transition-[transform,box-shadow] duration-180 hover:-translate-y-[3px] hover:shadow-[0_12px_28px_rgb(73_36_45_/_10%)] max-[1050px]:min-h-[155px] max-[480px]:min-h-[145px] ${card.cardClassName}`}
               >
@@ -305,7 +305,7 @@ export default async function HomePage() {
               size="lg"
               className="min-w-[260px] border border-[rgb(255_255_255_/_36%)] bg-[#fff7f9] text-[#5b1733] shadow-[0_8px_18px_rgb(29_9_15_/_25%)] hover:bg-[#f1e4e7] hover:text-[#4b102a] max-[480px]:w-[min(100%,290px)] max-[480px]:min-w-0"
             >
-              <Link href="/onboarding">Find my next meal</Link>
+              <Link href="/eat-now">Find my next meal</Link>
             </Button>
             <Link href="/discover" className="inline-flex items-center gap-2 font-semibold text-[#f4dce5] hover:text-white [&>svg]:w-[19px]">
               Browse recipes <ArrowRight aria-hidden="true" />

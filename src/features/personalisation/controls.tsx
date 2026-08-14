@@ -14,6 +14,7 @@ interface RecipePersonalisationControlsProps {
   initialState: RecipePersonalisationState;
   authenticated: boolean;
   compact?: boolean;
+  returnTo?: string;
 }
 
 export function RecipePersonalisationControls({
@@ -21,6 +22,7 @@ export function RecipePersonalisationControls({
   initialState,
   authenticated,
   compact = false,
+  returnTo = "/eat-now",
 }: RecipePersonalisationControlsProps) {
   const [state, setState] = useState(initialState);
   const [message, setMessage] = useState("");
@@ -29,7 +31,9 @@ export function RecipePersonalisationControls({
   if (!authenticated) {
     return (
       <Button asChild variant="outline" size={compact ? "sm" : "default"}>
-        <Link href="/auth/sign-in">Sign in to save</Link>
+        <Link href={`/auth/sign-in?${new URLSearchParams({ next: returnTo })}`}>
+          Sign in to save
+        </Link>
       </Button>
     );
   }

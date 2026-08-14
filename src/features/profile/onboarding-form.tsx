@@ -39,6 +39,7 @@ export interface ProfileDefaults {
 
 interface OnboardingFormProps {
   defaults: ProfileDefaults;
+  formPath?: "/onboarding" | "/profile/edit";
   returnTo: string;
   step: OnboardingStep;
 }
@@ -113,17 +114,23 @@ function StepProgress({ current }: { current: OnboardingStep }) {
   );
 }
 
-export function OnboardingForm({ defaults, returnTo, step }: OnboardingFormProps) {
+export function OnboardingForm({
+  defaults,
+  formPath = "/onboarding",
+  returnTo,
+  step,
+}: OnboardingFormProps) {
   const action = step === "basics" ? saveBasicsAction : step === "kitchen" ? saveKitchenAction : savePreferencesAction;
   const [state, formAction, pending] = useActionState(action, initialActionResult);
   const backStep = step === "kitchen" ? "basics" : "kitchen";
-  const backHref = `/onboarding?${new URLSearchParams({ step: backStep, ...(returnTo !== "/eat-now" ? { returnTo } : {}) })}`;
+  const backHref = `${formPath}?${new URLSearchParams({ step: backStep, ...(returnTo !== "/eat-now" ? { returnTo } : {}) })}`;
 
   return (
     <section className="mx-auto w-full max-w-2xl rounded-[1.75rem] bg-card p-5 shadow-[0_24px_70px_-38px_rgba(45,39,27,0.55)] sm:p-8">
       <StepProgress current={step} />
       <form action={formAction} className="space-y-6" noValidate>
         <input type="hidden" name="returnTo" value={returnTo} />
+        <input type="hidden" name="formPath" value={formPath} />
 
         {step === "basics" ? (
           <>
