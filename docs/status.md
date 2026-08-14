@@ -50,6 +50,16 @@ unit/integration tests, strict typecheck, lint, production build, and
 `git diff --check`; fresh desktop screenshot confirmation remains a manual check.
 The nonessential public footer has been removed until it has useful implemented
 destinations and active social accounts to represent.
+The public landing page styling has been brought back into the locked Tailwind
+architecture. Its page-specific `.landing-*` global CSS layer was removed and
+the existing desktop, tablet, and mobile presentation was translated to scoped
+Tailwind utilities in the page component, while retaining shadcn buttons and the
+current content, navigation, image treatment, and responsive behavior. The
+landing Playwright selector was scoped to the hero now that the primary action
+also appears in the closing banner. Verified with 77 unit/integration tests,
+four affected mobile/desktop Playwright tests including accessibility and
+horizontal-overflow checks, strict typecheck, lint, production build, and
+`git diff --check`.
 
 Authentication form refinement completed with independently accessible show/hide
 controls for every password entry and password confirmation on sign-up and

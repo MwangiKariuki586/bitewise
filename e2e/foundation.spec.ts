@@ -9,7 +9,8 @@ test("landing page establishes the BiteWise journey", async ({ page }) => {
   expect(response?.headers()["referrer-policy"]).toBe("strict-origin-when-cross-origin");
 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("what should we eat?");
-  await expect(page.getByRole("link", { name: "Find my next meal" })).toBeVisible();
+  const hero = page.locator('section[aria-labelledby="landing-title"]');
+  await expect(hero.getByRole("link", { name: "Find my next meal" })).toBeVisible();
 
   const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
   expect(accessibilityScanResults.violations).toEqual([]);
