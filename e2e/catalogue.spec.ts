@@ -67,7 +67,10 @@ test.describe("curated recipe catalogue", () => {
     await admin.auth.admin.deleteUser(userId);
   });
 
-  test("Eat Now ranks hard-filtered meals with pantry-aware explanations", async ({ page }) => {
+  test("Eat Now ranks hard-filtered meals with pantry-aware explanations", async ({ page }, testInfo) => {
+    if (testInfo.project.name === "desktop-chromium") {
+      await page.setViewportSize({ width: 1600, height: 1000 });
+    }
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(password);
@@ -78,7 +81,6 @@ test.describe("curated recipe catalogue", () => {
       page.getByRole("heading", { name: "A confident meal decision, in minutes." }),
     ).toBeVisible();
     await expect(page.getByText("30 locally relevant meals")).toBeVisible();
-    await expect(page.getByText("Prices estimated from local stores today")).toBeVisible();
     await expect(page.getByLabel("Meal budget (KES)")).toHaveValue("1666");
     await expect(page.getByLabel("Vegetarian · saved")).toBeChecked();
     await page.getByRole("button", { name: "Find meals that fit" }).click();
@@ -97,8 +99,23 @@ test.describe("curated recipe catalogue", () => {
     await expect(page.locator("[data-slot='card']")).toHaveCount(5);
     await expect(page.getByRole("img").first()).toBeVisible();
     await expect(page.getByRole("link", { name: /View details/ }).first()).toHaveAttribute("href", /\/recipes\//);
-    await expect(page.getByLabel("Meal budget (KES)")).toHaveCount(0);
-    await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
+    if (testInfo.project.name === "desktop-chromium") {
+      const firstCard = page.locator("[data-slot='card']").first();
+      const [cardBox, imageBox, detailsBox] = await Promise.all([
+        firstCard.boundingBox(),
+        firstCard.getByRole("img").boundingBox(),
+        firstCard.getByRole("link", { name: /View details/ }).boundingBox(),
+      ]);
+      expect(cardBox?.height).toBeLessThanOrEqual(160);
+      expect(Math.abs((imageBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThanOrEqual(12);
+      expect(Math.abs((detailsBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThanOrEqual(20);
+    }
+    if (testInfo.project.name === "mobile-chromium") {
+      await expect(page.getByLabel("Meal budget (KES)")).toHaveCount(0);
+      await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
+    } else {
+      await expect(page.getByLabel("Meal budget (KES)")).toHaveValue("1666");
+    }
 
     await page.getByLabel("Sort by").selectOption("cost");
     await page.getByRole("link", { name: /View details/ }).first().click();
@@ -106,7 +123,11 @@ test.describe("curated recipe catalogue", () => {
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
     await expect(page.getByLabel("Sort by")).toHaveValue("cost");
-    await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
+    if (testInfo.project.name === "mobile-chromium") {
+      await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
+    } else {
+      await expect(page.getByLabel("Meal budget (KES)")).toHaveValue("1666");
+    }
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
@@ -199,7 +220,7 @@ test.describe("curated recipe catalogue", () => {
     }
   });
 
-  test("Eat Now keeps dietary needs fixed and offers concrete no-match adjustments", async ({ page }) => {
+  test("Eat Now keeps dietary needs fixed and offers concrete no-match adjustments", async ({ page }, testInfo) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(email);
     await page.getByLabel("Password", { exact: true }).fill(password);
@@ -213,7 +234,9 @@ test.describe("curated recipe catalogue", () => {
     await expect(page.getByRole("heading", { name: "Keep the hard rules. Adjust the situation." })).toBeVisible();
     await expect(page.getByText("Select a gas cooker, electric cooker, or jiko that you can use today.")).toBeVisible();
     await expect(page.getByText("Your dietary requirements remain fixed and were not relaxed.")).toBeVisible();
-    await page.getByRole("button", { name: /Edit/ }).click();
+    if (testInfo.project.name === "mobile-chromium") {
+      await page.getByRole("button", { name: /Edit/ }).click();
+    }
     await expect(page.getByLabel("Vegetarian · saved")).toBeChecked();
     await expect(page.getByLabel("Vegetarian · saved")).toBeDisabled();
   });

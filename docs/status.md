@@ -62,6 +62,35 @@ unit/integration tests, all 58 mobile/desktop Playwright journeys (57 passed and
 one intentional desktop skip), strict typecheck, lint, production build, and
 `git diff --check`.
 
+Eat Now desktop-density follow-up: at 1280 px and wider, the successful state
+now follows the supplied desktop reference with a sticky 19rem constraint rail
+beside a bordered shortlist panel. Meal cards use one aligned row for the image,
+cuisine and pantry badges, summary, four key metrics, pantry/missing status, and
+details/save/overflow actions. Like, dislike, and recently-eaten actions remain
+available inside the overflow menu. Desktop keeps the full editable constraint
+rail visible while the existing mobile success summary still collapses. This is
+a presentation-only refinement with no query, cache, invalidation, or
+rate-limiting changes. Verified with all 90 unit/integration tests, all 58
+mobile/desktop Playwright journeys (57 passed and one intentional desktop skip),
+including a 1600px compact-card geometry check, strict typecheck, lint,
+production build, and `git diff --check`.
+
+Eat Now card-action follow-up: Like and Dislike are now always visible in the
+desktop card action column between View details and the Save row, using space
+that was previously empty. Recently eaten remains in the overflow menu. The
+same controls remain keyboard accessible and preserve their selected state and
+existing personalisation mutations. Verified with all 90 unit/integration
+tests, all 58 mobile/desktop Playwright journeys (57 passed and one intentional
+desktop skip), strict typecheck, lint, production build, and `git diff --check`.
+
+Eat Now card-spacing follow-up: the desktop card action column now uses one
+centered vertical stack with the same spacing token between View details, the
+Like/Dislike row, and the Save/overflow row. This removes the flexible middle
+spacer and keeps the top and bottom breathing room visually balanced.
+Verified with all 90 unit/integration tests, all 58 mobile/desktop Playwright
+journeys (57 passed and one intentional desktop skip), strict typecheck, lint,
+production build, and `git diff --check`.
+
 The public landing page has been rebuilt around the approved editorial desktop
 reference and intentionally adapted for tablet and mobile rather than merely
 scaled down. It now presents the complete BiteWise decision journey: budget,

@@ -29,4 +29,13 @@ describe("RecipePersonalisationControls", () => {
       "/auth/sign-in?next=%2Frecipes%2Fgitheri",
     );
   });
+
+  it("uses compact save and overflow actions on recommendation cards", () => {
+    render(<RecipePersonalisationControls cardActions recipeId={7} authenticated initialState={{ feedback: null, isSaved: false, lastEatenAt: null }} />);
+
+    expect(screen.getByRole("button", { name: "Save" })).toBeVisible();
+    expect(screen.getByLabelText("More meal actions")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Like" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Dislike" })).toBeInTheDocument();
+  });
 });

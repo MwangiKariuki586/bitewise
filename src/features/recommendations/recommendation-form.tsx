@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { ChefHat, ChevronDown, Clock3, Coins, ListFilter, LoaderCircle, PackageCheck, RefreshCw, ShoppingBasket, SlidersHorizontal, Sparkles, UsersRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -109,9 +110,9 @@ function RecommendationCard({
   rememberScroll: () => void;
 }) {
   return (
-    <Card className="overflow-hidden p-2.5 sm:p-3">
-      <div className="grid gap-3 sm:grid-cols-[10.5rem_minmax(0,1fr)] lg:grid-cols-[12rem_minmax(0,1fr)_12rem] xl:grid-cols-[13rem_minmax(0,1fr)_13rem]">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[1rem] bg-secondary sm:aspect-auto sm:min-h-40 lg:min-h-36">
+    <Card className="overflow-visible p-2.5 sm:p-3 xl:rounded-2xl xl:p-2">
+      <div className="grid gap-3 sm:grid-cols-[10.5rem_minmax(0,1fr)] xl:grid-cols-[11rem_minmax(0,1fr)_8.5rem_9.5rem] xl:items-stretch xl:gap-3">
+        <div className="relative aspect-[4/3] overflow-hidden rounded-[1rem] bg-secondary sm:aspect-auto sm:min-h-40 xl:min-h-[8rem]">
           {meal.image ? (
             <Image src={meal.image.path} alt={meal.image.alt} fill sizes="(max-width: 639px) 92vw, 208px" className="object-cover" />
           ) : (
@@ -120,28 +121,33 @@ function RecommendationCard({
           <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-1 text-[0.68rem] font-bold text-primary-foreground shadow-sm">Match {index + 1}</span>
         </div>
         <div className="flex min-w-0 flex-col py-1">
-          <h3 className="font-display text-[1.4rem] font-semibold leading-tight tracking-tight lg:text-[1.5rem]">{meal.name}</h3>
-          <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground sm:text-sm">{meal.summary}</p>
-          <div className="mt-3 grid grid-cols-3 gap-2 sm:mt-auto sm:pt-3">
+          <h3 className="font-display text-[1.35rem] font-semibold leading-tight tracking-tight xl:text-[1.25rem]">{meal.name}</h3>
+          <div className="mt-1 flex flex-wrap gap-1.5">
+            <Badge className="bg-orange-50 text-orange-950">{meal.cuisine.replaceAll("_", " ")}</Badge>
+            <Badge className="bg-emerald-50 text-emerald-900">Pantry match {meal.pantryCoveragePercent}%</Badge>
+          </div>
+          <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted-foreground">{meal.summary}</p>
+          <div className="mt-2 grid grid-cols-4 gap-2 sm:mt-auto sm:pt-2">
             <Metric label="Est. cost" value={formatKes(meal.affordableCostMinor)}><Coins className="size-3.5" aria-hidden="true" /></Metric>
             <Metric label="Prep time" value={`${meal.totalMinutes} min`}><Clock3 className="size-3.5" aria-hidden="true" /></Metric>
             <Metric label="Difficulty" value={meal.difficulty}><ChefHat className="size-3.5" aria-hidden="true" /></Metric>
+            <Metric label="Serves" value={String(meal.servings)}><UsersRound className="size-3.5" aria-hidden="true" /></Metric>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2 lg:flex lg:flex-col">
+        <div className="grid grid-cols-2 gap-2 sm:col-start-2 xl:col-start-auto xl:flex xl:flex-col">
           <div className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900">
             <PackageCheck className="mb-1 size-4" aria-hidden="true" />From pantry<br />{meal.pantryIngredientNames.length} items
           </div>
           <div className="rounded-xl bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-950">
             <ShoppingBasket className="mb-1 size-4 text-orange-600" aria-hidden="true" />Missing<br />{meal.missingIngredients.length} items
           </div>
-          <Button asChild className="col-span-2 lg:mt-auto">
+        </div>
+        <div className="grid grid-cols-1 gap-2 sm:col-start-2 xl:col-start-auto xl:flex xl:flex-col xl:justify-center">
+          <Button asChild className="w-full">
             <Link href={`/recipes/${meal.slug}`} scroll={false} onClick={rememberScroll}>View details <span aria-hidden="true">→</span></Link>
           </Button>
+          <RecipePersonalisationControls recipeId={meal.id} initialState={meal.personalisation} authenticated compact cardActions />
         </div>
-      </div>
-      <div className="mt-2 border-t border-border/55 pt-2 lg:pl-[13rem] xl:pl-[14rem]">
-        <RecipePersonalisationControls recipeId={meal.id} initialState={meal.personalisation} authenticated compact />
       </div>
     </Card>
   );
@@ -176,7 +182,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
           setState(stored.result);
           setConstraints(stored.constraints);
           setSort(stored.sort);
-          setExpanded(false);
+          setExpanded(window.matchMedia("(min-width: 1280px)").matches);
           restoreScroll.current = stored.scrollY;
         });
       } else {
@@ -235,7 +241,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
       if (result.status === "success") {
         scrollToResultsAfterSuccess.current = true;
         setConstraints(nextConstraints);
-        setExpanded(false);
+        setExpanded(window.matchMedia("(min-width: 1280px)").matches);
         sessionStorage.setItem(storageKey, JSON.stringify({ version: storageVersion, result, constraints: nextConstraints, sort, scrollY: 0 } satisfies StoredEatNowState));
       } else {
         setExpanded(true);
@@ -259,15 +265,16 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
     : "Any meal";
 
   return (
-    <div className="space-y-7">
-      <section className="rounded-[1.5rem] bg-card p-4 ring-1 ring-border/65 sm:p-5" aria-labelledby="constraints-heading">
+    <div className="space-y-7 xl:grid xl:grid-cols-[19rem_minmax(0,1fr)] xl:items-start xl:gap-4 xl:space-y-0">
+      <section className="rounded-[1.5rem] bg-card p-4 ring-1 ring-border/65 sm:p-5 xl:sticky xl:top-20" aria-labelledby="constraints-heading">
         <div className="flex items-center justify-between gap-3">
           <h2 id="constraints-heading" className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Today&apos;s constraints</h2>
           {state.status === "success" ? (
-            <Button type="button" variant="ghost" size="sm" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
+            <Button type="button" variant="ghost" size="sm" className="xl:hidden" onClick={() => setExpanded((value) => !value)} aria-expanded={expanded}>
               {expanded ? "Done" : "Edit"} <ChevronDown className={cn("size-4 transition-transform", expanded && "rotate-180")} aria-hidden="true" />
             </Button>
           ) : null}
+          {state.status === "success" ? <span className="hidden text-xs font-bold text-primary xl:block">Edit</span> : null}
         </div>
 
         {!expanded && state.status === "success" ? (
@@ -284,7 +291,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
         ) : (
           <form action={submit} className="mt-4 space-y-4">
             {defaults.dietaryPreferences.map((value) => <input key={value} type="hidden" name="dietaryPreferences" value={value} />)}
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-2">
               <div className="space-y-1.5"><Label htmlFor="budgetKes">Meal budget (KES)</Label><Input id="budgetKes" name="budgetKes" type="number" min="100" max="1000000" defaultValue={constraints.budgetKes} aria-describedby="pricing-context" /><FieldError errors={state.fieldErrors?.budgetKes} /></div>
               <div className="space-y-1.5"><Label htmlFor="servings">Servings</Label><Input id="servings" name="servings" type="number" min="1" max="30" defaultValue={constraints.servings} /><FieldError errors={state.fieldErrors?.servings} /></div>
               <div className="space-y-1.5"><Label htmlFor="maxMinutes">Time available</Label><Input id="maxMinutes" name="maxMinutes" type="number" min="5" max="480" defaultValue={constraints.maxMinutes} /><FieldError errors={state.fieldErrors?.maxMinutes} /></div>
@@ -292,7 +299,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
             </div>
             <details className="group rounded-xl bg-secondary/35 px-3 ring-1 ring-border/60" open={Boolean(state.fieldErrors?.equipment?.length || state.fieldErrors?.dietaryPreferences?.length)}>
               <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between text-sm font-bold">More constraints <ChevronDown className="size-4 transition-transform group-open:rotate-180" /></summary>
-              <div className="grid gap-4 border-t border-border/60 py-4 lg:grid-cols-2">
+              <div className="grid gap-4 border-t border-border/60 py-4 lg:grid-cols-2 xl:grid-cols-1">
                 <fieldset><legend className="text-sm font-semibold">Equipment available today</legend><div className="mt-2 grid grid-cols-2 gap-2">{equipmentOptions.map((option) => <label key={option.value} className="flex min-h-11 items-center gap-2 rounded-xl bg-background px-3 text-xs font-semibold has-[:checked]:bg-primary has-[:checked]:text-primary-foreground"><input name="equipment" type="checkbox" value={option.value} defaultChecked={constraints.equipment.includes(option.value)} className="size-4 accent-current" />{option.label}</label>)}</div><FieldError errors={state.fieldErrors?.equipment} /></fieldset>
                 <fieldset>
                   <legend className="text-sm font-semibold">Dietary needs</legend>
@@ -302,7 +309,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
               </div>
             </details>
             {state.status === "error" ? <p role="alert" className="rounded-xl bg-destructive/10 p-3 text-sm font-medium text-destructive">{state.message}</p> : null}
-            <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-center">
+            <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-center xl:grid-cols-1">
               <Button type="submit" size="lg" disabled={pending}>{pending ? <LoaderCircle className="size-4 animate-spin" /> : state.status === "success" ? <RefreshCw className="size-4" /> : <Sparkles className="size-4" />}{pending ? "Finding meals…" : state.status === "success" ? "Refresh my matches" : "Find meals that fit"}</Button>
               <p className="text-center text-xs text-muted-foreground">Up to 20 lists every 10 minutes</p>
             </div>
@@ -310,7 +317,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
         )}
       </section>
 
-      <section ref={resultsRef} aria-labelledby="recommendation-results" aria-live="polite" aria-busy={pending} className="min-w-0 scroll-mt-[5.5rem] space-y-3 lg:scroll-mt-20">
+      <section ref={resultsRef} aria-labelledby="recommendation-results" aria-live="polite" aria-busy={pending} className="min-w-0 scroll-mt-[5.5rem] space-y-3 lg:scroll-mt-20 xl:rounded-[1.5rem] xl:bg-card xl:p-4 xl:ring-1 xl:ring-border/65">
         <div className="flex flex-wrap items-end justify-between gap-3 px-1">
           <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Your shortlist</p><h2 id="recommendation-results" className="mt-1 font-display text-3xl font-semibold tracking-tight">{pending ? "Checking every constraint…" : meals.length ? "Best fits first" : "Ready when you are"}</h2><p className="mt-1 text-sm text-muted-foreground">{state.status === "success" ? state.message : "Set today’s constraints to find your strongest matches."}</p></div>
           {meals.length ? <label className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground">Sort by <ListFilter className="size-4 text-primary" /><select value={sort} onChange={(event) => { const nextSort = event.target.value as SortOption; setSort(nextSort); persist(window.scrollY, nextSort); }} className="h-10 rounded-xl bg-card px-3 font-semibold text-foreground ring-1 ring-border"><option value="best">Best fit</option><option value="cost">Lowest cost</option><option value="time">Quickest</option><option value="pantry">Most from pantry</option></select></label> : null}

@@ -128,7 +128,7 @@ test.describe("feedback, saved meals, and history", () => {
     expect(visibleHistory.data).toHaveLength(1);
   });
 
-  test("removes a disliked Eat Now result from the next ranked shortlist", async ({ page }) => {
+  test("removes a disliked Eat Now result from the next ranked shortlist", async ({ page }, testInfo) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
     await page.getByLabel("Password", { exact: true }).fill(password);
@@ -145,7 +145,9 @@ test.describe("feedback, saved meals, and history", () => {
     const dislike = firstCard.getByRole("button", { name: "Dislike", exact: true });
     await dislike.click();
     await expect(dislike).toHaveAttribute("aria-pressed", "true");
-    await page.getByRole("button", { name: /Edit/ }).click();
+    if (testInfo.project.name === "mobile-chromium") {
+      await page.getByRole("button", { name: /Edit/ }).click();
+    }
     await page.getByRole("button", { name: "Refresh my matches" }).click();
 
     await expect(

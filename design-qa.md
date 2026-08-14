@@ -2,10 +2,12 @@
 
 **Source visual truth**
 
-- Four user-provided BiteWise Eat Now mockups in the current conversation.
+- User-provided BiteWise Eat Now desktop reference and focused meal-card crop in
+  the current conversation, plus the earlier mobile/tablet references.
 - States: expanded constraints before generation and collapsed constraints with results.
-- Target viewports: mobile, tablet, and desktop.
-- Source pixel dimensions: 863 × 1822, 1086 × 1448, 1456 × 1086, and 942 × 1675 px.
+- Target viewports: desktop for the current refinement; earlier mobile and
+  tablet behavior remains in scope for regression.
+- Current desktop reference: 1920 × 1080 px. Focused card crop: 919 × 163 px.
 
 **Implementation evidence**
 
@@ -13,7 +15,10 @@
 - Browser-rendered authenticated screenshot: unavailable.
 - Implementation pixel dimensions and density normalization: unavailable.
 - Connected-browser state: signed-out redirect to `/auth/sign-in?next=%2Feat-now`.
-- Automated browser states verified separately: mobile and desktop expanded form, successful collapsed summary/results, no-match result, Edit/regeneration, recipe details/back restoration, sorting, 360/390 px navigation clearance, and accessibility.
+- Automated browser states verified separately include the desktop constraint
+  rail, successful results, compact card-height/alignment geometry, mobile
+  collapsed summary, no-match result, Edit/regeneration, recipe details/back
+  restoration, sorting, 360/390 px navigation clearance, and accessibility.
 
 **Findings**
 
