@@ -191,11 +191,15 @@ export async function generateWeeklyPlanAction(
 
   try {
     const budgetLimitMinor = weeklyBudgetMinor(profile);
-    const candidates = await getPlanCandidates(identity.sub, profile);
+    const [candidates, existingPlan] = await Promise.all([
+      getPlanCandidates(identity.sub, profile),
+      getWeeklyPlan(identity.sub, parsed.data.weekStart),
+    ]);
     const generated = generateDeterministicWeeklyPlan(
       candidates,
       profile.household_size,
       budgetLimitMinor,
+      new Set(existingPlan?.items.map((item) => item.recipeId) ?? []),
     );
     if (!generated) {
       return {
