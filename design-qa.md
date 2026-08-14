@@ -1,61 +1,47 @@
-# BiteWise mobile density design QA
+# Meal Plan and application-shell responsive revamp — design QA
 
-**Comparison target**
+**Source visual truth**
 
-- Source visual truth: the user-provided 4-in-1 BiteWise mobile mockup attached in the conversation. The attachment is a 1536 × 1024 composite and is not exposed to the workspace as a local file.
-- Implementation screenshot: unavailable. The configured in-app browser returned no available browser instance, so no browser-rendered implementation capture could be opened and combined with the source.
-- Intended viewport: authenticated mobile app at 360 × 800 and 390 × 800 CSS pixels; responsive functional coverage also ran in the desktop Chromium project.
-- Density normalization: not possible without an implementation screenshot and an extractable source-frame asset.
-- State: Eat Now default constraints, Meal Plan selected-day view, Discover browse results, and Cook idle/starter state.
+- User-provided Whole Week and shell composite mockup in the latest 2026-08-14 request.
+- Target states: BiteWise's established desktop sidebar with a two-column Whole Week grid; mobile with the established compact header and bottom navigation plus the new weekly summary and accordion day cards. The mockup's top navigation is not part of the requested shell change.
+- Source composite dimensions: 1676 × 909 px. The device frames and surrounding canvas prevent exact CSS viewport recovery.
 
-**Full-view comparison evidence**
+**Implementation evidence**
 
-Blocked. The source mockup is visible in the conversation, but the required browser-rendered implementation screenshot could not be captured in the in-app browser. Automated browser assertions verify first-viewport task visibility, compact intro height, compact browse/cook card height, and bottom-navigation clearance at 360 px and 390 px; these are functional layout evidence, not a substitute for visual comparison.
-
-**Focused region comparison evidence**
-
-Blocked for the same reason. The Eat Now constraints card, Meal Plan day selector and slots, Discover search/results, Cook starter rows, typography, imagery crops, colors, radii, shadows, and bottom navigation still require same-state visual comparison against the mockup.
+- Route: `http://127.0.0.1:3000/meal-plan`
+- Browser: connected Chrome
+- State reached: signed-out redirect to `/auth/sign-in?next=%2Fmeal-plan`
+- Browser console errors: none
+- Primary interactions tested: route navigation and protected-route redirect only
+- Implementation screenshot: unavailable because the protected Meal Plan UI was not rendered in the connected browser
+- Viewport and density comparison: unavailable; no authenticated implementation capture exists to normalize against the source
 
 **Findings**
 
-- No visual mismatch severity is assigned without valid side-by-side evidence.
-- Fonts and typography: Newsreader and Manrope remain wired through the existing design system; visual weight, wrapping, and optical hierarchy are not screenshot-verified.
-- Spacing and layout rhythm: automated viewport assertions pass; pixel-level rhythm is not screenshot-verified.
-- Colors and tokens: the existing aubergine / rose-stone tokens were preserved; rendered color fidelity is not screenshot-verified.
-- Image quality and asset fidelity: existing local recipe photography and the established Lucide icon system are used; crop and sharpness are not screenshot-verified.
-- Copy and content: page titles, section labels, actions, and compact metadata follow the supplied mockup while preserving existing capabilities.
+- [P0] Authenticated implementation cannot be captured
+  Location: `/meal-plan`
+  Evidence: the browser redirected to the sign-in route before the Meal Plan screen rendered.
+  Impact: desktop, tablet, and mobile visual fidelity cannot be assessed from browser evidence.
+  Fix: sign in to the connected browser with a completed BiteWise profile, then capture the same selected-day state at the three target widths.
 
-**Open Questions**
+**Required fidelity surfaces**
 
-- None about product behavior. The only blocker is access to a browser-rendered capture for the mandatory design comparison.
-
-**Implementation Checklist**
-
-- Capture the four authenticated routes at the same mobile viewport and matching data state.
-- Combine each implementation capture with its corresponding source frame.
-- Review typography, spacing, tokens, imagery, copy, navigation clearance, and expanded interaction states.
-- Fix any P0/P1/P2 drift and repeat the comparison.
-
-**Follow-up Polish**
-
-- Evaluate only after the required visual comparison; no P3-only changes are asserted from code inspection.
+- Fonts and typography: blocked pending authenticated captures.
+- Spacing and layout rhythm: blocked pending authenticated captures.
+- Colors and visual tokens: blocked pending authenticated captures.
+- Image quality and asset fidelity: code uses the catalogue's optimized local WebP photography, but visual crop and sharpness remain blocked pending authenticated captures.
+- Copy and content: source-level review confirms the target heading, revised description, budget summary, day selector, meal metadata, Whole Week cards, preserved BiteWise sidebar navigation, and actions are represented; browser confirmation is blocked.
 
 **Comparison history**
 
-- Pass 1: source attachment available, implementation browser capture unavailable; no valid visual iteration could be performed.
+- Initial pass: blocked before visual comparison because the protected route redirected to sign-in.
+- No visual fixes were made from screenshot evidence, because no authenticated implementation screenshot was available.
 
-**Primary interactions tested**
+**Implementation checklist**
 
-- Eat Now recommendation generation and no-match handling.
-- Discover search, ingredient filtering, recipe opening, protected planning handoff, and not-found state.
-- Meal Plan generation, day selection, swaps, serving edits, removal, manual restoration, whole-week access, and ownership isolation.
-- Cook session start, scaling, resume, completion, and ownership isolation.
-- Bottom-navigation clearance and first-viewport task visibility at compact mobile widths.
-
-**Console errors checked**
-
-- Blocked because the in-app browser was unavailable.
-
-**Final result**
+- Authenticate the connected browser with a completed BiteWise profile.
+- Capture desktop and mobile Whole Week states plus the selected-day state.
+- Compare each capture together with the source mockup and fix all P0/P1/P2 differences.
+- Verify day selection, whole-week toggle, meal edit disclosure, shopping-list generation, and week regeneration.
 
 final result: blocked

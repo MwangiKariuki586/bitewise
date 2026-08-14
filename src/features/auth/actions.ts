@@ -4,6 +4,10 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import type { ActionResult } from "@/lib/action-result";
+import {
+  postAuthenticationPath,
+  safeReturnPath,
+} from "@/lib/auth/redirect";
 import { requireUser } from "@/lib/auth/session";
 import { getPublicEnv } from "@/lib/env";
 import { consumeRateLimit } from "@/lib/rate-limit";
@@ -16,12 +20,10 @@ import {
   updatePasswordSchema,
 } from "@/features/auth/schemas";
 import {
+  authErrorMessage,
   emailSendRateLimitMessage,
   isEmailSendRateLimit,
 } from "@/features/auth/errors";
-
-const genericAuthError =
-  "We could not complete that request. Check your details and try again.";
 
 async function requestIdentifier(email: string) {
   const requestHeaders = await headers();
@@ -56,6 +58,17 @@ function validationError(error: { flatten: () => { fieldErrors: Record<string, s
   };
 }
 
+function requestedPath(formData: FormData) {
+  const value = formData.get("next");
+  return safeReturnPath(typeof value === "string" ? value : null);
+}
+
+function confirmationRedirect(siteUrl: string, nextPath: string) {
+  const url = new URL("/auth/confirm", siteUrl);
+  url.searchParams.set("next", nextPath);
+  return url.toString();
+}
+
 export async function signUpAction(
   _previousState: ActionResult,
   formData: FormData,
@@ -72,11 +85,12 @@ export async function signUpAction(
 
   const supabase = await createClient();
   const { NEXT_PUBLIC_SITE_URL } = getPublicEnv();
+  const destination = postAuthenticationPath(requestedPath(formData), false);
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/onboarding`,
+      emailRedirectTo: confirmationRedirect(NEXT_PUBLIC_SITE_URL, destination),
       data: { display_name: parsed.data.name },
     },
   });
@@ -84,12 +98,10 @@ export async function signUpAction(
   if (error) {
     return {
       status: "error",
-      message: isEmailSendRateLimit(error)
-        ? emailSendRateLimitMessage
-        : genericAuthError,
+      message: authErrorMessage(error, "sign-up"),
     };
   }
-  if (data.session) redirect("/onboarding");
+  if (data.session) redirect(destination);
 
   return {
     status: "success",
@@ -114,7 +126,12 @@ export async function signInAction(
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error || !data.user) {
-    return { status: "error", message: genericAuthError };
+    return {
+      status: "error",
+      message: error
+        ? authErrorMessage(error, "sign-in")
+        : "Sign-in could not be completed. Please try again.",
+    };
   }
 
   const { data: profile } = await supabase
@@ -123,7 +140,12 @@ export async function signInAction(
     .eq("user_id", data.user.id)
     .maybeSingle();
 
-  redirect(profile?.onboarding_completed ? "/eat-now" : "/onboarding");
+  redirect(
+    postAuthenticationPath(
+      requestedPath(formData),
+      Boolean(profile?.onboarding_completed),
+    ),
+  );
 }
 
 export async function forgotPasswordAction(
@@ -142,8 +164,12 @@ export async function forgotPasswordAction(
 
   const supabase = await createClient();
   const { NEXT_PUBLIC_SITE_URL } = getPublicEnv();
+  const nextPath = requestedPath(formData);
+  const updatePasswordPath = nextPath
+    ? `/auth/update-password?${new URLSearchParams({ next: nextPath })}`
+    : "/auth/update-password";
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/auth/update-password`,
+    redirectTo: confirmationRedirect(NEXT_PUBLIC_SITE_URL, updatePasswordPath),
   });
 
   return {
@@ -169,11 +195,12 @@ export async function resendConfirmationAction(
 
   const supabase = await createClient();
   const { NEXT_PUBLIC_SITE_URL } = getPublicEnv();
+  const destination = postAuthenticationPath(requestedPath(formData), false);
   const { error } = await supabase.auth.resend({
     type: "signup",
     email: parsed.data.email,
     options: {
-      emailRedirectTo: `${NEXT_PUBLIC_SITE_URL}/auth/confirm?next=/onboarding`,
+      emailRedirectTo: confirmationRedirect(NEXT_PUBLIC_SITE_URL, destination),
     },
   });
 
@@ -201,8 +228,10 @@ export async function updatePasswordAction(
     password: parsed.data.password,
   });
 
-  if (error) return { status: "error", message: genericAuthError };
-  redirect("/profile");
+  if (error) {
+    return { status: "error", message: authErrorMessage(error, "update-password") };
+  }
+  redirect(requestedPath(formData) ?? "/profile");
 }
 
 export async function signOutAction() {

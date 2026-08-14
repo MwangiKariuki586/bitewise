@@ -67,14 +67,16 @@ test.describe("feedback, saved meals, and history", () => {
 
   test("flows from a public recipe into feedback, history, and My Kitchen", async ({ page }) => {
     await page.goto(`/recipes/${recipeSlug}`);
-    await expect(page.getByRole("link", { name: "Sign in to save" })).toBeVisible();
+    const signInToSave = page.getByRole("link", { name: "Sign in to save" });
+    await expect(signInToSave).toBeVisible();
+    await signInToSave.click();
+    await expect(page).toHaveURL(/\/auth\/sign-in\?/);
+    expect(new URL(page.url()).searchParams.get("next")).toBe(`/recipes/${recipeSlug}`);
 
-    await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
-    await expect(page).toHaveURL(/\/eat-now/);
-    await page.goto(`/recipes/${recipeSlug}`);
+    await expect(page).toHaveURL(new RegExp(`/recipes/${recipeSlug}$`));
 
     const like = page.getByRole("button", { name: "Like", exact: true });
     const dislike = page.getByRole("button", { name: "Dislike", exact: true });
@@ -126,10 +128,10 @@ test.describe("feedback, saved meals, and history", () => {
     expect(visibleHistory.data).toHaveLength(1);
   });
 
-  test("removes a disliked Eat Now result from the next ranked shortlist", async ({ page }) => {
+  test("removes a disliked Eat Now result from the next ranked shortlist", async ({ page }, testInfo) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now/);
 
@@ -143,6 +145,9 @@ test.describe("feedback, saved meals, and history", () => {
     const dislike = firstCard.getByRole("button", { name: "Dislike", exact: true });
     await dislike.click();
     await expect(dislike).toHaveAttribute("aria-pressed", "true");
+    if (testInfo.project.name === "mobile-chromium") {
+      await page.getByRole("button", { name: /Edit/ }).click();
+    }
     await page.getByRole("button", { name: "Refresh my matches" }).click();
 
     await expect(

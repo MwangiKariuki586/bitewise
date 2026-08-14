@@ -34,9 +34,29 @@ describe("profile validation", () => {
     expect(
       kitchenSchema.safeParse({
         availableMinutes: 30,
+        breakfastMinutes: 20,
+        lunchMinutes: 40,
+        dinnerMinutes: 60,
         equipment: ["gas_cooker", "campfire"],
       }).success,
     ).toBe(false);
+  });
+
+  it("accepts separate meal-plan time limits", () => {
+    const result = kitchenSchema.parse({
+      availableMinutes: 30,
+      breakfastMinutes: 20,
+      lunchMinutes: 45,
+      dinnerMinutes: 75,
+      equipment: ["gas_cooker"],
+    });
+
+    expect(result).toMatchObject({
+      availableMinutes: 30,
+      breakfastMinutes: 20,
+      lunchMinutes: 45,
+      dinnerMinutes: 75,
+    });
   });
 
   it("treats dietary constraints and preferences as canonical arrays", () => {

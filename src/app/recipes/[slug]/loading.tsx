@@ -3,7 +3,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function RecipeDetailLoading() {
   return (
-    <AppShell>
+    <AppShell
+      accountMenu={
+        <span className="size-10 animate-pulse rounded-full bg-muted" aria-label="Loading account menu" />
+      }
+    >
       <div className="mx-auto max-w-7xl space-y-7" aria-label="Loading recipe" role="status">
         <Skeleton className="h-[32rem] rounded-[2rem]" />
         <div className="grid gap-6 lg:grid-cols-2"><Skeleton className="h-96 rounded-[1.5rem]" /><Skeleton className="h-96 rounded-[1.5rem]" /></div>

@@ -1,8 +1,11 @@
 "use client";
 
+import Image from "next/image";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import {
   CalendarRange,
+  CalendarCheck2,
   ChefHat,
   Clock3,
   Coins,
@@ -11,6 +14,10 @@ import {
   Sparkles,
   Trash2,
   UsersRound,
+  Ellipsis,
+  ChevronDown,
+  ChevronRight,
+  Lightbulb,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +31,7 @@ import {
 import type {
   WeeklyPlan,
   WeeklyPlanItem,
+  MealPlanConstraintDiagnostic,
 } from "@/features/meal-plan/data";
 import type {
   CandidatesByMealType,
@@ -40,6 +48,7 @@ interface WeeklyPlanBoardProps {
   householdSize: number;
   plan: WeeklyPlan | null;
   candidates: CandidatesByMealType;
+  constraintDiagnostics?: MealPlanConstraintDiagnostic[];
 }
 
 const initialState: ActionResult = { status: "idle" };
@@ -50,6 +59,62 @@ function formatKes(minor: number) {
 
 function mealLabel(mealType: MealType) {
   return mealType[0].toUpperCase() + mealType.slice(1);
+}
+
+function ConstraintHealth({
+  diagnostics,
+  weekStart,
+}: {
+  diagnostics: MealPlanConstraintDiagnostic[];
+  weekStart: string;
+}) {
+  if (!diagnostics.length) return null;
+  const returnTo = encodeURIComponent(`/meal-plan?week=${weekStart}`);
+
+  return (
+    <Card className="border-warning/25 bg-surface-warm p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-warning/12 text-warning">
+          <Lightbulb className="size-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-lg font-semibold">Improve your weekly variety</h2>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            BiteWise kept your saved limits. These adjustments would unlock more valid choices; nothing changes until you update your profile and regenerate.
+          </p>
+          <div className="mt-3 grid gap-2 lg:grid-cols-3">
+            {diagnostics.map((diagnostic) => {
+              const timeGain = diagnostic.timeCandidateCount - diagnostic.currentCount;
+              const budgetGain = diagnostic.budgetCandidateCount - diagnostic.currentCount;
+              const useTime = timeGain > 0;
+              const useBudget = !useTime && budgetGain > 0;
+              const href = useTime
+                ? `/profile/edit?returnTo=${returnTo}&step=kitchen#${diagnostic.mealType}Minutes`
+                : useBudget
+                  ? `/profile/edit?returnTo=${returnTo}&step=basics#budgetKes`
+                  : `/profile/edit?returnTo=${returnTo}&step=preferences`;
+              const message = useTime
+                ? `Allowing up to ${diagnostic.timeLimitMinutes} minutes unlocks ${timeGain} more.`
+                : useBudget
+                  ? `A ${formatKes(diagnostic.suggestedBudgetMinor)} weekly budget unlocks ${budgetGain} more.`
+                  : "Your combined dietary, time, and kitchen settings leave a small matching pool.";
+              return (
+                <div key={diagnostic.mealType} className="rounded-xl bg-card/80 p-3 ring-1 ring-border/60">
+                  <p className="text-sm font-bold capitalize">{diagnostic.mealType} variety is limited</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {diagnostic.currentCount} matching {diagnostic.currentCount === 1 ? "meal" : "meals"}. {message}
+                  </p>
+                  <Button asChild variant="link" className="mt-2 text-xs">
+                    <Link href={href}>{useTime ? `Adjust ${diagnostic.mealType} time` : useBudget ? "Review weekly budget" : "Review preferences"}</Link>
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 function MutationNotice({ state }: { state: ActionResult }) {
@@ -98,19 +163,30 @@ function PlannedSlot({
     initialState,
   );
   return (
-    <div className="space-y-2.5 rounded-xl bg-secondary/50 p-3 ring-1 ring-border/45">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+    <article className="overflow-hidden rounded-2xl bg-card ring-1 ring-border/60">
+      <div className="grid grid-cols-[5.25rem_minmax(0,1fr)] sm:grid-cols-[5.75rem_minmax(0,1fr)] lg:grid-cols-1 xl:grid-cols-[6.5rem_minmax(0,1fr)]">
+        <div className="relative min-h-28 bg-secondary lg:aspect-[4/3] lg:min-h-0 xl:aspect-auto xl:min-h-32">
+          <Image
+            src={item.recipe.imagePath ?? "/images/recipes/githeri.webp"}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 84px, (max-width: 1279px) 30vw, 104px"
+            className="object-cover"
+          />
+        </div>
+        <div className="min-w-0 p-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
             {mealLabel(item.mealType)}
           </p>
-          <h3 className="mt-0.5 truncate font-display text-lg font-semibold">
+          <h3 className="mt-0.5 line-clamp-2 font-display text-base font-semibold leading-tight">
             {item.recipe.name}
           </h3>
-        </div>
-        <Badge>{formatKes(item.budgetedCostMinor)}</Badge>
-      </div>
-      <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-muted-foreground">
+            </div>
+            <Badge className="shrink-0 text-[0.6rem]">{formatKes(item.budgetedCostMinor)}</Badge>
+          </div>
+      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[0.65rem] font-medium text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <Clock3 className="size-3.5 text-primary" aria-hidden="true" />
           {item.recipe.totalMinutes} min
@@ -125,7 +201,12 @@ function PlannedSlot({
         </span>
       </div>
 
-      <form action={action} className="flex items-end gap-2">
+      <details className="group mt-3 border-t border-border/55 pt-2">
+        <summary className="flex min-h-9 cursor-pointer list-none items-center justify-between rounded-lg text-xs font-semibold text-primary outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          Edit meal
+          <Ellipsis className="size-4" aria-hidden="true" />
+        </summary>
+      <form action={action} className="mt-2 flex items-end gap-2">
         <HiddenSlotFields
           weekStart={weekStart}
           dayOfWeek={item.dayOfWeek}
@@ -152,7 +233,7 @@ function PlannedSlot({
         </Button>
       </form>
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className="mt-2 grid grid-cols-2 gap-2">
         <form action={action}>
           <HiddenSlotFields
             weekStart={weekStart}
@@ -179,7 +260,10 @@ function PlannedSlot({
         </form>
       </div>
       <MutationNotice state={state} />
-    </div>
+      </details>
+        </div>
+      </div>
+    </article>
   );
 }
 
@@ -269,7 +353,7 @@ function EmptySlot({
   );
 }
 
-function GeneratePlan({ weekStart }: { weekStart: string }) {
+function GeneratePlan({ weekStart, hasPlan }: { weekStart: string; hasPlan: boolean }) {
   const [state, action, pending] = useActionState(
     generateWeeklyPlanAction,
     initialState,
@@ -278,13 +362,13 @@ function GeneratePlan({ weekStart }: { weekStart: string }) {
     <div className="space-y-2">
       <form action={action}>
         <input type="hidden" name="weekStart" value={weekStart} />
-        <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        <Button type="submit" variant={hasPlan ? "outline" : "default"} className="h-11 min-h-11 w-full min-w-0 whitespace-nowrap rounded-xl px-2 text-[0.68rem] sm:px-4 sm:text-sm" disabled={pending}>
           {pending ? (
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
           ) : (
             <Sparkles className="size-4" aria-hidden="true" />
           )}
-          {pending ? "Building your week…" : "Generate complete week"}
+          {pending ? "Building your week…" : hasPlan ? "Regenerate week" : "Generate complete week"}
         </Button>
       </form>
       <MutationNotice state={state} />
@@ -335,7 +419,7 @@ function DayPlanCard({
   const dayItems = plan?.items.filter((item) => item.dayOfWeek === dayOfWeek) ?? [];
 
   return (
-    <Card className="p-3.5 sm:p-5">
+    <Card className="p-3.5 shadow-[0_14px_36px_-28px_rgba(91,23,51,0.55)] sm:p-5">
       <header className="mb-3 flex items-center justify-between gap-3">
         <h2 aria-label={dayName} className="font-display text-xl font-semibold">
           {dayName} <span className="font-sans text-xs font-bold text-primary">· {dateLabel}</span>
@@ -345,7 +429,7 @@ function DayPlanCard({
           {formatKes(dayItems.reduce((total, item) => total + item.budgetedCostMinor, 0))}
         </span>
       </header>
-      <div className="grid gap-2 sm:grid-cols-3 xl:grid-cols-1 2xl:grid-cols-3">
+      <div className="grid gap-2 sm:grid-cols-3">
         {mealTypes.map((mealType) => {
           const item = dayItems.find((candidate) => candidate.mealType === mealType);
           return item ? (
@@ -366,15 +450,84 @@ function DayPlanCard({
   );
 }
 
+function WholeWeekDayCard({
+  weekStart,
+  dayOfWeek,
+  plan,
+  expanded,
+  onToggle,
+  onEdit,
+}: {
+  weekStart: string;
+  dayOfWeek: number;
+  plan: WeeklyPlan | null;
+  expanded: boolean;
+  onToggle: () => void;
+  onEdit: () => void;
+}) {
+  const { dayName, shortDayName, dateLabel } = dayMeta(weekStart, dayOfWeek);
+  const dayItems = plan?.items.filter((item) => item.dayOfWeek === dayOfWeek) ?? [];
+  const cost = dayItems.reduce((sum, item) => sum + item.budgetedCostMinor, 0);
+
+  return (
+    <Card className="overflow-hidden rounded-xl p-0 shadow-[0_10px_28px_-26px_rgba(91,23,51,0.6)]">
+      <button
+        type="button"
+        aria-expanded={expanded}
+        onClick={onToggle}
+        className="flex min-h-12 w-full items-center justify-between gap-3 px-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring lg:pointer-events-none lg:px-4"
+      >
+        <span className="font-display text-base font-semibold text-primary lg:text-lg">
+          <span className="lg:hidden">{shortDayName}</span><span className="hidden lg:inline">{dayName}</span> {dateLabel}
+        </span>
+        <span className="flex items-center gap-2 text-xs font-bold text-primary">
+          {formatKes(cost)}
+          <ChevronDown className={`size-4 transition-transform lg:hidden ${expanded ? "rotate-180" : ""}`} aria-hidden="true" />
+        </span>
+      </button>
+
+      <div className={`${expanded ? "block" : "hidden"} border-t border-border/60 lg:block`}>
+        <div className="grid gap-2 px-3 py-3 sm:grid-cols-3 lg:px-4">
+          {mealTypes.map((mealType) => {
+            const item = dayItems.find((candidate) => candidate.mealType === mealType);
+            return (
+              <div key={mealType} className="flex min-w-0 items-center gap-2.5">
+                <div className="relative size-11 shrink-0 overflow-hidden rounded-full bg-secondary ring-1 ring-border/70">
+                  {item ? <Image src={item.recipe.imagePath ?? "/images/recipes/githeri.webp"} alt="" fill sizes="44px" className="object-cover" /> : null}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[0.6rem] font-bold uppercase tracking-[0.12em] text-primary">{mealLabel(mealType)}</p>
+                  <p className="line-clamp-2 text-xs font-semibold leading-4">{item?.recipe.name ?? "Open meal slot"}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <button type="button" aria-label={`Edit ${dayName} ${dateLabel}`} onClick={onEdit} className="flex min-h-10 w-full items-center gap-1.5 border-t border-border/60 px-3 text-xs font-bold text-primary outline-none hover:bg-secondary/45 focus-visible:ring-2 focus-visible:ring-ring lg:px-4">
+          View day <ChevronRight className="size-3.5" aria-hidden="true" />
+        </button>
+      </div>
+
+      {!expanded ? (
+        <p className="truncate border-t border-border/60 px-3 py-2 text-[0.62rem] text-muted-foreground lg:hidden">
+          {mealTypes.map((mealType) => `${mealType[0].toUpperCase()}: ${dayItems.find((item) => item.mealType === mealType)?.recipe.name ?? "Open"}`).join(" · ")}
+        </p>
+      ) : null}
+    </Card>
+  );
+}
+
 export function WeeklyPlanBoard({
   weekStart,
   budgetLimitMinor,
   householdSize,
   plan,
   candidates,
+  constraintDiagnostics = [],
 }: WeeklyPlanBoardProps) {
   const [selectedDay, setSelectedDay] = useState(0);
   const [showWholeWeek, setShowWholeWeek] = useState(false);
+  const [expandedWeekDay, setExpandedWeekDay] = useState(0);
   const totalMinor = plan?.estimatedTotalMinor ?? 0;
   const percentage = Math.min(100, Math.round((totalMinor / budgetLimitMinor) * 100));
   const days = Array.from({ length: 7 }, (_, dayOfWeek) => ({
@@ -383,11 +536,11 @@ export function WeeklyPlanBoard({
   }));
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div className={`space-y-4 sm:space-y-5 ${showWholeWeek ? "" : "lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-x-6 lg:gap-y-5 lg:space-y-0 xl:gap-x-8"}`}>
       <div
         role="group"
         aria-label="Choose a day"
-        className="flex overflow-x-auto rounded-2xl bg-card p-1 shadow-sm ring-1 ring-border/65 lg:hidden"
+        className={`flex min-w-0 overflow-x-auto rounded-2xl bg-card p-1 shadow-sm ring-1 ring-border/65 ${showWholeWeek ? "" : "lg:col-start-1 lg:row-start-1"}`}
       >
         {days.map((day) => (
           <button
@@ -411,8 +564,43 @@ export function WeeklyPlanBoard({
         ))}
       </div>
 
-      <Card className="overflow-hidden p-4 sm:p-5">
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <Card className={`overflow-hidden p-4 sm:p-5 ${showWholeWeek ? "" : "lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:w-full lg:self-start"}`}>
+        {showWholeWeek ? (
+          <div className="grid gap-4 lg:grid-cols-[3.5rem_minmax(0,1fr)_auto_18rem] lg:items-center lg:gap-6">
+            <div className="hidden size-13 place-items-center rounded-full bg-primary text-primary-foreground lg:grid">
+              <CalendarCheck2 className="size-6" aria-hidden="true" />
+            </div>
+            <div className="grid grid-cols-2 gap-x-5 gap-y-3">
+              <div>
+                <p className="font-display text-lg font-semibold leading-tight">{plan?.items.length ?? 0} of 21 meals</p>
+                <p className="mt-1 text-xs text-muted-foreground">{plan?.items.length === 21 ? "All set for the week" : "Keep building your week"}</p>
+              </div>
+              <div>
+                <p className="font-display text-lg font-semibold leading-tight">{percentage}% of budget</p>
+                <p className="mt-1 text-xs text-muted-foreground">{formatKes(totalMinor)} of {formatKes(budgetLimitMinor)}</p>
+              </div>
+              <div
+                className="col-span-2 h-2 overflow-hidden rounded-full bg-secondary"
+                role="progressbar"
+                aria-label="Weekly budget used"
+                aria-valuemin={0}
+                aria-valuemax={budgetLimitMinor}
+                aria-valuenow={totalMinor}
+              >
+                <div className="h-full rounded-full bg-success transition-[width] motion-reduce:transition-none" style={{ width: `${percentage}%` }} />
+              </div>
+            </div>
+            <div className="border-t border-border/70 pt-3 lg:min-w-40 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
+              <p className="text-xs font-medium text-muted-foreground">Estimated week cost</p>
+              <p className="mt-1 font-display text-3xl font-semibold leading-none">{formatKes(totalMinor)}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 lg:grid-cols-1">
+              {plan ? <GenerateShoppingList mealPlanId={plan.id} /> : null}
+              <GeneratePlan weekStart={weekStart} hasPlan={Boolean(plan)} />
+            </div>
+          </div>
+        ) : (
+        <div className="grid gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge>{plan?.items.length ?? 0} of 21 meals</Badge>
@@ -447,14 +635,16 @@ export function WeeklyPlanBoard({
               />
             </div>
           </div>
-          <div className="space-y-3">
-            <GeneratePlan weekStart={weekStart} />
+          <div className="flex flex-col gap-2">
             {plan ? <GenerateShoppingList mealPlanId={plan.id} /> : null}
+            <GeneratePlan weekStart={weekStart} hasPlan={Boolean(plan)} />
           </div>
         </div>
+        )}
       </Card>
 
-      <section aria-label="Mobile meal plan" className="space-y-3 lg:hidden">
+      <section aria-label="Mobile meal plan" className={`min-w-0 space-y-3 ${showWholeWeek ? "" : "lg:col-start-1 lg:row-start-2"}`}>
+        <ConstraintHealth diagnostics={constraintDiagnostics} weekStart={weekStart} />
         <Button
           type="button"
           variant="ghost"
@@ -467,39 +657,24 @@ export function WeeklyPlanBoard({
         </Button>
 
         {showWholeWeek ? (
-          <Card className="divide-y divide-border/60 overflow-hidden px-4">
+          <div role="region" aria-label="Seven-day meal plan" className="grid gap-2 lg:grid-cols-2 lg:gap-4">
             {days.map((day) => {
-              const dayItems = plan?.items.filter((item) => item.dayOfWeek === day.dayOfWeek) ?? [];
               return (
-                <button
+                <WholeWeekDayCard
                   key={day.dayOfWeek}
-                  type="button"
-                  aria-label={`Edit ${day.dayName} ${day.dateLabel}`}
-                  onClick={() => {
+                  weekStart={weekStart}
+                  dayOfWeek={day.dayOfWeek}
+                  plan={plan}
+                  expanded={expandedWeekDay === day.dayOfWeek}
+                  onToggle={() => setExpandedWeekDay(day.dayOfWeek)}
+                  onEdit={() => {
                     setSelectedDay(day.dayOfWeek);
                     setShowWholeWeek(false);
                   }}
-                  className="grid min-h-20 w-full grid-cols-[3.5rem_minmax(0,1fr)_auto] items-center gap-3 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <span>
-                    <span className="block text-xs font-bold uppercase tracking-wide text-primary">{day.shortDayName}</span>
-                    <span className="block text-xs text-muted-foreground">{day.dateLabel}</span>
-                  </span>
-                  <span className="min-w-0 space-y-1">
-                    {mealTypes.map((mealType) => (
-                      <span key={mealType} className="block truncate text-xs">
-                        <span className="font-semibold capitalize">{mealType}:</span>{" "}
-                        {dayItems.find((item) => item.mealType === mealType)?.recipe.name ?? "Open"}
-                      </span>
-                    ))}
-                  </span>
-                  <span className="text-xs font-semibold text-muted-foreground">
-                    {formatKes(dayItems.reduce((sum, item) => sum + item.budgetedCostMinor, 0))}
-                  </span>
-                </button>
+                />
               );
             })}
-          </Card>
+          </div>
         ) : (
           <div id="selected-day-plan">
             <DayPlanCard
@@ -513,18 +688,7 @@ export function WeeklyPlanBoard({
         )}
       </section>
 
-      <section aria-label="Seven-day meal plan" className="hidden gap-4 lg:grid xl:grid-cols-2">
-        {days.map((day) => (
-          <DayPlanCard
-            key={day.dayOfWeek}
-            weekStart={weekStart}
-            dayOfWeek={day.dayOfWeek}
-            plan={plan}
-            householdSize={householdSize}
-            candidates={candidates}
-          />
-        ))}
-      </section>
+      {!showWholeWeek ? <section aria-label="Seven-day meal plan" className="sr-only"><span>Use View whole week to navigate all seven days.</span></section> : null}
     </div>
   );
 }

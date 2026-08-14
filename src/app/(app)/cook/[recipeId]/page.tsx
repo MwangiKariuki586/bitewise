@@ -19,9 +19,10 @@ interface CookRecipePageProps {
 }
 
 export default async function CookRecipePage({ params }: CookRecipePageProps) {
-  const parsed = z.coerce.number().int().positive().safeParse((await params).recipeId);
+  const recipeId = (await params).recipeId;
+  const parsed = z.coerce.number().int().positive().safeParse(recipeId);
   if (!parsed.success) notFound();
-  const { identity, profile } = await requireCompletedProfile();
+  const { identity, profile } = await requireCompletedProfile(`/cook/${recipeId}`);
   const { recipe, session, completedSteps } = await getCookSession(identity.sub, parsed.data);
   if (!recipe) notFound();
   const personalisation =

@@ -46,7 +46,7 @@ test.describe("pantry inventory and isolation", () => {
     test.setTimeout(120_000);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(emailA);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
     await page.goto("/my-kitchen");
@@ -75,7 +75,7 @@ test.describe("pantry inventory and isolation", () => {
     const today = new Date().toISOString().slice(0, 10);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(emailA);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
     await page.goto("/my-kitchen/leftovers");

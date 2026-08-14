@@ -54,3 +54,11 @@ export interface PlanRpcItem {
   recipe_id: number;
   servings: number;
 }
+
+export const addRecipeToPlanSchema = planItemSchema.extend({
+  weekStart: weekStartSchema,
+  expectedRecipeId: z.number().int().positive().nullable(),
+  replaceConfirmed: z.boolean(),
+});
+
+export type AddRecipeToPlanInput = z.infer<typeof addRecipeToPlanSchema>;

@@ -16,10 +16,14 @@ interface SavedMealsPageProps {
 }
 
 export default async function SavedMealsPage({ searchParams }: SavedMealsPageProps) {
+  const rawQuery = await searchParams;
   const query = z.object({
     page: z.coerce.number().int().min(1).max(100).catch(1),
-  }).parse({ page: (await searchParams).page ?? 1 });
-  const identity = await requireUser();
+  }).parse({ page: rawQuery.page ?? 1 });
+  const returnTo = rawQuery.page
+    ? `/my-kitchen/saved?${new URLSearchParams({ page: rawQuery.page })}`
+    : "/my-kitchen/saved";
+  const identity = await requireUser(returnTo);
   const saved = await getSavedRecipePage(identity.sub, query.page);
   const pages = Math.max(1, Math.ceil(saved.total / saved.pageSize));
 

@@ -10,6 +10,7 @@ import { LeftoverForm } from "@/features/leftovers/leftover-form";
 import { leftoverQuerySchema } from "@/features/leftovers/schemas";
 import { getRecipeCatalogue } from "@/features/recipes/data";
 import { KitchenNav } from "@/features/shopping-list/kitchen-nav";
+import { requireUser } from "@/lib/auth/session";
 
 interface PageProps {
   searchParams: Promise<{ edit?: string; page?: string; search?: string }>;
@@ -79,7 +80,13 @@ function Group({
 }
 
 export default async function LeftoversPage({ searchParams }: PageProps) {
-  const query = leftoverQuerySchema.parse(await searchParams);
+  const rawQuery = await searchParams;
+  const returnParams = new URLSearchParams();
+  if (rawQuery.edit) returnParams.set("edit", rawQuery.edit);
+  if (rawQuery.page) returnParams.set("page", rawQuery.page);
+  if (rawQuery.search) returnParams.set("search", rawQuery.search);
+  await requireUser(`/my-kitchen/leftovers${returnParams.size ? `?${returnParams}` : ""}`);
+  const query = leftoverQuerySchema.parse(rawQuery);
   const [{ items, total, pageSize, editItem }, recipes] = await Promise.all([
     getLeftoversPage(query.page, query.search, query.edit),
     getRecipeCatalogue(),

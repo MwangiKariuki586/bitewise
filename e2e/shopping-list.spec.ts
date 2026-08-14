@@ -127,7 +127,7 @@ test.describe("shopping list aggregation and isolation", () => {
     test.setTimeout(120_000);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
 

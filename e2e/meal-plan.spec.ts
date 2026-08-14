@@ -133,7 +133,7 @@ test.describe("weekly meal planning", () => {
     test.setTimeout(60_000);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(userAEmail);
-    await page.getByLabel("Password").fill(password);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in" }).click();
     await expect(page).toHaveURL(/\/eat-now$/);
 
@@ -243,5 +243,43 @@ test.describe("weekly meal planning", () => {
       .single();
     if (privileged.error || !privileged.data) throw privileged.error;
     expect(privileged.data.user_id).toBe(userAId);
+  });
+
+  test("adds a recipe-detail meal into a chosen future slot", async ({ page }) => {
+    await page.goto("/auth/sign-in");
+    await page.getByLabel("Email address").fill(userAEmail);
+    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(/\/eat-now$/);
+
+    await page.goto("/recipes/githeri-avocado-bowl");
+    await page.getByRole("button", { name: "Add to meal plan" }).click();
+    const dialog = page.getByRole("dialog", { name: "Add to meal plan" });
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("button", { name: "Next week" }).click();
+    await dialog.getByRole("button", { name: "Add meal" }).click();
+    await expect(page.getByText(/Added to Monday/)).toBeVisible();
+
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const addedPlan = await retryCloudRead<{ id: number }>(() =>
+      admin.from("meal_plans").select("id").eq("user_id", userAId).eq("week_start", "2026-08-17").single(),
+    );
+    const addedRecipe = await retryCloudRead<{ id: number }>(() =>
+      admin.from("recipes").select("id").eq("slug", "githeri-avocado-bowl").single(),
+    );
+    const stored = await retryCloudRead<{ recipe: { slug: string }; servings: number }>(() =>
+      admin
+        .from("meal_plan_items")
+        .select("servings,recipe:recipes!meal_plan_items_recipe_id_fkey(slug)")
+        .eq("user_id", userAId)
+        .eq("meal_plan_id", addedPlan.id)
+        .eq("day_of_week", 0)
+        .eq("recipe_id", addedRecipe.id)
+        .single(),
+    );
+    expect(stored.recipe.slug).toBe("githeri-avocado-bowl");
+    expect(stored.servings).toBe(2);
   });
 });

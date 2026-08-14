@@ -29,7 +29,7 @@ function PreferenceGroup({ title, values }: { title: string; values: string[] })
 }
 
 export default async function ProfilePage() {
-  const { profile } = await getCurrentProfile();
+  const { profile } = await getCurrentProfile("/profile");
 
   if (!profile) {
     return (
@@ -51,14 +51,14 @@ export default async function ProfilePage() {
           <h1 className="mt-2 font-display text-4xl font-semibold sm:text-5xl">Meals shaped around {profile.display_name ?? "you"}.</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">These defaults guide recommendations and plans. You can still adjust them for a particular meal.</p>
         </div>
-        <Button asChild><Link href="/onboarding?returnTo=/profile"><Pencil className="size-4" aria-hidden="true" />Edit preferences</Link></Button>
+        <Button asChild><Link href="/profile/edit"><Pencil className="size-4" aria-hidden="true" />Edit preferences</Link></Button>
       </header>
 
       <section aria-label="Practical defaults" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {[
           { icon: Heart, label: "Food budget", value: budget },
           { icon: Users, label: "People to serve", value: String(profile.household_size) },
-          { icon: Clock3, label: "Cooking time", value: `${profile.available_minutes} minutes` },
+          { icon: Clock3, label: "Eat Now time", value: `${profile.eat_now_minutes} minutes` },
           { icon: CookingPot, label: "Equipment", value: `${profile.equipment.length} selected` },
         ].map(({ icon: Icon, label, value }) => (
           <article key={label} className="rounded-2xl bg-card p-5 shadow-[0_12px_35px_-28px_rgba(45,39,27,0.75)]">
@@ -67,6 +67,23 @@ export default async function ProfilePage() {
             <p className="mt-1 font-semibold">{value}</p>
           </article>
         ))}
+      </section>
+
+      <section aria-label="Meal Plan cooking times" className="rounded-[1.75rem] bg-card p-6 shadow-sm sm:p-8">
+        <h2 className="font-display text-2xl font-semibold">Meal Plan cooking times</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Separate maximums keep breakfast practical without limiting dinners unnecessarily.</p>
+        <div className="mt-5 grid grid-cols-3 gap-3">
+          {[
+            ["Breakfast", profile.breakfast_minutes],
+            ["Lunch", profile.lunch_minutes],
+            ["Dinner", profile.dinner_minutes],
+          ].map(([label, minutes]) => (
+            <div key={label} className="rounded-xl bg-muted/55 p-3 text-center">
+              <p className="text-xs font-semibold text-muted-foreground">{label}</p>
+              <p className="mt-1 font-display text-xl font-semibold">{minutes} min</p>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="grid gap-6 rounded-[1.75rem] bg-card p-6 shadow-sm sm:p-8 lg:grid-cols-2">

@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { getPublicEnv, hasSupabaseEnv } from "@/lib/env";
+import { isProtectedAppPath } from "@/lib/auth/redirect";
 import type { Database } from "@/lib/supabase/database.types";
 
 export async function updateSession(request: NextRequest) {
@@ -28,6 +29,18 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  if (isProtectedAppPath(request.nextUrl.pathname) && !data?.claims) {
+    const signInUrl = request.nextUrl.clone();
+    const nextPath = `${request.nextUrl.pathname}${request.nextUrl.search}`;
+    signInUrl.pathname = "/auth/sign-in";
+    signInUrl.search = "";
+    signInUrl.searchParams.set("next", nextPath);
+
+    const redirectResponse = NextResponse.redirect(signInUrl);
+    response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
+  }
+
   return response;
 }

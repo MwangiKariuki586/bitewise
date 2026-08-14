@@ -33,7 +33,10 @@ function byAffordableCost(left: PlanCandidate, right: PlanCandidate) {
     left.name.localeCompare(right.name, "en-KE");
 }
 
-function uniqueBaseline(candidates: CandidatesByMealType) {
+function uniqueBaseline(
+  candidates: CandidatesByMealType,
+  avoidedRecipeIds: ReadonlySet<number>,
+) {
   const assigned = new Map<number, number>();
   const slotCandidate = new Map<number, PlanCandidate>();
   const orderedSlots = slots
@@ -45,7 +48,10 @@ function uniqueBaseline(candidates: CandidatesByMealType) {
 
   function assign(slotIndex: number, seen: Set<number>): boolean {
     const slot = slots[slotIndex];
-    const available = [...candidates[slot.mealType]].sort(byAffordableCost);
+    const available = [...candidates[slot.mealType]].sort((left, right) =>
+      Number(avoidedRecipeIds.has(left.recipeId)) - Number(avoidedRecipeIds.has(right.recipeId)) ||
+      byAffordableCost(left, right),
+    );
     for (const candidate of available) {
       if (seen.has(candidate.recipeId)) continue;
       seen.add(candidate.recipeId);
@@ -71,6 +77,42 @@ function duplicateBaseline(candidates: CandidatesByMealType) {
   );
 }
 
+function diverseAffordableBaseline(
+  candidates: CandidatesByMealType,
+  budgetLimitMinor: number,
+  avoidedRecipeIds: ReadonlySet<number>,
+) {
+  const selection = duplicateBaseline(candidates);
+  if (selection.some((candidate) => candidate === null)) return null;
+  const complete = selection as PlanCandidate[];
+  let totalMinor = totalCost(complete);
+  if (totalMinor > budgetLimitMinor) return null;
+  const usage = new Map<number, number>();
+  for (const candidate of complete) {
+    usage.set(candidate.recipeId, (usage.get(candidate.recipeId) ?? 0) + 1);
+  }
+
+  for (let index = 0; index < slots.length; index += 1) {
+    const current = complete[index];
+    usage.set(current.recipeId, (usage.get(current.recipeId) ?? 1) - 1);
+    const replacement = candidates[slots[index].mealType]
+      .filter((candidate) =>
+        totalMinor - current.budgetedCostMinor + candidate.budgetedCostMinor <= budgetLimitMinor,
+      )
+      .sort((left, right) =>
+        (usage.get(left.recipeId) ?? 0) - (usage.get(right.recipeId) ?? 0) ||
+        Number(avoidedRecipeIds.has(left.recipeId)) - Number(avoidedRecipeIds.has(right.recipeId)) ||
+        right.score - left.score ||
+        byAffordableCost(left, right),
+      )[0] ?? current;
+    complete[index] = replacement;
+    totalMinor = totalMinor - current.budgetedCostMinor + replacement.budgetedCostMinor;
+    usage.set(replacement.recipeId, (usage.get(replacement.recipeId) ?? 0) + 1);
+  }
+
+  return { selection: complete, totalMinor };
+}
+
 function totalCost(selection: Array<PlanCandidate | null>) {
   return selection.reduce(
     (total, candidate) => total + (candidate?.budgetedCostMinor ?? 0),
@@ -82,13 +124,18 @@ function upgradeWithinBudget(
   selection: PlanCandidate[],
   candidates: CandidatesByMealType,
   budgetLimitMinor: number,
+  avoidedRecipeIds: ReadonlySet<number>,
 ) {
   let totalMinor = totalCost(selection);
   const usedIds = new Set(selection.map((candidate) => candidate.recipeId));
 
   for (let index = 0; index < slots.length; index += 1) {
     const current = selection[index];
-    const ranked = candidates[slots[index].mealType];
+    const ranked = [...candidates[slots[index].mealType]].sort((left, right) =>
+      Number(avoidedRecipeIds.has(left.recipeId)) - Number(avoidedRecipeIds.has(right.recipeId)) ||
+      right.score - left.score ||
+      byAffordableCost(left, right),
+    );
     const replacement = ranked.find((candidate) => {
       if (candidate.recipeId === current.recipeId) return true;
       if (usedIds.has(candidate.recipeId)) return false;
@@ -118,23 +165,34 @@ export function generateDeterministicWeeklyPlan(
   candidates: CandidatesByMealType,
   servings: number,
   budgetLimitMinor: number,
+  avoidedRecipeIds: ReadonlySet<number> = new Set(),
 ): GeneratedPlan | null {
   if (mealTypes.some((mealType) => candidates[mealType].length === 0)) return null;
 
-  const unique = uniqueBaseline(candidates);
+  const unique = uniqueBaseline(candidates, avoidedRecipeIds);
   let selection = unique;
   let usedDuplicates = false;
   if (!selection || totalCost(selection) > budgetLimitMinor) {
-    selection = duplicateBaseline(candidates);
+    const diversified = diverseAffordableBaseline(
+      candidates,
+      budgetLimitMinor,
+      avoidedRecipeIds,
+    );
+    selection = diversified?.selection ?? null;
     usedDuplicates = true;
   }
-  if (selection.some((candidate) => candidate === null)) return null;
+  if (!selection || selection.some((candidate) => candidate === null)) return null;
 
   const completeSelection = selection as PlanCandidate[];
   if (totalCost(completeSelection) > budgetLimitMinor) return null;
   const upgraded = usedDuplicates
     ? { selection: completeSelection, totalMinor: totalCost(completeSelection) }
-    : upgradeWithinBudget(completeSelection, candidates, budgetLimitMinor);
+    : upgradeWithinBudget(
+        completeSelection,
+        candidates,
+        budgetLimitMinor,
+        avoidedRecipeIds,
+      );
 
   return {
     totalMinor: upgraded.totalMinor,

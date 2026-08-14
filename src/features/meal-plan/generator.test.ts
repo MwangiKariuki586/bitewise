@@ -58,6 +58,34 @@ describe("deterministic weekly plan generation", () => {
     expect(new Set(plan?.items.map((item) => item.recipe_id))).toHaveLength(3);
   });
 
+  it("maximizes affordable variety before repeating the cheapest meals", () => {
+    const candidates = candidatesFor(
+      { breakfast: 1, lunch: 101, dinner: 201 },
+      [100, 110, 120, 130, 140, 1_000, 1_000],
+    );
+    const plan = generateDeterministicWeeklyPlan(candidates, 2, 3_000);
+
+    expect(plan?.usedDuplicates).toBe(true);
+    expect(new Set(plan?.items.map((item) => item.recipe_id)).size).toBeGreaterThan(3);
+    expect(plan?.totalMinor).toBeLessThanOrEqual(3_000);
+  });
+
+  it("prefers recipes outside the existing week when regenerating", () => {
+    const candidates = candidatesFor(
+      { breakfast: 1, lunch: 101, dinner: 201 },
+      [100, 110, 120, 130, 140, 150, 160, 170],
+    );
+    const existingIds = new Set([
+      1, 2, 3, 4, 5, 6, 7,
+      101, 102, 103, 104, 105, 106, 107,
+      201, 202, 203, 204, 205, 206, 207,
+    ]);
+    const plan = generateDeterministicWeeklyPlan(candidates, 2, 10_000, existingIds);
+
+    expect(plan?.items.some((item) => !existingIds.has(item.recipe_id))).toBe(true);
+    expect(plan?.totalMinor).toBeLessThanOrEqual(10_000);
+  });
+
   it("returns no plan when even the cheapest full week is over budget", () => {
     const candidates = candidatesFor(
       { breakfast: 1, lunch: 101, dinner: 201 },

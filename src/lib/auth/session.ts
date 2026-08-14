@@ -4,6 +4,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
+import { authPath, safeReturnPath } from "@/lib/auth/redirect";
 import { createClient } from "@/lib/supabase/server";
 
 const claimsSchema = z.object({
@@ -23,11 +24,11 @@ export const getSessionIdentity = cache(async () => {
   return parsed.success ? parsed.data : null;
 });
 
-export async function requireUser() {
+export async function requireUser(returnTo?: string) {
   const identity = await getSessionIdentity();
 
   if (!identity) {
-    redirect("/auth/sign-in");
+    redirect(authPath("/auth/sign-in", safeReturnPath(returnTo)));
   }
 
   return identity;

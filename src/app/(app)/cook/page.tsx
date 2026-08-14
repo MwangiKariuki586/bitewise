@@ -23,9 +23,12 @@ interface CookPageProps {
 }
 
 export default async function CookPage({ searchParams }: CookPageProps) {
-  const [{ identity, profile }, query, catalogue] = await Promise.all([
-    requireCompletedProfile(),
-    searchParams,
+  const query = await searchParams;
+  const returnParams = new URLSearchParams();
+  if (query.completed) returnParams.set("completed", query.completed);
+  const returnTo = `/cook${returnParams.size ? `?${returnParams}` : ""}`;
+  const [{ identity, profile }, catalogue] = await Promise.all([
+    requireCompletedProfile(returnTo),
     getRecipeCatalogue(),
   ]);
   const activeSessions = await getActiveCookSessions(identity.sub);

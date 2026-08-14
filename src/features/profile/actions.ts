@@ -33,10 +33,14 @@ function returnPath(formData: FormData) {
     : "/eat-now";
 }
 
-function nextStep(step: string, returnTo: string) {
+function formPath(formData: FormData) {
+  return formData.get("formPath") === "/profile/edit" ? "/profile/edit" : "/onboarding";
+}
+
+function nextStep(step: string, returnTo: string, pathname: string) {
   const params = new URLSearchParams({ step });
   if (returnTo !== "/eat-now") params.set("returnTo", returnTo);
-  return `/onboarding?${params.toString()}`;
+  return `${pathname}?${params.toString()}`;
 }
 
 export async function saveBasicsAction(
@@ -61,7 +65,7 @@ export async function saveBasicsAction(
   if (error) return { status: "error", message: "Your changes could not be saved." };
 
   revalidatePath("/profile");
-  redirect(nextStep("kitchen", returnPath(formData)));
+  redirect(nextStep("kitchen", returnPath(formData), formPath(formData)));
 }
 
 export async function saveKitchenAction(
@@ -71,6 +75,9 @@ export async function saveKitchenAction(
   const identity = await requireUser();
   const parsed = kitchenSchema.safeParse({
     availableMinutes: formData.get("availableMinutes"),
+    breakfastMinutes: formData.get("breakfastMinutes"),
+    lunchMinutes: formData.get("lunchMinutes"),
+    dinnerMinutes: formData.get("dinnerMinutes"),
     equipment: uniqueFormValues(formData, "equipment"),
   });
   if (!parsed.success) return errors(parsed.error);
@@ -79,7 +86,15 @@ export async function saveKitchenAction(
   const { error } = await supabase.from("profiles").upsert(
     {
       user_id: identity.sub,
-      available_minutes: parsed.data.availableMinutes,
+      eat_now_minutes: parsed.data.availableMinutes,
+      available_minutes: Math.max(
+        parsed.data.breakfastMinutes,
+        parsed.data.lunchMinutes,
+        parsed.data.dinnerMinutes,
+      ),
+      breakfast_minutes: parsed.data.breakfastMinutes,
+      lunch_minutes: parsed.data.lunchMinutes,
+      dinner_minutes: parsed.data.dinnerMinutes,
       equipment: parsed.data.equipment,
     },
     { onConflict: "user_id" },
@@ -87,7 +102,7 @@ export async function saveKitchenAction(
   if (error) return { status: "error", message: "Your changes could not be saved." };
 
   revalidatePath("/profile");
-  redirect(nextStep("preferences", returnPath(formData)));
+  redirect(nextStep("preferences", returnPath(formData), formPath(formData)));
 }
 
 export async function savePreferencesAction(

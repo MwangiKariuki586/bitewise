@@ -16,7 +16,7 @@ export function GenerateShoppingList({ mealPlanId }: { mealPlanId: number }) {
     <div className="space-y-2">
       <form action={action}>
         <input type="hidden" name="mealPlanId" value={mealPlanId} />
-        <Button type="submit" variant="outline" className="w-full sm:w-auto" disabled={pending}>
+        <Button type="submit" className="h-11 min-h-11 w-full min-w-0 whitespace-nowrap rounded-xl px-2 text-[0.68rem] sm:px-4 sm:text-sm" disabled={pending}>
           {pending ? (
             <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
           ) : (

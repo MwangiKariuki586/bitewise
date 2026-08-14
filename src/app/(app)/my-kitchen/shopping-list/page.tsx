@@ -21,8 +21,12 @@ function listHref(page: number) {
 }
 
 export default async function ShoppingListPage({ searchParams }: ShoppingListPageProps) {
-  const query = shoppingListPageSchema.parse(await searchParams);
-  const identity = await requireUser();
+  const rawQuery = await searchParams;
+  const query = shoppingListPageSchema.parse(rawQuery);
+  const returnTo = rawQuery.page
+    ? `/my-kitchen/shopping-list?${new URLSearchParams({ page: rawQuery.page })}`
+    : "/my-kitchen/shopping-list";
+  const identity = await requireUser(returnTo);
   const list = await getActiveShoppingList(identity.sub, query.page);
 
   if (!list) {

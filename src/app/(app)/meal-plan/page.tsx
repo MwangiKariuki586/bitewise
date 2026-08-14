@@ -10,6 +10,7 @@ import {
 } from "@/features/meal-plan/dates";
 import {
   getPlanCandidates,
+  getMealPlanConstraintDiagnostics,
   getWeeklyPlan,
   weeklyBudgetMinor,
 } from "@/features/meal-plan/data";
@@ -23,26 +24,31 @@ interface MealPlanPageProps {
 }
 
 export default async function MealPlanPage({ searchParams }: MealPlanPageProps) {
-  const [{ identity, profile }, params] = await Promise.all([
-    requireCompletedProfile(),
-    searchParams,
-  ]);
+  const params = await searchParams;
+  const returnParams = new URLSearchParams();
+  if (params.week) returnParams.set("week", params.week);
+  const returnTo = `/meal-plan${returnParams.size ? `?${returnParams}` : ""}`;
+  const { identity, profile } = await requireCompletedProfile(returnTo);
   const requestedWeek = weekStartSchema.safeParse(params.week);
   const weekStart = requestedWeek.success ? requestedWeek.data : currentWeekStart();
   const [plan, candidates] = await Promise.all([
     getWeeklyPlan(identity.sub, weekStart),
     getPlanCandidates(identity.sub, profile),
   ]);
+  const constraintDiagnostics = await getMealPlanConstraintDiagnostics(
+    profile,
+    candidates,
+  );
   const previousWeek = shiftWeek(weekStart, -1);
   const nextWeek = shiftWeek(weekStart, 1);
   const isCurrentWeek = weekStart === currentWeekStart();
 
   return (
-    <div className="space-y-4 pb-8 sm:space-y-6">
+    <div className="space-y-4 pb-8 sm:space-y-5">
       <PageIntro
         eyebrow="Meal Plan"
         title="Make the week feel lighter."
-        description="Plan practical meals around your budget, kitchen, time, and household."
+        description="Balanced meals, smarter budget, less stress."
         variant="standard"
       />
 
@@ -87,6 +93,7 @@ export default async function MealPlanPage({ searchParams }: MealPlanPageProps) 
         householdSize={profile.household_size}
         plan={plan}
         candidates={candidates}
+        constraintDiagnostics={constraintDiagnostics}
       />
     </div>
   );
