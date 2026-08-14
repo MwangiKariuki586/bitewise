@@ -20,6 +20,37 @@ Active feature: BiteWise MVP
 
 Status: Complete
 
+The public landing page has been rebuilt around the approved editorial desktop
+reference and intentionally adapted for tablet and mobile rather than merely
+scaled down. It now presents the complete BiteWise decision journey: budget,
+pantry and time benefits; situational entry points; decide-to-cook steps; and
+clear onboarding and recipe-discovery actions. Existing server-verified session
+routing is preserved. The change is presentation-only: it introduces no data
+query, cache, invalidation, mutation, or rate-limit changes. Verified with 77
+unit/integration tests, strict typecheck, lint, production build, and
+`git diff --check`. Browser-backed desktop/tablet/mobile comparison and the
+affected Playwright journey remain outstanding because no in-app browser was
+available in this session; `design-qa.md` records the blocked visual gate.
+The closing banner actions now use the platform's ivory, aubergine, and soft
+rose palette instead of the reference's yellow accent, with matching hover and
+focus behavior. This is a styling-only refinement with no data-access impact.
+The large-screen hero recipe card now has a more deliberate top-left and
+bottom-right frame, with smoother nested corner radii and enough inset space to
+keep the rotated white edge from appearing clipped. Tablet and mobile framing
+remain unchanged.
+Chrome inspection clarified that the requested treatment belongs to the food
+image, not the surrounding recipe card. The outer-card experiment was reverted;
+the desktop-only image now uses a consistent, restrained corner radius without
+an additional border or edge outline. Tablet and mobile remain unchanged.
+The desktop hero photo no longer counter-rotates inside its rotated recipe card,
+removing the skewed, over-zoomed crop while preserving the established tablet
+and mobile treatment. This styling-only fix introduces no data-access, caching,
+invalidation, mutation, or rate-limit changes. Verified with all 77
+unit/integration tests, strict typecheck, lint, production build, and
+`git diff --check`; fresh desktop screenshot confirmation remains a manual check.
+The nonessential public footer has been removed until it has useful implemented
+destinations and active social accounts to represent.
+
 Authentication form refinement completed with independently accessible show/hide
 controls for every password entry and password confirmation on sign-up and
 password update. Password mismatches are rejected by server-side Zod
