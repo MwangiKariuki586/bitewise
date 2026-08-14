@@ -1,71 +1,62 @@
-# Eat Now design QA
+# Recipe details design QA
 
 **Source visual truth**
 
-- User-provided BiteWise Eat Now desktop reference and focused meal-card crop in
-  the current conversation, plus the earlier mobile/tablet references.
-- States: expanded constraints before generation and collapsed constraints with results.
-- Target viewports: desktop for the current refinement; earlier mobile and
-  tablet behavior remains in scope for regression.
-- Current desktop reference: 1920 × 1080 px. Focused card crop: 919 × 163 px.
+- User-provided BiteWise recipe-detail mobile and desktop mockups in the current conversation.
+- Source dimensions: mobile 945 x 1679 px; desktop 1456 x 1086 px.
+- Intended states: default ingredients tab, serving count 4, kitchen inventory expanded.
 
 **Implementation evidence**
 
-- Route: `/eat-now`.
-- Browser-rendered authenticated screenshot: unavailable.
-- Implementation pixel dimensions and density normalization: unavailable.
-- Connected-browser state: signed-out redirect to `/auth/sign-in?next=%2Feat-now`.
-- Automated browser states verified separately include the desktop constraint
-  rail, successful results, compact card-height/alignment geometry, mobile
-  collapsed summary, no-match result, Edit/regeneration, recipe details/back
-  restoration, sorting, 360/390 px navigation clearance, and accessibility.
+- Route: `/recipes/githeri-avocado-bowl`.
+- Browser-rendered route and responsive DOM were inspected at the recipe detail page.
+- Implementation screenshots: unavailable because the connected Chrome capture command timed out.
+- Browser viewport capture dimensions and density normalization: unavailable.
+- Browser state: recipe title and preparation content visible; no console errors; responsive DOM had no horizontal overflow at the browser's enforced minimum width.
 
 **Findings**
 
-- [P1] Screenshot-backed comparison is blocked.
-  Location: complete Eat Now page at mobile, tablet, and desktop widths.
-  Evidence: the supplied mockups are available, but the connected browser session was signed out and redirected before the protected page rendered. The in-app browser surface was unavailable.
-  Impact: typography, spacing, image crop, color, responsive card density, and exact visual alignment cannot receive the required same-state screenshot sign-off.
-  Fix: open an authenticated Eat Now session in the in-app browser, capture expanded and successful-result states at matching viewports, combine each capture with its source mockup, and fix any remaining P0/P1/P2 drift.
+- [P1] Same-state screenshot comparison is blocked.
+  Location: full recipe page at mobile, tablet, and desktop widths.
+  Evidence: both source mockups are available and the implementation renders in the browser, but the browser could not capture an implementation screenshot.
+  Impact: exact image crop, line wrapping, spacing, visual density, and breakpoint fidelity cannot receive the required visual sign-off.
+  Fix: capture the rendered route at 390 px, 820 px, and 1440 px, combine the mobile and desktop captures with their corresponding source images, then correct any remaining P0/P1/P2 drift.
 
 **Required fidelity surfaces**
 
-- Fonts and typography: existing Newsreader and Manrope brand typography is preserved; exact rendered wrapping remains unverified.
-- Spacing and layout rhythm: mockup-led hero, constraints, shortlist, and responsive card grids are implemented; screenshot comparison remains blocked.
-- Colors and visual tokens: existing BiteWise ivory, aubergine, rose-stone, green, and orange semantic surfaces are retained; rendered sampling remains unverified.
-- Image quality and asset fidelity: the existing optimized Githeri WebP is used for the hero and catalogue assets remain served through `next/image`; live crop and sharpness remain unverified.
-- Copy and content: mockup hierarchy and interaction labels are implemented; exact line wrapping remains unverified.
+- Fonts and typography: BiteWise's existing Newsreader and Manrope hierarchy is retained; exact wrapping and optical weight remain visually unverified.
+- Spacing and layout rhythm: the mobile image-first flow, tablet single-column midpoint, and desktop content-plus-rail composition are implemented; screenshot comparison remains blocked.
+- Colors and visual tokens: the existing aubergine, ivory, green, orange, red, violet, and blue semantic palette is used; rendered color comparison remains blocked.
+- Image quality and asset fidelity: the existing optimized recipe WebP is rendered through `next/image`; exact crop and sharpness remain visually unverified.
+- Copy and content: hero facts, rationale cards, kitchen readiness, serving control, ingredients, tutorial link, and preparation are present and readable in the browser DOM.
 
 **Full-view comparison evidence**
 
-- Blocked: no authenticated browser-rendered implementation screenshot could be captured.
+- Blocked: browser-rendered implementation screenshots could not be captured.
 
 **Focused region comparison evidence**
 
-- Blocked: no valid same-state full-view capture exists from which to produce constraints and card-region comparisons.
+- Blocked: no valid full-view implementation capture exists from which to create hero, kitchen, and recipe-body comparisons.
 
 **Primary interactions tested**
 
-- Full constraints render before generation.
-- Success collapses; Edit expands; regeneration collapses again.
-- Error/no-match behavior preserves hard constraints and editable values.
-- Dedicated recipe details navigation restores constraints, results, sort, and scroll state on back navigation.
-- Mobile navigation clearance is verified at 360 px and 390 px.
-- The complete 58-test mobile/desktop Playwright suite passes with one intentional mobile-only skip; the Eat Now result state also passes an automated accessibility scan.
-- Connected browser console errors for the authenticated state could not be checked because the session redirected to sign-in.
+- Ingredients and Nutrition tabs render as controls.
+- Serving decrement/increment controls are present and the serving-scaled ingredient behavior is covered by the updated Discover journey.
+- Meal-plan and Cook Mode links preserve the existing routes.
+- Browser rendered the recipe title and Preparation section with no console errors.
 
 **Comparison history**
 
-- Pass 1: blocked before visual comparison. The connected browser loaded the protected route but redirected to sign-in; the in-app browser was unavailable. No screenshot-derived fixes were made.
+- Pass 1: blocked before combined-image comparison because Chrome screenshot capture timed out. No screenshot-derived fixes were claimed.
 
 **Implementation checklist**
 
-- Open a signed-in Eat Now session in the in-app browser.
-- Capture expanded and collapsed/result states at matching mobile, tablet, and desktop viewports.
-- Compare source and implementation in combined images and resolve any P0/P1/P2 findings.
+- Capture matching mobile, tablet, and desktop implementation screenshots.
+- Compare source and implementation together.
+- Resolve any P0/P1/P2 visual differences before visual sign-off.
 
 **Follow-up polish**
 
-- Defer P3 visual polish until screenshot-backed comparison is available.
+- Defer P3 polish until screenshot evidence is available.
 
 final result: blocked

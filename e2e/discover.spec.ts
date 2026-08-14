@@ -15,9 +15,14 @@ test.describe("public recipe discovery", () => {
     await firstRecipe.click();
 
     await expect(page).toHaveURL(/\/recipes\//);
-    await expect(page.getByRole("heading", { name: "Ingredients" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Cook it with confidence" })).toBeVisible();
-    await expect(page.getByText(/indicative nairobi prices/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Ingredients" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Preparation" })).toBeVisible();
+    await expect(page.getByText(/why bitewise recommended this/i)).toBeVisible();
+
+    const servingCount = page.getByText("4", { exact: true }).last();
+    await page.getByRole("button", { name: "Increase servings" }).click();
+    await expect(page.getByText("Serves 5")).toBeVisible();
+    await expect(servingCount).toHaveText("5");
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
