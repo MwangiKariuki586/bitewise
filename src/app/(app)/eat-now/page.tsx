@@ -41,7 +41,7 @@ export default async function EatNowPage() {
         defaults={{
           budgetKes: Math.floor(mealBudgetMinor / 100),
           servings: profile.household_size,
-          maxMinutes: profile.available_minutes,
+          maxMinutes: profile.eat_now_minutes,
           equipment: profile.equipment,
           dietaryPreferences: profile.dietary_preferences,
         }}

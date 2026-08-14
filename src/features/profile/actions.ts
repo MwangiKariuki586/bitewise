@@ -75,6 +75,9 @@ export async function saveKitchenAction(
   const identity = await requireUser();
   const parsed = kitchenSchema.safeParse({
     availableMinutes: formData.get("availableMinutes"),
+    breakfastMinutes: formData.get("breakfastMinutes"),
+    lunchMinutes: formData.get("lunchMinutes"),
+    dinnerMinutes: formData.get("dinnerMinutes"),
     equipment: uniqueFormValues(formData, "equipment"),
   });
   if (!parsed.success) return errors(parsed.error);
@@ -83,7 +86,15 @@ export async function saveKitchenAction(
   const { error } = await supabase.from("profiles").upsert(
     {
       user_id: identity.sub,
-      available_minutes: parsed.data.availableMinutes,
+      eat_now_minutes: parsed.data.availableMinutes,
+      available_minutes: Math.max(
+        parsed.data.breakfastMinutes,
+        parsed.data.lunchMinutes,
+        parsed.data.dinnerMinutes,
+      ),
+      breakfast_minutes: parsed.data.breakfastMinutes,
+      lunch_minutes: parsed.data.lunchMinutes,
+      dinner_minutes: parsed.data.dinnerMinutes,
       equipment: parsed.data.equipment,
     },
     { onConflict: "user_id" },

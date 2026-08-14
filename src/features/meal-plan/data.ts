@@ -17,6 +17,9 @@ import type { Json } from "@/lib/supabase/database.types";
 
 export interface MealPlanProfile {
   available_minutes: number;
+  breakfast_minutes: number;
+  lunch_minutes: number;
+  dinner_minutes: number;
   budget_minor: number | null;
   budget_period: string;
   dietary_preferences: string[];
@@ -25,6 +28,15 @@ export interface MealPlanProfile {
   household_size: number;
   preferred_cuisines: string[];
   preferred_dishes: string[];
+}
+
+export function planningMinutes(
+  profile: MealPlanProfile,
+  mealType: MealType,
+) {
+  if (mealType === "breakfast") return profile.breakfast_minutes;
+  if (mealType === "lunch") return profile.lunch_minutes;
+  return profile.dinner_minutes;
 }
 
 export interface WeeklyPlanItem {
@@ -50,6 +62,15 @@ export interface WeeklyPlan {
   budgetLimitMinor: number;
   estimatedTotalMinor: number;
   items: WeeklyPlanItem[];
+}
+
+export interface MealPlanConstraintDiagnostic {
+  mealType: MealType;
+  currentCount: number;
+  timeLimitMinutes: number;
+  timeCandidateCount: number;
+  suggestedBudgetMinor: number;
+  budgetCandidateCount: number;
 }
 
 export interface PlanCandidateOption extends PlanCandidate {
@@ -155,7 +176,7 @@ export async function getPlanCandidates(
       p_budget_minor: Math.min(budgetLimitMinor, 100_000_000),
       p_dietary: profile.dietary_preferences,
       p_equipment: profile.equipment,
-      p_max_minutes: profile.available_minutes,
+      p_max_minutes: planningMinutes(profile, mealType),
       p_meal_type: mealType,
       p_servings: servings,
     }),
@@ -212,7 +233,7 @@ export async function getPlanCandidates(
       const ranked = rankRecommendations(mapped, pantry, {
         budgetMinor: budgetLimitMinor,
         servings,
-        maxMinutes: profile.available_minutes,
+        maxMinutes: planningMinutes(profile, mealType),
         healthGoals: profile.health_goals,
         preferredCuisines: profile.preferred_cuisines,
         preferredDishes: profile.preferred_dishes,
@@ -224,6 +245,65 @@ export async function getPlanCandidates(
   ) as CandidatesByMealType;
 
   return candidates;
+}
+
+export async function getMealPlanConstraintDiagnostics(
+  profile: MealPlanProfile,
+  candidates: CandidatesByMealType,
+): Promise<MealPlanConstraintDiagnostic[]> {
+  const limitedMealTypes = mealTypes.filter(
+    (mealType) => candidates[mealType].length < 7,
+  );
+  if (!limitedMealTypes.length) return [];
+
+  const supabase = await createClient();
+  const currentBudgetMinor = weeklyBudgetMinor(profile);
+  const suggestedBudgetMinor = Math.min(
+    100_000_000,
+    Math.ceil(currentBudgetMinor * 1.2),
+  );
+  const baseArgs = {
+    p_dietary: profile.dietary_preferences,
+    p_equipment: profile.equipment,
+    p_servings: profile.household_size,
+  };
+  const probes = await Promise.all(
+    limitedMealTypes.flatMap((mealType) => {
+      const currentTimeLimit = planningMinutes(profile, mealType);
+      const timeLimitMinutes = Math.min(480, currentTimeLimit + 15);
+      return [
+      supabase.rpc("get_recommendation_candidates", {
+        ...baseArgs,
+        p_budget_minor: Math.min(currentBudgetMinor, 100_000_000),
+        p_max_minutes: timeLimitMinutes,
+        p_meal_type: mealType,
+      }),
+      supabase.rpc("get_recommendation_candidates", {
+        ...baseArgs,
+        p_budget_minor: suggestedBudgetMinor,
+        p_max_minutes: currentTimeLimit,
+        p_meal_type: mealType,
+      }),
+      ];
+    }),
+  );
+
+  return limitedMealTypes.map((mealType, index) => {
+    const timeProbe = probes[index * 2];
+    const budgetProbe = probes[index * 2 + 1];
+    return {
+      mealType,
+      currentCount: candidates[mealType].length,
+      timeLimitMinutes: Math.min(480, planningMinutes(profile, mealType) + 15),
+      timeCandidateCount: timeProbe.error
+        ? candidates[mealType].length
+        : (timeProbe.data?.length ?? 0),
+      suggestedBudgetMinor,
+      budgetCandidateCount: budgetProbe.error
+        ? candidates[mealType].length
+        : (budgetProbe.data?.length ?? 0),
+    };
+  });
 }
 
 export async function replaceWeeklyPlan(

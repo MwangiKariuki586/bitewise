@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useActionState, useState } from "react";
 import {
   CalendarRange,
@@ -16,6 +17,7 @@ import {
   Ellipsis,
   ChevronDown,
   ChevronRight,
+  Lightbulb,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +31,7 @@ import {
 import type {
   WeeklyPlan,
   WeeklyPlanItem,
+  MealPlanConstraintDiagnostic,
 } from "@/features/meal-plan/data";
 import type {
   CandidatesByMealType,
@@ -45,6 +48,7 @@ interface WeeklyPlanBoardProps {
   householdSize: number;
   plan: WeeklyPlan | null;
   candidates: CandidatesByMealType;
+  constraintDiagnostics?: MealPlanConstraintDiagnostic[];
 }
 
 const initialState: ActionResult = { status: "idle" };
@@ -55,6 +59,62 @@ function formatKes(minor: number) {
 
 function mealLabel(mealType: MealType) {
   return mealType[0].toUpperCase() + mealType.slice(1);
+}
+
+function ConstraintHealth({
+  diagnostics,
+  weekStart,
+}: {
+  diagnostics: MealPlanConstraintDiagnostic[];
+  weekStart: string;
+}) {
+  if (!diagnostics.length) return null;
+  const returnTo = encodeURIComponent(`/meal-plan?week=${weekStart}`);
+
+  return (
+    <Card className="border-warning/25 bg-surface-warm p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-warning/12 text-warning">
+          <Lightbulb className="size-5" aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h2 className="font-display text-lg font-semibold">Improve your weekly variety</h2>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            BiteWise kept your saved limits. These adjustments would unlock more valid choices; nothing changes until you update your profile and regenerate.
+          </p>
+          <div className="mt-3 grid gap-2 lg:grid-cols-3">
+            {diagnostics.map((diagnostic) => {
+              const timeGain = diagnostic.timeCandidateCount - diagnostic.currentCount;
+              const budgetGain = diagnostic.budgetCandidateCount - diagnostic.currentCount;
+              const useTime = timeGain > 0;
+              const useBudget = !useTime && budgetGain > 0;
+              const href = useTime
+                ? `/profile/edit?returnTo=${returnTo}&step=kitchen#${diagnostic.mealType}Minutes`
+                : useBudget
+                  ? `/profile/edit?returnTo=${returnTo}&step=basics#budgetKes`
+                  : `/profile/edit?returnTo=${returnTo}&step=preferences`;
+              const message = useTime
+                ? `Allowing up to ${diagnostic.timeLimitMinutes} minutes unlocks ${timeGain} more.`
+                : useBudget
+                  ? `A ${formatKes(diagnostic.suggestedBudgetMinor)} weekly budget unlocks ${budgetGain} more.`
+                  : "Your combined dietary, time, and kitchen settings leave a small matching pool.";
+              return (
+                <div key={diagnostic.mealType} className="rounded-xl bg-card/80 p-3 ring-1 ring-border/60">
+                  <p className="text-sm font-bold capitalize">{diagnostic.mealType} variety is limited</p>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    {diagnostic.currentCount} matching {diagnostic.currentCount === 1 ? "meal" : "meals"}. {message}
+                  </p>
+                  <Button asChild variant="link" className="mt-2 text-xs">
+                    <Link href={href}>{useTime ? `Adjust ${diagnostic.mealType} time` : useBudget ? "Review weekly budget" : "Review preferences"}</Link>
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 function MutationNotice({ state }: { state: ActionResult }) {
@@ -463,6 +523,7 @@ export function WeeklyPlanBoard({
   householdSize,
   plan,
   candidates,
+  constraintDiagnostics = [],
 }: WeeklyPlanBoardProps) {
   const [selectedDay, setSelectedDay] = useState(0);
   const [showWholeWeek, setShowWholeWeek] = useState(false);
@@ -583,6 +644,7 @@ export function WeeklyPlanBoard({
       </Card>
 
       <section aria-label="Mobile meal plan" className={`min-w-0 space-y-3 ${showWholeWeek ? "" : "lg:col-start-1 lg:row-start-2"}`}>
+        <ConstraintHealth diagnostics={constraintDiagnostics} weekStart={weekStart} />
         <Button
           type="button"
           variant="ghost"

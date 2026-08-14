@@ -453,14 +453,18 @@ export type Database = {
       profiles: {
         Row: {
           available_minutes: number
+          breakfast_minutes: number
           budget_minor: number | null
           budget_period: string
+          dinner_minutes: number
+          eat_now_minutes: number
           created_at: string
           dietary_preferences: string[]
           display_name: string | null
           equipment: string[]
           health_goals: string[]
           household_size: number
+          lunch_minutes: number
           onboarding_completed: boolean
           preferred_cuisines: string[]
           preferred_dishes: string[]
@@ -469,14 +473,18 @@ export type Database = {
         }
         Insert: {
           available_minutes?: number
+          breakfast_minutes?: number
           budget_minor?: number | null
           budget_period?: string
+          dinner_minutes?: number
+          eat_now_minutes?: number
           created_at?: string
           dietary_preferences?: string[]
           display_name?: string | null
           equipment?: string[]
           health_goals?: string[]
           household_size?: number
+          lunch_minutes?: number
           onboarding_completed?: boolean
           preferred_cuisines?: string[]
           preferred_dishes?: string[]
@@ -485,14 +493,18 @@ export type Database = {
         }
         Update: {
           available_minutes?: number
+          breakfast_minutes?: number
           budget_minor?: number | null
           budget_period?: string
+          dinner_minutes?: number
+          eat_now_minutes?: number
           created_at?: string
           dietary_preferences?: string[]
           display_name?: string | null
           equipment?: string[]
           health_goals?: string[]
           household_size?: number
+          lunch_minutes?: number
           onboarding_completed?: boolean
           preferred_cuisines?: string[]
           preferred_dishes?: string[]

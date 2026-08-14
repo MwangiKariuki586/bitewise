@@ -26,6 +26,9 @@ export type OnboardingStep = "basics" | "kitchen" | "preferences";
 
 export interface ProfileDefaults {
   availableMinutes: number;
+  breakfastMinutes: number;
+  lunchMinutes: number;
+  dinnerMinutes: number;
   budgetKes: number | null;
   budgetPeriod: string;
   dietaryPreferences: string[];
@@ -174,10 +177,28 @@ export function OnboardingForm({
               <p className="mt-2 text-sm leading-6 text-muted-foreground">We’ll only recommend meals that fit your available time and equipment.</p>
             </header>
             <div className="space-y-2">
-              <Label htmlFor="availableMinutes">Usual cooking time (minutes)</Label>
+              <Label htmlFor="availableMinutes">Eat Now cooking time (minutes)</Label>
               <Input id="availableMinutes" name="availableMinutes" type="number" inputMode="numeric" min={5} max={480} step={5} defaultValue={defaults.availableMinutes} aria-invalid={Boolean(state.fieldErrors?.availableMinutes)} />
               <FieldError id="time-error" errors={state.fieldErrors?.availableMinutes} />
+              <p className="text-xs text-muted-foreground">Used when you need a recommendation for right now.</p>
             </div>
+            <fieldset className="space-y-3 rounded-2xl bg-muted/45 p-4">
+              <legend className="px-1 text-sm font-semibold">Meal Plan cooking times</legend>
+              <p className="text-xs leading-5 text-muted-foreground">Set a realistic maximum for each daily meal. These limits stay strict until you change them.</p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {([
+                  ["breakfastMinutes", "Breakfast", defaults.breakfastMinutes],
+                  ["lunchMinutes", "Lunch", defaults.lunchMinutes],
+                  ["dinnerMinutes", "Dinner", defaults.dinnerMinutes],
+                ] as const).map(([name, label, value]) => (
+                  <div key={name} className="space-y-2">
+                    <Label htmlFor={name}>{label} minutes</Label>
+                    <Input id={name} name={name} type="number" inputMode="numeric" min={5} max={480} step={5} defaultValue={value} aria-invalid={Boolean(state.fieldErrors?.[name])} />
+                    <FieldError id={`${name}-error`} errors={state.fieldErrors?.[name]} />
+                  </div>
+                ))}
+              </div>
+            </fieldset>
             <ChoiceGrid legend="Equipment available" name="equipment" options={equipmentOptions} defaults={defaults.equipment} />
           </>
         ) : null}

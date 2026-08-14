@@ -32,6 +32,9 @@ export const kitchenSchema = z.object({
     .int()
     .min(5, "Choose at least 5 minutes.")
     .max(480, "Choose no more than 8 hours."),
+  breakfastMinutes: z.coerce.number().int().min(5).max(480),
+  lunchMinutes: z.coerce.number().int().min(5).max(480),
+  dinnerMinutes: z.coerce.number().int().min(5).max(480),
   equipment: z.array(z.enum(values(equipmentOptions))).max(9),
 });
 

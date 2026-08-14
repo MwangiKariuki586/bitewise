@@ -33,7 +33,10 @@ export async function ProfileFormPage({ mode, returnTo, step }: ProfileFormPageP
     ? requestedStep
     : "basics";
   const defaults: ProfileDefaults = {
-    availableMinutes: profile?.available_minutes ?? 45,
+    availableMinutes: profile?.eat_now_minutes ?? profile?.available_minutes ?? 45,
+    breakfastMinutes: profile?.breakfast_minutes ?? profile?.available_minutes ?? 45,
+    lunchMinutes: profile?.lunch_minutes ?? profile?.available_minutes ?? 45,
+    dinnerMinutes: profile?.dinner_minutes ?? profile?.available_minutes ?? 45,
     budgetKes: profile?.budget_minor ? profile.budget_minor / 100 : null,
     budgetPeriod: profile?.budget_period ?? "weekly",
     dietaryPreferences: profile?.dietary_preferences ?? [],

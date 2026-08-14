@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
 const profileColumns =
-  "display_name,budget_period,budget_minor,household_size,available_minutes,equipment,dietary_preferences,health_goals,preferred_cuisines,preferred_dishes,onboarding_completed";
+  "display_name,budget_period,budget_minor,household_size,available_minutes,eat_now_minutes,breakfast_minutes,lunch_minutes,dinner_minutes,equipment,dietary_preferences,health_goals,preferred_cuisines,preferred_dishes,onboarding_completed";
 
 export async function getCurrentProfile(returnTo?: string) {
   const identity = await requireUser(returnTo);

@@ -60,4 +60,33 @@ describe("WeeklyPlanBoard", () => {
     expect(within(mobilePlan).getByRole("button", { name: "Back to selected day" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Generate complete week" })).toBeEnabled();
   });
+
+  it("explains a constrained meal pool and links to the setting that unlocks options", () => {
+    render(
+      <WeeklyPlanBoard
+        weekStart="2026-08-10"
+        budgetLimitMinor={500_000}
+        householdSize={4}
+        plan={null}
+        candidates={candidates}
+        constraintDiagnostics={[
+          {
+            mealType: "dinner",
+            currentCount: 1,
+            timeLimitMinutes: 60,
+            timeCandidateCount: 7,
+            suggestedBudgetMinor: 600_000,
+            budgetCandidateCount: 1,
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("heading", { name: "Improve your weekly variety" })).toBeInTheDocument();
+    expect(screen.getByText(/1 matching meal\. Allowing up to 60 minutes unlocks 6 more/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Adjust dinner time" })).toHaveAttribute(
+      "href",
+      "/profile/edit?returnTo=%2Fmeal-plan%3Fweek%3D2026-08-10&step=kitchen#dinnerMinutes",
+    );
+  });
 });

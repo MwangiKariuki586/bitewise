@@ -10,6 +10,7 @@ import {
 } from "@/features/meal-plan/dates";
 import {
   getPlanCandidates,
+  getMealPlanConstraintDiagnostics,
   getWeeklyPlan,
   weeklyBudgetMinor,
 } from "@/features/meal-plan/data";
@@ -34,6 +35,10 @@ export default async function MealPlanPage({ searchParams }: MealPlanPageProps) 
     getWeeklyPlan(identity.sub, weekStart),
     getPlanCandidates(identity.sub, profile),
   ]);
+  const constraintDiagnostics = await getMealPlanConstraintDiagnostics(
+    profile,
+    candidates,
+  );
   const previousWeek = shiftWeek(weekStart, -1);
   const nextWeek = shiftWeek(weekStart, 1);
   const isCurrentWeek = weekStart === currentWeekStart();
@@ -88,6 +93,7 @@ export default async function MealPlanPage({ searchParams }: MealPlanPageProps) 
         householdSize={profile.household_size}
         plan={plan}
         candidates={candidates}
+        constraintDiagnostics={constraintDiagnostics}
       />
     </div>
   );
