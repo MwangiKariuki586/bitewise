@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  addRecipeToPlanSchema,
   generatePlanSchema,
   planMutationSchema,
   weekStartSchema,
@@ -28,5 +29,26 @@ describe("meal plan validation", () => {
       servings: "4",
     }).success).toBe(true);
     expect(planMutationSchema.safeParse({ ...base, operation: "set_servings" }).success).toBe(false);
+  });
+
+  it("validates direct recipe placement and replacement intent", () => {
+    expect(addRecipeToPlanSchema.safeParse({
+      weekStart: "2026-08-10",
+      dayOfWeek: 2,
+      mealType: "lunch",
+      recipeId: 12,
+      servings: 4,
+      expectedRecipeId: null,
+      replaceConfirmed: false,
+    }).success).toBe(true);
+    expect(addRecipeToPlanSchema.safeParse({
+      weekStart: "2026-08-11",
+      dayOfWeek: 9,
+      mealType: "snack",
+      recipeId: -1,
+      servings: 0,
+      expectedRecipeId: null,
+      replaceConfirmed: false,
+    }).success).toBe(false);
   });
 });
