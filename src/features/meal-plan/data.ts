@@ -35,11 +35,12 @@ export interface WeeklyPlanItem {
   servings: number;
   estimatedCostMinor: number;
   budgetedCostMinor: number;
-  recipe: {
-    name: string;
-    slug: string;
-    totalMinutes: number;
-    difficulty: string;
+    recipe: {
+      name: string;
+      slug: string;
+      totalMinutes: number;
+      difficulty: string;
+      imagePath: string | null;
   };
 }
 
@@ -94,6 +95,7 @@ export async function getWeeklyPlan(userId: string, weekStart: string) {
           prep_minutes,
           cook_minutes,
           difficulty
+          ,recipe_images(local_path,is_primary)
         )
       )
     `)
@@ -123,6 +125,8 @@ export async function getWeeklyPlan(userId: string, weekStart: string) {
           slug: item.recipe.slug,
           totalMinutes: item.recipe.prep_minutes + item.recipe.cook_minutes,
           difficulty: item.recipe.difficulty,
+          imagePath:
+            item.recipe.recipe_images.find((image) => image.is_primary)?.local_path ?? null,
         },
       }))
       .sort((left, right) =>

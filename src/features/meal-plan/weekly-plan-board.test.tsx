@@ -50,7 +50,7 @@ describe("WeeklyPlanBoard", () => {
     const daySelector = screen.getByRole("group", { name: "Choose a day" });
     expect(within(mobilePlan).getByRole("heading", { name: "Monday" })).toBeInTheDocument();
     expect(within(mobilePlan).getAllByText("Open meal slot")).toHaveLength(3);
-    expect(within(desktopPlan).getAllByText("Open meal slot")).toHaveLength(21);
+    expect(within(desktopPlan).getByText(/Use View whole week/)).toBeInTheDocument();
 
     await user.click(within(daySelector).getByRole("button", { name: "Tue 11" }));
     expect(within(mobilePlan).getByRole("heading", { name: "Tuesday" })).toBeInTheDocument();

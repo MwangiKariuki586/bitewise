@@ -39,11 +39,11 @@ export default async function MealPlanPage({ searchParams }: MealPlanPageProps) 
   const isCurrentWeek = weekStart === currentWeekStart();
 
   return (
-    <div className="space-y-4 pb-8 sm:space-y-6">
+    <div className="space-y-4 pb-8 sm:space-y-5">
       <PageIntro
         eyebrow="Meal Plan"
         title="Make the week feel lighter."
-        description="Plan practical meals around your budget, kitchen, time, and household."
+        description="Balanced meals, smarter budget, less stress."
         variant="standard"
       />
 

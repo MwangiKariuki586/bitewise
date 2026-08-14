@@ -1,62 +1,47 @@
-# Recipe details design QA
+# Meal Plan and application-shell responsive revamp — design QA
 
 **Source visual truth**
 
-- User-provided BiteWise recipe-detail mobile and desktop mockups in the current conversation.
-- Source dimensions: mobile 945 x 1679 px; desktop 1456 x 1086 px.
-- Intended states: default ingredients tab, serving count 4, kitchen inventory expanded.
+- User-provided Whole Week and shell composite mockup in the latest 2026-08-14 request.
+- Target states: BiteWise's established desktop sidebar with a two-column Whole Week grid; mobile with the established compact header and bottom navigation plus the new weekly summary and accordion day cards. The mockup's top navigation is not part of the requested shell change.
+- Source composite dimensions: 1676 × 909 px. The device frames and surrounding canvas prevent exact CSS viewport recovery.
 
 **Implementation evidence**
 
-- Route: `/recipes/githeri-avocado-bowl`.
-- Browser-rendered route and responsive DOM were inspected at the recipe detail page.
-- Implementation screenshots: unavailable because the connected Chrome capture command timed out.
-- Browser viewport capture dimensions and density normalization: unavailable.
-- Browser state: recipe title and preparation content visible; no console errors; responsive DOM had no horizontal overflow at the browser's enforced minimum width.
+- Route: `http://127.0.0.1:3000/meal-plan`
+- Browser: connected Chrome
+- State reached: signed-out redirect to `/auth/sign-in?next=%2Fmeal-plan`
+- Browser console errors: none
+- Primary interactions tested: route navigation and protected-route redirect only
+- Implementation screenshot: unavailable because the protected Meal Plan UI was not rendered in the connected browser
+- Viewport and density comparison: unavailable; no authenticated implementation capture exists to normalize against the source
 
 **Findings**
 
-- [P1] Same-state screenshot comparison is blocked.
-  Location: full recipe page at mobile, tablet, and desktop widths.
-  Evidence: both source mockups are available and the implementation renders in the browser, but the browser could not capture an implementation screenshot.
-  Impact: exact image crop, line wrapping, spacing, visual density, and breakpoint fidelity cannot receive the required visual sign-off.
-  Fix: capture the rendered route at 390 px, 820 px, and 1440 px, combine the mobile and desktop captures with their corresponding source images, then correct any remaining P0/P1/P2 drift.
+- [P0] Authenticated implementation cannot be captured
+  Location: `/meal-plan`
+  Evidence: the browser redirected to the sign-in route before the Meal Plan screen rendered.
+  Impact: desktop, tablet, and mobile visual fidelity cannot be assessed from browser evidence.
+  Fix: sign in to the connected browser with a completed BiteWise profile, then capture the same selected-day state at the three target widths.
 
 **Required fidelity surfaces**
 
-- Fonts and typography: BiteWise's existing Newsreader and Manrope hierarchy is retained; exact wrapping and optical weight remain visually unverified.
-- Spacing and layout rhythm: the mobile image-first flow, tablet single-column midpoint, and desktop content-plus-rail composition are implemented; screenshot comparison remains blocked.
-- Colors and visual tokens: the existing aubergine, ivory, green, orange, red, violet, and blue semantic palette is used; rendered color comparison remains blocked.
-- Image quality and asset fidelity: the existing optimized recipe WebP is rendered through `next/image`; exact crop and sharpness remain visually unverified.
-- Copy and content: hero facts, rationale cards, kitchen readiness, serving control, ingredients, tutorial link, and preparation are present and readable in the browser DOM.
-
-**Full-view comparison evidence**
-
-- Blocked: browser-rendered implementation screenshots could not be captured.
-
-**Focused region comparison evidence**
-
-- Blocked: no valid full-view implementation capture exists from which to create hero, kitchen, and recipe-body comparisons.
-
-**Primary interactions tested**
-
-- Ingredients and Nutrition tabs render as controls.
-- Serving decrement/increment controls are present and the serving-scaled ingredient behavior is covered by the updated Discover journey.
-- Meal-plan and Cook Mode links preserve the existing routes.
-- Browser rendered the recipe title and Preparation section with no console errors.
+- Fonts and typography: blocked pending authenticated captures.
+- Spacing and layout rhythm: blocked pending authenticated captures.
+- Colors and visual tokens: blocked pending authenticated captures.
+- Image quality and asset fidelity: code uses the catalogue's optimized local WebP photography, but visual crop and sharpness remain blocked pending authenticated captures.
+- Copy and content: source-level review confirms the target heading, revised description, budget summary, day selector, meal metadata, Whole Week cards, preserved BiteWise sidebar navigation, and actions are represented; browser confirmation is blocked.
 
 **Comparison history**
 
-- Pass 1: blocked before combined-image comparison because Chrome screenshot capture timed out. No screenshot-derived fixes were claimed.
+- Initial pass: blocked before visual comparison because the protected route redirected to sign-in.
+- No visual fixes were made from screenshot evidence, because no authenticated implementation screenshot was available.
 
 **Implementation checklist**
 
-- Capture matching mobile, tablet, and desktop implementation screenshots.
-- Compare source and implementation together.
-- Resolve any P0/P1/P2 visual differences before visual sign-off.
-
-**Follow-up polish**
-
-- Defer P3 polish until screenshot evidence is available.
+- Authenticate the connected browser with a completed BiteWise profile.
+- Capture desktop and mobile Whole Week states plus the selected-day state.
+- Compare each capture together with the source mockup and fix all P0/P1/P2 differences.
+- Verify day selection, whole-week toggle, meal edit disclosure, shopping-list generation, and week regeneration.
 
 final result: blocked
