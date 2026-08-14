@@ -145,6 +145,7 @@ test.describe("feedback, saved meals, and history", () => {
     const dislike = firstCard.getByRole("button", { name: "Dislike", exact: true });
     await dislike.click();
     await expect(dislike).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: /Edit/ }).click();
     await page.getByRole("button", { name: "Refresh my matches" }).click();
 
     await expect(

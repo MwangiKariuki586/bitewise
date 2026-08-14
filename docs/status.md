@@ -20,6 +20,48 @@ Active feature: BiteWise MVP
 
 Status: Complete
 
+Eat Now responsive refinement completed from the supplied desktop, tablet, and
+mobile mockups. The page now uses a branded food hero, exposes the complete
+constraints form before generation, collapses only after a successful response,
+retains submitted budget, servings, time, meal type, equipment, and dietary
+values, and reopens through Edit. Failed generation remains expanded. Results
+use compact responsive cards with pantry and missing-item summaries; detailed
+meal content stays on the existing dedicated recipe route. Best-fit, cost, time,
+and pantry sorting plus recommendation state and scroll position are preserved
+in session storage across the recipe-details round trip. Regeneration collapses
+again only after success, and the existing mobile safe-area clearance remains in
+place.
+
+The recommendation query, public catalogue cache, private request-scoped data,
+invalidation, and the existing authenticated limit of 20 recommendation lists
+per 10 minutes are unchanged. Verified with 89 unit/integration tests, all 58
+mobile/desktop Playwright journeys (57 passed and one intentional desktop skip
+for the mobile-only density check), strict typecheck, warning-free lint,
+production build, and `git diff --check`. The connected browser session was
+signed out and could not render the authenticated Eat Now state, so fresh
+screenshot-to-mockup visual sign-off remains blocked; see `design-qa.md`.
+
+Eat Now session restoration follow-up: persisted recommendation state now carries
+an explicit schema version and is shape-checked before rendering. Legacy or
+malformed session data is removed automatically and falls back to the full
+constraints form, preventing the route-level error boundary seen after the
+constraint-state shape changed. This client-only recovery does not change
+queries, caching, invalidation, or rate limiting. Regression coverage reproduces
+the incompatible legacy payload. The follow-up passed all 89 unit/integration
+tests, the seven affected mobile/desktop catalogue journeys with one intentional
+desktop skip, strict typecheck, lint, production build, and `git diff --check`.
+
+Eat Now result transition follow-up: after a successful initial generation or
+regeneration, the collapsed form now smoothly scrolls the shortlist heading
+directly beneath the sticky application header. Failed generation does not move
+the viewport, and reduced-motion preferences replace the animation with an
+immediate aligned jump. The result section uses responsive scroll margin so the
+header does not cover its heading. This client-only interaction does not change
+queries, caching, invalidation, or rate limiting. Verified with all 89
+unit/integration tests, all 58 mobile/desktop Playwright journeys (57 passed and
+one intentional desktop skip), strict typecheck, lint, production build, and
+`git diff --check`.
+
 The public landing page has been rebuilt around the approved editorial desktop
 reference and intentionally adapted for tablet and mobile rather than merely
 scaled down. It now presents the complete BiteWise decision journey: budget,
