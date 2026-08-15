@@ -110,12 +110,8 @@ test.describe("curated recipe catalogue", () => {
       expect(Math.abs((imageBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThanOrEqual(12);
       expect(Math.abs((detailsBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThanOrEqual(20);
     }
-    if (testInfo.project.name === "mobile-chromium") {
-      await expect(page.getByLabel("Meal budget (KES)")).toHaveCount(0);
-      await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
-    } else {
-      await expect(page.getByLabel("Meal budget (KES)")).toHaveValue("1666");
-    }
+    await expect(page.getByLabel("Meal budget (KES)")).toHaveCount(0);
+    await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
 
     await page.getByLabel("Sort by").selectOption("cost");
     await page.getByRole("link", { name: /View details/ }).first().click();
@@ -132,11 +128,7 @@ test.describe("curated recipe catalogue", () => {
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
     await expect(page.getByLabel("Sort by")).toHaveValue("cost");
-    if (testInfo.project.name === "mobile-chromium") {
-      await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
-    } else {
-      await expect(page.getByLabel("Meal budget (KES)")).toHaveValue("1666");
-    }
+    await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);

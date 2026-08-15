@@ -88,8 +88,13 @@ describe("RecommendationForm", () => {
     render(<RecommendationForm defaults={defaults} />);
 
     expect(screen.getByLabelText("Meal budget (KES)")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Your best matches will appear here" })).toBeVisible();
+    expect(screen.getAllByText("Gas cooker").some((element) => element.tagName === "SPAN")).toBe(true);
+    expect(screen.getByText("No dietary restrictions")).toBeVisible();
+    expect(screen.getByText("More constraints").closest("details")).not.toHaveAttribute("open");
     expect(screen.getByLabelText("Meal budget (KES)")).toHaveAttribute("min", "0");
     expect(screen.getByLabelText("Meal budget (KES)")).toHaveAttribute("step", "5");
+    expect(screen.getByRole("button", { name: "Find meals that fit" })).toHaveAttribute("formnovalidate");
     await user.clear(screen.getByLabelText("Meal budget (KES)"));
     await user.type(screen.getByLabelText("Meal budget (KES)"), "350");
     await user.click(screen.getByRole("button", { name: "Find meals that fit" }));
@@ -118,10 +123,13 @@ describe("RecommendationForm", () => {
     const user = userEvent.setup();
     render(<RecommendationForm defaults={defaults} />);
 
+    await user.clear(screen.getByLabelText("Meal budget (KES)"));
+    await user.type(screen.getByLabelText("Meal budget (KES)"), "275");
     await user.click(screen.getByRole("button", { name: "Find meals that fit" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("could not generate");
     expect(screen.getByLabelText("Meal budget (KES)")).toBeVisible();
+    expect(screen.getByLabelText("Meal budget (KES)")).toHaveValue(275);
     expect(screen.queryByRole("button", { name: /Edit/ })).not.toBeInTheDocument();
     expect(scrollIntoView).not.toHaveBeenCalled();
   });
