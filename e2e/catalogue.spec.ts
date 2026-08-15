@@ -112,6 +112,16 @@ test.describe("curated recipe catalogue", () => {
     }
     await expect(page.getByLabel("Meal budget (KES)")).toHaveCount(0);
     await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
+    if (testInfo.project.name === "desktop-chromium") {
+      const constraintsSection = page.locator('section[aria-labelledby="constraints-heading"]');
+      const [constraintsBox, resultsBox] = await Promise.all([
+        constraintsSection.boundingBox(),
+        resultsSection.boundingBox(),
+      ]);
+      expect(constraintsBox).not.toBeNull();
+      expect(resultsBox).not.toBeNull();
+      expect((resultsBox?.x ?? 0)).toBeGreaterThan((constraintsBox?.x ?? 0) + (constraintsBox?.width ?? 0));
+    }
 
     await page.getByLabel("Sort by").selectOption("cost");
     await page.getByRole("link", { name: /View details/ }).first().click();

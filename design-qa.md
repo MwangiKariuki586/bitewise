@@ -24,6 +24,7 @@ Blocked for the same reason. Source inspection informed the full constraint form
 
 - Fonts and typography: existing BiteWise Newsreader and Manrope tokens retained; browser comparison blocked.
 - Spacing and layout rhythm: shared text-only page header and responsive pre-results form/shortlist composition implemented; browser comparison blocked.
+- Collapsed constraints: tablets use a compact full-width summary above the shortlist; large screens use a wider two-column summary rail beside the matches instead of the cramped vertical stack; screenshot comparison remains blocked.
 - Colors and visual tokens: existing BiteWise surfaces, primary, secondary, muted, and foreground tokens retained with borders reduced in favor of spacing and soft elevation; browser comparison blocked.
 - Image quality and asset fidelity: not applicable after the approved follow-up removed the non-essential hero photograph.
 - Copy and content: mockup-led hero, constraint, saved-preference, shortlist, metric, and request-limit copy implemented without fake meal data.

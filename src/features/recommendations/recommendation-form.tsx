@@ -299,8 +299,8 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
   const pricing = state.status === "success" ? state.data?.pricing : null;
 
   return (
-    <div className={cn("space-y-5 xl:grid xl:items-start xl:gap-5 xl:space-y-0", state.status === "success" ? "xl:grid-cols-[19rem_minmax(0,1fr)]" : "xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]")}>
-      <section className="rounded-[1.5rem] bg-card/80 p-4 shadow-[0_16px_45px_-38px_rgba(91,23,51,0.5)] sm:p-5 xl:sticky xl:top-20" aria-labelledby="constraints-heading">
+    <div className={cn("space-y-5 xl:grid xl:items-start xl:gap-5 xl:space-y-0", state.status === "success" ? "xl:grid-cols-[22rem_minmax(0,1fr)]" : "xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]")}>
+      <section className={cn("rounded-[1.5rem] bg-card/80 p-4 shadow-[0_16px_45px_-38px_rgba(91,23,51,0.5)] xl:sticky xl:top-20", state.status !== "success" && "sm:p-5")} aria-labelledby="constraints-heading">
         <div className="flex items-center justify-between gap-3">
           <div><h2 id="constraints-heading" className="text-xs font-bold uppercase tracking-[0.16em] text-primary">What fits today?</h2>{state.status !== "success" || expanded ? <p className="mt-2 text-xs text-muted-foreground">Adjust anything that&apos;s different for this meal.</p> : null}</div>
           {state.status === "success" ? (
@@ -311,7 +311,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
         </div>
 
         {!expanded && state.status === "success" ? (
-          <div className="mt-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:flex-nowrap xl:grid xl:grid-cols-2">
             <span className="constraint-chip"><Coins className="size-4" />KES {constraints.budgetKes.toLocaleString("en-KE")}</span>
             <span className="constraint-chip"><UsersRound className="size-4" />{constraints.servings} servings</span>
             <span className="constraint-chip"><Clock3 className="size-4" />{constraints.maxMinutes} min</span>

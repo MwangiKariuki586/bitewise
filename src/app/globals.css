@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @utility constraint-chip {
-  @apply flex min-h-12 items-center gap-2 rounded-xl bg-background px-3 text-sm font-semibold ring-1 ring-border/70 sm:min-w-36;
+  @apply flex min-h-10 items-center gap-2 rounded-xl bg-background px-3 text-xs font-semibold ring-1 ring-border/70;
 }
 
 :root {
