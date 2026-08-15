@@ -1,15 +1,16 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { RecipeDetailView } from "@/features/recipes/recipe-detail-view";
 import type { RecipeCatalogueItem } from "@/features/recipes/data";
 
 vi.mock("@/features/meal-plan/add-to-meal-plan-control", () => ({
-  AddToMealPlanControl: () => <button type="button">Add to meal plan</button>,
+  AddToMealPlanControl: ({ returnTo }: { returnTo?: string }) => <button type="button" data-return-to={returnTo}>Add to meal plan</button>,
 }));
 
 vi.mock("@/features/cook/cook-setup-control", () => ({
-  CookSetupControl: () => <button type="button">Start cooking</button>,
+  CookSetupControl: ({ returnTo }: { returnTo?: string }) => <button type="button" data-return-to={returnTo}>Start cooking</button>,
 }));
 
 vi.mock("@/features/personalisation/controls", () => ({
@@ -59,6 +60,9 @@ describe("RecipeDetailView", () => {
         recipe={recipe}
         personalisation={{ isSaved: false, feedback: null, lastEatenAt: null }}
         authenticated
+        viewContext={{ source: "direct", servings: 1 }}
+        pantryItems={[]}
+        today="2026-08-15"
       />,
     );
 
@@ -68,5 +72,50 @@ describe("RecipeDetailView", () => {
     expect(region).toHaveClass("h-60", "md:absolute", "md:w-[52%]", "xl:w-[52%]");
     expect(region.parentElement).not.toHaveClass("border-b");
     expect(image).toHaveClass("object-cover", "object-center");
+  });
+
+  it("defaults direct visits to one serving and persists serving changes in the URL", async () => {
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/recipes/black-bean-rice");
+    render(
+      <RecipeDetailView
+        recipe={recipe}
+        personalisation={{ isSaved: false, feedback: null, lastEatenAt: null }}
+        authenticated
+        viewContext={{ source: "direct", servings: 1 }}
+        pantryItems={[]}
+        today="2026-08-15"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Back to Discover" })).toHaveAttribute("href", "/discover");
+    expect(screen.getAllByText("Serves 1").length).toBeGreaterThan(0);
+    expect(screen.getByText("Ingredient value")).toBeInTheDocument();
+    await user.click(screen.getAllByRole("button", { name: "Increase servings" })[0]);
+    expect(window.location.search).toBe("?servings=2");
+    expect(screen.getByRole("button", { name: "Add to meal plan" })).toHaveAttribute(
+      "data-return-to",
+      "/recipes/black-bean-rice?servings=2",
+    );
+  });
+
+  it("keeps Eat Now pricing and navigation context", () => {
+    render(
+      <RecipeDetailView
+        recipe={recipe}
+        personalisation={{ isSaved: false, feedback: null, lastEatenAt: null }}
+        authenticated
+        viewContext={{ source: "eat-now", servings: 4 }}
+        pantryItems={[]}
+        today="2026-08-15"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Back to Eat Now" })).toHaveAttribute("href", "/eat-now");
+    expect(screen.getByText("Cash needed")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Start cooking" })).toHaveAttribute(
+      "data-return-to",
+      "/recipes/black-bean-rice?servings=4&source=eat-now",
+    );
   });
 });

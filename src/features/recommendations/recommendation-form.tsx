@@ -15,6 +15,7 @@ import { dietaryOptions, equipmentOptions } from "@/features/profile/options";
 import { generateRecommendationsAction } from "@/features/recommendations/actions";
 import type { RecommendationResponse } from "@/features/recommendations/data";
 import type { RecommendedMeal } from "@/features/recommendations/ranking";
+import { recipeViewHref } from "@/features/recipes/view-context";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
 
@@ -144,7 +145,7 @@ function RecommendationCard({
         </div>
         <div className="grid grid-cols-1 gap-2 sm:col-start-2 xl:col-start-auto xl:flex xl:flex-col xl:justify-center">
           <Button asChild className="w-full">
-            <Link href={`/recipes/${meal.slug}`} scroll={false} onClick={rememberScroll}>View details <span aria-hidden="true">→</span></Link>
+            <Link href={recipeViewHref(meal.slug, "eat-now", meal.servings)} scroll={false} onClick={rememberScroll}>View details <span aria-hidden="true">→</span></Link>
           </Button>
           <RecipePersonalisationControls recipeId={meal.id} initialState={meal.personalisation} authenticated compact cardActions />
         </div>
@@ -293,7 +294,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
           <form action={submit} className="mt-4 space-y-4">
             {defaults.dietaryPreferences.map((value) => <input key={value} type="hidden" name="dietaryPreferences" value={value} />)}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-2">
-              <div className="space-y-1.5"><Label htmlFor="budgetKes">Meal budget (KES)</Label><Input id="budgetKes" name="budgetKes" type="number" min="100" max="1000000" defaultValue={constraints.budgetKes} aria-describedby="budget-pricing-context" /><p id="budget-pricing-context" className="text-[0.68rem] leading-4 text-muted-foreground">Maximum cash available for missing items today.</p><FieldError errors={state.fieldErrors?.budgetKes} /></div>
+              <div className="space-y-1.5"><Label htmlFor="budgetKes">Meal budget (KES)</Label><Input id="budgetKes" name="budgetKes" type="number" min="0" max="1000000" step="5" defaultValue={constraints.budgetKes} aria-describedby="budget-pricing-context" /><p id="budget-pricing-context" className="text-[0.68rem] leading-4 text-muted-foreground">Maximum cash available for missing items today.</p><FieldError errors={state.fieldErrors?.budgetKes} /></div>
               <div className="space-y-1.5"><Label htmlFor="servings">Servings</Label><Input id="servings" name="servings" type="number" min="1" max="30" defaultValue={constraints.servings} /><FieldError errors={state.fieldErrors?.servings} /></div>
               <div className="space-y-1.5"><Label htmlFor="maxMinutes">Time available</Label><Input id="maxMinutes" name="maxMinutes" type="number" min="5" max="480" defaultValue={constraints.maxMinutes} /><FieldError errors={state.fieldErrors?.maxMinutes} /></div>
               <div className="space-y-1.5"><Label htmlFor="mealType">Meal type</Label><div className="relative"><select id="mealType" name="mealType" defaultValue={constraints.mealType} className="h-12 w-full appearance-none rounded-xl bg-background px-3 pr-8 text-sm ring-1 ring-input"><option value="">Any meal</option><option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option><option value="snack">Snack</option></select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2" /></div></div>

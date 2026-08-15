@@ -22,6 +22,7 @@ interface AddToMealPlanControlProps {
   recipeId: number;
   recipeName: string;
   recipeSlug: string;
+  returnTo?: string;
 }
 
 const dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -35,7 +36,7 @@ function sentenceLabel(value: string) {
   return value[0].toUpperCase() + value.slice(1);
 }
 
-export function AddToMealPlanControl({ authenticated, recipeId, recipeName, recipeSlug }: AddToMealPlanControlProps) {
+export function AddToMealPlanControl({ authenticated, recipeId, recipeName, recipeSlug, returnTo: returnToProp }: AddToMealPlanControlProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<AddToMealPlanContext | null>(null);
@@ -47,7 +48,7 @@ export function AddToMealPlanControl({ authenticated, recipeId, recipeName, reci
   const [replacementConfirmed, setReplacementConfirmed] = useState(false);
   const [loading, startLoading] = useTransition();
   const [saving, startSaving] = useTransition();
-  const returnTo = `/recipes/${recipeSlug}`;
+  const returnTo = returnToProp ?? `/recipes/${recipeSlug}`;
 
   const selectedWeek = context?.weeks.find((week) => week.weekStart === weekStart) ?? null;
   const occupiedSlot = selectedWeek?.slots.find((slot) => slot.dayOfWeek === dayOfWeek && slot.mealType === mealType) ?? null;

@@ -15,12 +15,18 @@ import { AddToMealPlanControl } from "@/features/meal-plan/add-to-meal-plan-cont
 import { RecipePersonalisationControls } from "@/features/personalisation/controls";
 import type { RecipePersonalisationState } from "@/features/personalisation/data";
 import type { RecipeCatalogueItem } from "@/features/recipes/data";
+import { cashNeededMinor, ingredientValueMinor } from "@/features/recipes/pricing";
+import type { RecipeViewContext } from "@/features/recipes/view-context";
+import type { RecommendationPantryItem } from "@/features/recommendations/ranking";
 import { buildYouTubeTutorialSearchUrl } from "@/features/watch-cook/youtube-search";
 
 interface RecipeDetailViewProps {
   recipe: RecipeCatalogueItem;
   personalisation: RecipePersonalisationState;
   authenticated: boolean;
+  viewContext: RecipeViewContext;
+  pantryItems: RecommendationPantryItem[];
+  today: string;
 }
 
 function formatQuantity(value: number) {
@@ -39,12 +45,38 @@ const reasons = [
   { icon: ShoppingCart, title: "Equipment fit", copy: "Uses basic kitchen tools", tone: "text-blue-700 bg-blue-50" },
 ];
 
-export function RecipeDetailView({ recipe, personalisation, authenticated }: RecipeDetailViewProps) {
-  const [servings, setServings] = useState(recipe.baseServings);
+export function RecipeDetailView({ recipe, personalisation, authenticated, viewContext, pantryItems, today }: RecipeDetailViewProps) {
+  const [servings, setServings] = useState(viewContext.servings);
   const [tab, setTab] = useState<"ingredients" | "nutrition">("ingredients");
   const ratio = servings / recipe.baseServings;
   const optional = recipe.ingredients.filter((ingredient) => ingredient.isOptional);
   const required = recipe.ingredients.filter((ingredient) => !ingredient.isOptional);
+  const pantryAware = viewContext.source === "eat-now";
+  const displayedCostMinor = pantryAware
+    ? cashNeededMinor(recipe, pantryItems, servings, today)
+    : ingredientValueMinor(recipe, servings);
+  const sourceHref =
+    viewContext.source === "discover" ? "/discover" :
+    viewContext.source === "meal-plan" ? "/meal-plan" :
+    viewContext.source === "saved" ? "/my-kitchen/saved" :
+    viewContext.source === "eat-now" ? "/eat-now" :
+    "/discover";
+  const sourceLabel =
+    viewContext.source === "discover" ? "Discover" :
+    viewContext.source === "meal-plan" ? "Meal Plan" :
+    viewContext.source === "saved" ? "Saved Meals" :
+    viewContext.source === "eat-now" ? "Eat Now" :
+    "Discover";
+  function hrefForServings(nextServings: number) {
+    const params = new URLSearchParams({ servings: String(nextServings) });
+    if (viewContext.source !== "direct") params.set("source", viewContext.source);
+    return `/recipes/${recipe.slug}?${params}`;
+  }
+  const currentHref = hrefForServings(servings);
+  function updateServings(nextServings: number) {
+    setServings(nextServings);
+    window.history.replaceState(null, "", hrefForServings(nextServings));
+  }
   const youtubeUrl = buildYouTubeTutorialSearchUrl({
     recipeName: recipe.name,
     language: "english",
@@ -79,7 +111,7 @@ export function RecipeDetailView({ recipe, personalisation, authenticated }: Rec
 
             <div className="relative z-10 px-5 pb-7 sm:px-8 md:flex md:min-h-[25rem] md:w-[62%] md:flex-col md:justify-center md:py-8 xl:w-[60%]">
               <Button asChild variant="ghost" className="-ml-3 mb-4 w-fit text-primary hover:text-primary">
-                <Link href="/eat-now"><ArrowLeft aria-hidden="true" />Back to Eat Now</Link>
+                <Link href={sourceHref}><ArrowLeft aria-hidden="true" />Back to {sourceLabel}</Link>
               </Button>
               <div className="flex flex-wrap gap-2">
                 <span className="rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground">Match 1</span>
@@ -90,19 +122,19 @@ export function RecipeDetailView({ recipe, personalisation, authenticated }: Rec
               <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">{recipe.summary}</p>
               <div className="mt-6 grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
                 {[
-                  [CircleDollarSign, formatKes(recipe.estimatedCostMinor), "Ingredient value"],
+                  [CircleDollarSign, formatKes(displayedCostMinor), pantryAware ? "Cash needed" : "Ingredient value"],
                   [Clock3, `${recipe.totalMinutes} min`, "Prep + cook"],
-                  [UsersRound, String(recipe.baseServings), "Servings"],
+                  [UsersRound, String(servings), "Servings"],
                   [Gauge, recipe.difficulty, "Difficulty"],
                 ].map(([Icon, value, label]) => (
                   <div key={String(label)} className="flex gap-2"><Icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" /><span><strong className="block capitalize">{String(value)}</strong><small className="text-muted-foreground">{String(label)}</small></span></div>
                 ))}
               </div>
               <div className="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.75rem] gap-2 sm:max-w-[31rem] sm:gap-3">
-                <AddToMealPlanControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} />
-                <CookSetupControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} />
+                <AddToMealPlanControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} returnTo={currentHref} />
+                <CookSetupControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} returnTo={currentHref} />
                 <div>
-                  <RecipePersonalisationControls recipeId={recipe.id} initialState={personalisation} authenticated={authenticated} compact detailActions returnTo={`/recipes/${recipe.slug}`} />
+                  <RecipePersonalisationControls recipeId={recipe.id} initialState={personalisation} authenticated={authenticated} compact detailActions returnTo={currentHref} />
                 </div>
               </div>
             </div>
@@ -125,19 +157,19 @@ export function RecipeDetailView({ recipe, personalisation, authenticated }: Rec
               <h2 id="your-kitchen" className="font-display text-xl font-semibold">Recipe ingredients</h2>
               <div className="mt-3 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                 <details open className="rounded-2xl bg-green-50/80 p-4"><summary className="flex cursor-pointer list-none items-center justify-between font-bold text-green-800">Required ({required.length})<ChevronDown className="size-4" /></summary><ul className="mt-3 space-y-2 text-sm">{required.map((item) => <li key={item.id} className="flex items-center gap-2"><Check className="size-4 text-green-700" />{item.name}</li>)}</ul></details>
-                <details open className="rounded-2xl bg-orange-50/80 p-4"><summary className="flex cursor-pointer list-none items-center justify-between font-bold text-red-700">Optional ({optional.length})<ChevronDown className="size-4" /></summary><ul className="mt-3 space-y-2 text-sm">{optional.length ? optional.map((item) => <li key={item.id}>{item.name}</li>) : <li>No optional extras</li>}</ul><p className="mt-4 border-t border-orange-200 pt-3 text-xs leading-5 text-muted-foreground">Ingredient value is prorated for the recipe. Use Eat Now for pantry-aware cash needed today.</p></details>
+                <details open className="rounded-2xl bg-orange-50/80 p-4"><summary className="flex cursor-pointer list-none items-center justify-between font-bold text-red-700">Optional ({optional.length})<ChevronDown className="size-4" /></summary><ul className="mt-3 space-y-2 text-sm">{optional.length ? optional.map((item) => <li key={item.id}>{item.name}</li>) : <li>No optional extras</li>}</ul><p className="mt-4 border-t border-orange-200 pt-3 text-xs leading-5 text-muted-foreground">{pantryAware ? "Cash needed deducts your usable pantry quantities and uses practical buying increments for missing items." : "Ingredient value is the prorated raw-ingredient value for the selected servings."}</p></details>
                 <div className="rounded-2xl bg-primary/5 p-4 md:col-span-2 lg:col-span-1"><h3 className="font-bold">Substitutions</h3><p className="mt-3 text-sm leading-6 text-muted-foreground">Use a close pantry alternative when one is available, without changing the spirit of the meal.</p><Button variant="outline" className="mt-4 w-full">Add missing items</Button></div>
               </div>
             </section>
 
             <section className="xl:hidden" aria-label="Recipe ingredients and preparation">
-              <RecipeBody recipe={recipe} servings={servings} setServings={setServings} ratio={ratio} tab={tab} setTab={setTab} youtubeUrl={youtubeUrl} />
+              <RecipeBody recipe={recipe} servings={servings} setServings={updateServings} ratio={ratio} tab={tab} setTab={setTab} youtubeUrl={youtubeUrl} />
             </section>
           </div>
         </div>
 
         <aside className="hidden min-w-0 px-8 py-7 xl:block">
-          <RecipeBody recipe={recipe} servings={servings} setServings={setServings} ratio={ratio} tab={tab} setTab={setTab} youtubeUrl={youtubeUrl} />
+          <RecipeBody recipe={recipe} servings={servings} setServings={updateServings} ratio={ratio} tab={tab} setTab={setTab} youtubeUrl={youtubeUrl} />
         </aside>
       </div>
       {recipe.image ? <footer className="px-5 pb-5 text-[.68rem] text-muted-foreground sm:px-8">Photo by <a className="underline" href={recipe.image.attributionUrl} target="_blank" rel="noreferrer">{recipe.image.attributionName}</a> · {recipe.image.licenseName}</footer> : null}

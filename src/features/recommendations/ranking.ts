@@ -264,10 +264,12 @@ export function rankRecommendations(
     const budgetedCostMinor = preferences.affordabilityMode === "purchase-cost"
       ? cashNeededForMealMinor
       : candidate.affordableCostMinor;
-    const budgetHeadroom = Math.max(
-      0,
-      Math.min(1, (preferences.budgetMinor - budgetedCostMinor) / preferences.budgetMinor),
-    );
+    const budgetHeadroom = preferences.budgetMinor === 0
+      ? (budgetedCostMinor === 0 ? 1 : 0)
+      : Math.max(
+          0,
+          Math.min(1, (preferences.budgetMinor - budgetedCostMinor) / preferences.budgetMinor),
+        );
     const timeHeadroom = Math.max(
       0,
       Math.min(1, (preferences.maxMinutes - candidate.totalMinutes) / preferences.maxMinutes),

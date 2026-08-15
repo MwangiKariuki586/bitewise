@@ -88,13 +88,15 @@ describe("RecommendationForm", () => {
     render(<RecommendationForm defaults={defaults} />);
 
     expect(screen.getByLabelText("Meal budget (KES)")).toBeVisible();
+    expect(screen.getByLabelText("Meal budget (KES)")).toHaveAttribute("min", "0");
+    expect(screen.getByLabelText("Meal budget (KES)")).toHaveAttribute("step", "5");
     await user.clear(screen.getByLabelText("Meal budget (KES)"));
     await user.type(screen.getByLabelText("Meal budget (KES)"), "350");
     await user.click(screen.getByRole("button", { name: "Find meals that fit" }));
 
     await waitFor(() => expect(screen.queryByLabelText("Meal budget (KES)")).not.toBeInTheDocument());
     expect(screen.getByText("KES 350")).toBeVisible();
-    expect(await screen.findByRole("link", { name: /View details/ })).toHaveAttribute("href", "/recipes/githeri");
+    expect(await screen.findByRole("link", { name: /View details/ })).toHaveAttribute("href", "/recipes/githeri?source=eat-now&servings=4");
     expect(screen.getByText("KES 180")).toBeVisible();
     expect(screen.getByText(/practical 100 g or 100 ml buying quantities/i)).toBeVisible();
     await waitFor(() => {

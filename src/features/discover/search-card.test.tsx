@@ -29,7 +29,7 @@ describe("DiscoverSearchCard", () => {
 
     expect(screen.getByRole("link", { name: /githeri/i })).toHaveAttribute(
       "href",
-      "/recipes/githeri",
+      "/recipes/githeri?source=discover&servings=1",
     );
     expect(screen.getByText("55 min")).toBeVisible();
     expect(screen.getByText("KES 100 ingredients/serving")).toBeVisible();

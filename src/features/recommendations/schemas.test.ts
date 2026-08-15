@@ -25,7 +25,17 @@ describe("recommendation input", () => {
     ).toBe(true);
     expect(
       recommendationInputSchema.safeParse({
-        budgetKes: "10",
+        budgetKes: "65",
+        servings: "1",
+        maxMinutes: "45",
+        mealType: null,
+        equipment: ["gas_cooker"],
+        dietaryPreferences: [],
+      }).success,
+    ).toBe(true);
+    expect(
+      recommendationInputSchema.safeParse({
+        budgetKes: "-5",
         servings: "0",
         maxMinutes: "999",
         mealType: "brunch",

@@ -16,6 +16,7 @@ interface CookSetupControlProps {
   recipeId: number;
   recipeName: string;
   recipeSlug: string;
+  returnTo?: string;
 }
 
 interface CookSetupContext {
@@ -28,12 +29,13 @@ export function CookSetupControl({
   recipeId,
   recipeName,
   recipeSlug,
+  returnTo: returnToProp,
 }: CookSetupControlProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [context, setContext] = useState<CookSetupContext | null>(null);
   const [loading, startLoading] = useTransition();
-  const returnTo = `/recipes/${recipeSlug}`;
+  const returnTo = returnToProp ?? `/recipes/${recipeSlug}`;
 
   if (!authenticated) {
     return (

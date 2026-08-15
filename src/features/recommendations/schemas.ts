@@ -13,7 +13,7 @@ export const recommendationInputSchema = z.object({
   budgetKes: z.coerce
     .number("Enter a valid meal budget.")
     .int("Use a whole KES amount.")
-    .min(100, "Meal budget must be at least KES 100.")
+    .min(0, "Meal budget cannot be negative.")
     .max(1_000_000, "Meal budget must be KES 1,000,000 or less."),
   servings: z.coerce.number().int().min(1).max(30),
   maxMinutes: z.coerce.number().int().min(5).max(480),

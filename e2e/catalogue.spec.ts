@@ -119,7 +119,9 @@ test.describe("curated recipe catalogue", () => {
 
     await page.getByLabel("Sort by").selectOption("cost");
     await page.getByRole("link", { name: /View details/ }).first().click();
-    await expect(page).toHaveURL(/\/recipes\//);
+    await expect(page).toHaveURL(/\/recipes\/[^?]+\?source=eat-now&servings=4$/);
+    await expect(page.getByText("Cash needed", { exact: true })).toBeVisible();
+    await expect(page.locator("span:visible", { hasText: "Serves 4" })).toBeVisible();
     const recipeUrl = page.url();
     await page.getByRole("button", { name: "Start cooking" }).click();
     await expect(page.getByRole("dialog")).toBeVisible();
@@ -140,6 +142,18 @@ test.describe("curated recipe catalogue", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
+  test("Discover opens recipe details at one serving with ingredient-value pricing", async ({ page }) => {
+    await page.goto("/discover");
+    await page.getByRole("link", { name: /Open .* to view or save/ }).first().click();
+
+    await expect(page).toHaveURL(/\/recipes\/[^?]+\?source=discover&servings=1$/);
+    await expect(page.getByRole("link", { name: "Back to Discover" })).toBeVisible();
+    await expect(page.getByText("Ingredient value", { exact: true })).toBeVisible();
+    await expect(page.locator("span:visible", { hasText: "Serves 1" })).toBeVisible();
+    await page.locator("button[aria-label='Increase servings']:visible").click();
+    await expect(page).toHaveURL(/servings=2/);
+  });
+
   test("Eat Now applies the budget to missing-item purchase costs", async ({ page }) => {
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(email);
@@ -148,6 +162,9 @@ test.describe("curated recipe catalogue", () => {
     await expect(page).toHaveURL(/\/eat-now$/);
 
     const budget = page.getByLabel("Meal budget (KES)");
+    await budget.fill("65");
+    await budget.press("ArrowUp");
+    await expect(budget).toHaveValue("70");
     await budget.fill("100");
     await page.getByRole("button", { name: "Find meals that fit" }).click();
     await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
