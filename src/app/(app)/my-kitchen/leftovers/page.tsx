@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { CalendarClock, ChevronLeft, ChevronRight, Search, Soup, Trash2 } from "lucide-react";
+import { CalendarClock, Search, Soup, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { deleteLeftoverAction } from "@/features/leftovers/actions";
 import { getLeftoversPage } from "@/features/leftovers/data";
 import { LeftoverForm } from "@/features/leftovers/leftover-form";
@@ -116,11 +117,7 @@ export default async function LeftoversPage({ searchParams }: PageProps) {
           <div className="flex items-center justify-between gap-3"><form className="relative w-full max-w-sm"><Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" /><Input name="search" defaultValue={query.search} placeholder="Search leftovers" aria-label="Search leftovers" className="pl-10" /></form><p className="shrink-0 text-sm text-muted-foreground">{total} items</p></div>
           {!items.length ? <section className="rounded-[1.5rem] bg-card px-6 py-14 text-center"><Soup className="mx-auto size-10 text-primary/55" aria-hidden="true" /><h2 className="mt-4 font-display text-3xl font-semibold">{query.search ? "No leftovers match." : "No leftovers to use up."}</h2><p className="mt-2 text-sm text-muted-foreground">Save extra portions here so they stay useful and visible.</p></section> : <><Group items={expired} title="Expired — discard safely" tone="expired" recipeNames={recipeNames} /><Group items={soon} title="Use within 2 days" tone="soon" recipeNames={recipeNames} /><Group items={usable} title="Ready to use" recipeNames={recipeNames} /></>}
           {pages > 1 ? (
-            <nav aria-label="Leftover pages" className="flex items-center justify-between rounded-2xl bg-card p-3">
-              <Button asChild={query.page > 1} variant="ghost" disabled={query.page <= 1}>{query.page > 1 ? <Link href={leftoversHref(query.page - 1, query.search)}><ChevronLeft className="size-4" aria-hidden="true" />Previous</Link> : <span><ChevronLeft className="size-4" aria-hidden="true" />Previous</span>}</Button>
-              <span className="text-sm font-medium text-muted-foreground">Page {query.page} of {pages}</span>
-              <Button asChild={query.page < pages} variant="ghost" disabled={query.page >= pages}>{query.page < pages ? <Link href={leftoversHref(query.page + 1, query.search)}>Next<ChevronRight className="size-4" aria-hidden="true" /></Link> : <span>Next<ChevronRight className="size-4" aria-hidden="true" /></span>}</Button>
-            </nav>
+            <Pagination currentPage={query.page} totalPages={pages} getHref={(page) => leftoversHref(page, query.search)} ariaLabel="Leftover pages" />
           ) : null}
         </div>
       </div>

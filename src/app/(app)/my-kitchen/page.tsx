@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { CalendarClock, ChevronLeft, ChevronRight, PackageOpen, Search, Trash2 } from "lucide-react";
+import { CalendarClock, PackageOpen, Search, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Pagination } from "@/components/ui/pagination";
 import { deletePantryItemAction } from "@/features/pantry/actions";
 import { getPantryFormData, getPantryPage } from "@/features/pantry/data";
 import { PantryForm } from "@/features/pantry/pantry-form";
@@ -141,11 +142,7 @@ export default async function MyKitchenPage({ searchParams }: MyKitchenPageProps
           )}
 
           {pages > 1 ? (
-            <nav aria-label="Pantry pages" className="flex items-center justify-between rounded-2xl bg-card p-3">
-              <Button asChild={parsed.page > 1} variant="ghost" disabled={parsed.page <= 1}>{parsed.page > 1 ? <Link href={pantryHref(parsed.page - 1, parsed.search)}><ChevronLeft className="size-4" aria-hidden="true" />Previous</Link> : <span><ChevronLeft className="size-4" aria-hidden="true" />Previous</span>}</Button>
-              <span className="text-sm font-medium text-muted-foreground">Page {parsed.page} of {pages}</span>
-              <Button asChild={parsed.page < pages} variant="ghost" disabled={parsed.page >= pages}>{parsed.page < pages ? <Link href={pantryHref(parsed.page + 1, parsed.search)}>Next<ChevronRight className="size-4" aria-hidden="true" /></Link> : <span>Next<ChevronRight className="size-4" aria-hidden="true" /></span>}</Button>
-            </nav>
+            <Pagination currentPage={parsed.page} totalPages={pages} getHref={(page) => pantryHref(page, parsed.search)} ariaLabel="Pantry pages" />
           ) : null}
         </div>
       </div>

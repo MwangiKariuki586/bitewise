@@ -1,11 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bookmark, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
+import { Bookmark, Clock3 } from "lucide-react";
 import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { getSavedRecipePage } from "@/features/personalisation/data";
 import { RecipePersonalisationControls } from "@/features/personalisation/controls";
 import { KitchenNav } from "@/features/shopping-list/kitchen-nav";
@@ -56,11 +57,7 @@ export default async function SavedMealsPage({ searchParams }: SavedMealsPagePro
       )}
 
       {pages > 1 ? (
-        <nav aria-label="Saved meal pages" className="flex items-center justify-between rounded-2xl bg-card p-3 ring-1 ring-border/55">
-          <Button asChild={query.page > 1} variant="ghost" disabled={query.page <= 1}>{query.page > 1 ? <Link href={`/my-kitchen/saved?page=${query.page - 1}`}><ChevronLeft className="size-4" aria-hidden="true" />Previous</Link> : <span><ChevronLeft className="size-4" aria-hidden="true" />Previous</span>}</Button>
-          <span className="text-sm font-medium text-muted-foreground">Page {query.page} of {pages}</span>
-          <Button asChild={query.page < pages} variant="ghost" disabled={query.page >= pages}>{query.page < pages ? <Link href={`/my-kitchen/saved?page=${query.page + 1}`}>Next<ChevronRight className="size-4" aria-hidden="true" /></Link> : <span>Next<ChevronRight className="size-4" aria-hidden="true" /></span>}</Button>
-        </nav>
+        <Pagination currentPage={query.page} totalPages={pages} getHref={(page) => `/my-kitchen/saved?page=${page}`} ariaLabel="Saved meal pages" />
       ) : null}
     </div>
   );

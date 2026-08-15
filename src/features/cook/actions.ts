@@ -36,11 +36,12 @@ export async function getCookSetupContextAction(
   }
 
   const catalogue = await getRecipeCatalogue();
-  if (!catalogue.some((recipe) => recipe.id === parsed.data)) {
+  const recipe = catalogue.find((item) => item.id === parsed.data);
+  if (!recipe) {
     return { status: "error", message: "That recipe could not be opened in Cook Mode." };
   }
 
-  const { identity, profile } = await requireCompletedProfile(`/cook/${parsed.data}`);
+  const { identity, profile } = await requireCompletedProfile(`/recipes/${recipe.slug}`);
   const activeSession = await hasActiveCookSession(identity.sub, parsed.data);
   return {
     status: "success",

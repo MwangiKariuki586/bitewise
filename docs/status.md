@@ -20,6 +20,14 @@ Active feature: BiteWise MVP
 
 Status: Complete
 
+Responsive pagination is now shared across Discover, Pantry, Leftovers, Saved
+Meals, and Shopping List. It uses numbered ranges with ellipses on tablet and
+desktop, larger circular tablet targets, compact desktop controls, a subtle
+container-free treatment, and an `x of y` mobile summary. Current,
+previous/next, disabled, focus, and accessible-label states are covered by
+component tests. Querying, caching, invalidation, and rate limiting are
+unchanged because this is a presentation-only refactor of existing page links.
+
 Eat Now responsive refinement completed from the supplied desktop, tablet, and
 mobile mockups. The page now uses a branded food hero, exposes the complete
 constraints form before generation, collapses only after a successful response,
@@ -265,6 +273,8 @@ Recipe hero positioning follow-up implemented and reviewed in Chrome. Phones ret
 Recipe guest overflow refinement completed. The detail-page kebab trigger and its grid track now use the shared 44 px button height and radius, matching Add to meal plan and Start cooking. Signed-out users no longer see the narrow "Sign in to save" control: they can open the same Save, Like, Dislike, and Mark as eaten menu as authenticated users, and selecting any action redirects to sign-in with the current recipe preserved as the safe return path before any personalisation mutation can run. Other non-detail personalisation surfaces retain their existing sign-in handoff. No database, RLS, caching, invalidation, or rate-limit behavior changed. Verified in Chrome with the signed-out menu open and a Save-to-sign-in redirect, plus 102 unit/integration tests, strict typecheck, warning-free lint, production build, and `git diff --check`.
 
 Personalisation overflow dismissal completed. Recipe-detail and recommendation-card overflow menus now use controlled accessible triggers with `aria-expanded` and close on outside click, Escape, or action selection while keeping clicks inside the menu usable. Chrome confirmed the detail menu transitions from open to closed after a blank-page click without changing the route. No data access, authentication, mutation, caching, invalidation, database, or rate-limit behavior changed. Verified with 104 unit/integration tests, strict typecheck, warning-free lint, production build, and `git diff --check`.
+
+Recipe-detail Cook Mode setup completed. Start cooking now opens an accessible responsive serving picker in place: a bottom sheet on phones and a centred dialog on larger screens. It defaults to the authenticated household size and keeps the recipe URL unchanged until Begin cooking creates the session and enters the immersive `/cook/[recipeId]` experience. An existing active session resumes directly, signed-out visitors retain the recipe route through authentication, and direct Cook Mode URLs keep the original full-page setup as a refresh/deep-link fallback. The private setup context is loaded only after interaction, selects only one owned active-session ID, remains request-scoped and uncached, and continues to use the existing validated atomic cook-session RPC, Cook-route invalidation, ownership policies, and inexpensive-mutation rate-limit decision. No schema, RLS, grant, shared-cache, or new rate-limit changes were required. Verified with 107 unit/integration tests, strict typecheck, warning-free lint, production build, `git diff --check`, two hosted mobile/desktop recipe-page dialog journeys, and two hosted mobile/desktop guided-session start, scale, persistence, resume, and completion journeys.
 
 - Agent must update this file after every completed feature.
 - Every feature must pass its tests + typecheck + lint + build before being marked done.
