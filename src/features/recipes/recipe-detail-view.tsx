@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CookSetupControl } from "@/features/cook/cook-setup-control";
 import { AddToMealPlanControl } from "@/features/meal-plan/add-to-meal-plan-control";
 import { RecipePersonalisationControls } from "@/features/personalisation/controls";
 import type { RecipePersonalisationState } from "@/features/personalisation/data";
@@ -97,9 +98,9 @@ export function RecipeDetailView({ recipe, personalisation, authenticated }: Rec
                   <div key={String(label)} className="flex gap-2"><Icon className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden="true" /><span><strong className="block capitalize">{String(value)}</strong><small className="text-muted-foreground">{String(label)}</small></span></div>
                 ))}
               </div>
-              <div className="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem] gap-2 sm:max-w-[31rem] sm:gap-3">
+              <div className="mt-6 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.75rem] gap-2 sm:max-w-[31rem] sm:gap-3">
                 <AddToMealPlanControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} />
-                <Button asChild variant="outline" className="min-w-0 px-2 sm:px-4"><Link href={`/cook/${recipe.id}`}>Start cooking</Link></Button>
+                <CookSetupControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} />
                 <div>
                   <RecipePersonalisationControls recipeId={recipe.id} initialState={personalisation} authenticated={authenticated} compact detailActions returnTo={`/recipes/${recipe.slug}`} />
                 </div>

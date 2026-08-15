@@ -8,6 +8,10 @@ vi.mock("@/features/meal-plan/add-to-meal-plan-control", () => ({
   AddToMealPlanControl: () => <button type="button">Add to meal plan</button>,
 }));
 
+vi.mock("@/features/cook/cook-setup-control", () => ({
+  CookSetupControl: () => <button type="button">Start cooking</button>,
+}));
+
 vi.mock("@/features/personalisation/controls", () => ({
   RecipePersonalisationControls: () => <button type="button">More actions</button>,
 }));

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useId, useRef, useState, useTransition } from "react";
 import { Bookmark, Check, History, LoaderCircle, MoreVertical, ThumbsDown, ThumbsUp } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -59,8 +59,12 @@ export function RecipePersonalisationControls({
 }: RecipePersonalisationControlsProps) {
   const [state, setState] = useState(initialState);
   const [message, setMessage] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pending, startTransition] = useTransition();
+  const menuRef = useRef<HTMLDivElement>(null);
+  const menuId = useId();
   const router = useRouter();
+  const signInHref = `/auth/sign-in?${new URLSearchParams({ next: returnTo })}`;
 
   useEffect(() => {
     function handleSync(event: Event) {
@@ -71,10 +75,25 @@ export function RecipePersonalisationControls({
     return () => window.removeEventListener(personalisationSyncEvent, handleSync);
   }, [recipeId]);
 
-  if (!authenticated) {
+  useEffect(() => {
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("mousedown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, []);
+
+  if (!authenticated && !detailActions) {
     return (
       <Button asChild variant="outline" size={compact ? "sm" : "default"}>
-        <Link href={`/auth/sign-in?${new URLSearchParams({ next: returnTo })}`}>
+        <Link href={signInHref}>
           Sign in to save
         </Link>
       </Button>
@@ -82,6 +101,11 @@ export function RecipePersonalisationControls({
   }
 
   function mutate(operation: PersonalisationOperation) {
+    setMenuOpen(false);
+    if (!authenticated) {
+      router.push(signInHref);
+      return;
+    }
     if (pending) return;
     startTransition(async () => {
       const result = await mutateRecipePersonalisationAction({ recipeId, operation });
@@ -100,12 +124,12 @@ export function RecipePersonalisationControls({
   const buttonSize = compact ? "sm" : "default";
   if (detailActions) {
     return (
-      <div className="relative">
-        <details className="group relative">
-          <summary aria-label="More recipe actions" className="grid size-10 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+      <div ref={menuRef} className="relative">
+        <button type="button" aria-label="More recipe actions" aria-expanded={menuOpen} aria-controls={menuId} onClick={() => setMenuOpen((current) => !current)} className="grid size-11 cursor-pointer place-items-center rounded-xl border border-border bg-background text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
             <MoreVertical className="size-4" aria-hidden="true" />
-          </summary>
-          <div className="absolute bottom-12 right-0 z-30 grid min-w-44 gap-1 rounded-xl border border-border bg-card p-2 shadow-xl">
+        </button>
+        {menuOpen ? (
+          <div id={menuId} role="menu" aria-label="Recipe actions" className="absolute bottom-12 right-0 z-30 grid min-w-44 gap-1 rounded-xl border border-border bg-card p-2 shadow-xl">
             <Button type="button" size="sm" variant="ghost" className="justify-start" aria-pressed={state.isSaved} disabled={pending} onClick={() => mutate(state.isSaved ? "unsave" : "save")}><Bookmark className="size-4" fill={state.isSaved ? "currentColor" : "none"} />{state.isSaved ? "Saved" : "Save"}</Button>
             <Button type="button" size="sm" variant={state.feedback === "liked" ? "secondary" : "ghost"} className="justify-start" aria-pressed={state.feedback === "liked"} disabled={pending} onClick={() => mutate(state.feedback === "liked" ? "undo_feedback" : "like")}><ThumbsUp className="size-4" fill={state.feedback === "liked" ? "currentColor" : "none"} />{state.feedback === "liked" ? "Unlike" : "Like"}</Button>
             <Button type="button" size="sm" variant={state.feedback === "disliked" ? "secondary" : "ghost"} className="justify-start" aria-pressed={state.feedback === "disliked"} disabled={pending} onClick={() => mutate(state.feedback === "disliked" ? "undo_feedback" : "dislike")}><ThumbsDown className="size-4" fill={state.feedback === "disliked" ? "currentColor" : "none"} />{state.feedback === "disliked" ? "Remove dislike" : "Dislike"}</Button>
@@ -114,7 +138,7 @@ export function RecipePersonalisationControls({
               {state.lastEatenAt ? "Mark as eaten again" : "Mark as eaten"}
             </Button>
           </div>
-        </details>
+        ) : null}
         <p aria-live="polite" className="sr-only">{message}</p>
       </div>
     );
@@ -130,12 +154,14 @@ export function RecipePersonalisationControls({
           </div>
           <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] gap-2">
             <Button type="button" size="sm" variant={state.isSaved ? "secondary" : "outline"} aria-pressed={state.isSaved} disabled={pending} onClick={() => mutate(state.isSaved ? "unsave" : "save")}><Bookmark className="size-4" fill={state.isSaved ? "currentColor" : "none"} aria-hidden="true" />{state.isSaved ? "Saved" : "Save"}</Button>
-            <details className="group relative">
-              <summary aria-label="More meal actions" className="grid size-9 cursor-pointer list-none place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><MoreVertical className="size-4" aria-hidden="true" /><span className="sr-only">More meal actions</span></summary>
-              <div className="absolute bottom-11 right-0 z-20 grid min-w-40 gap-1 rounded-xl border border-border bg-card p-2 shadow-xl">
+            <div ref={menuRef} className="relative">
+              <button type="button" aria-label="More meal actions" aria-expanded={menuOpen} aria-controls={menuId} onClick={() => setMenuOpen((current) => !current)} className="grid size-9 cursor-pointer place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><MoreVertical className="size-4" aria-hidden="true" /></button>
+              {menuOpen ? (
+              <div id={menuId} role="menu" aria-label="Meal actions" className="absolute bottom-11 right-0 z-20 grid min-w-40 gap-1 rounded-xl border border-border bg-card p-2 shadow-xl">
                 <Button type="button" size="sm" variant="ghost" disabled={pending} onClick={() => mutate("eaten")}>{pending ? <LoaderCircle className="size-4 animate-spin" /> : state.lastEatenAt ? <Check className="size-4" /> : <History className="size-4" />}{state.lastEatenAt ? "Mark as eaten again" : "Mark as eaten"}</Button>
               </div>
-            </details>
+              ) : null}
+            </div>
           </div>
         </div>
         <p aria-live="polite" className="sr-only">{message}</p>

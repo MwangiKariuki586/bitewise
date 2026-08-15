@@ -5,6 +5,20 @@ import { createClient } from "@/lib/supabase/server";
 
 const sessionColumns = "id,recipe_id,servings,current_step,status,started_at,updated_at";
 
+export async function hasActiveCookSession(userId: string, recipeId: number) {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("cook_sessions")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("recipe_id", recipeId)
+    .eq("status", "active")
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error("The cooking session could not be checked.");
+  return Boolean(data);
+}
+
 export async function getActiveCookSessions(userId: string) {
   const [supabase, catalogue] = await Promise.all([
     createClient(),

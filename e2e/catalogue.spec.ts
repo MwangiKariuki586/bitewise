@@ -120,6 +120,13 @@ test.describe("curated recipe catalogue", () => {
     await page.getByLabel("Sort by").selectOption("cost");
     await page.getByRole("link", { name: /View details/ }).first().click();
     await expect(page).toHaveURL(/\/recipes\//);
+    const recipeUrl = page.url();
+    await page.getByRole("button", { name: "Start cooking" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("spinbutton", { name: "Servings" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Begin cooking" })).toBeVisible();
+    expect(page.url()).toBe(recipeUrl);
+    await page.getByRole("button", { name: "Close cook setup" }).click();
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
     await expect(page.getByLabel("Sort by")).toHaveValue("cost");

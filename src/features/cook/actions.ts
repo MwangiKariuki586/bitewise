@@ -8,6 +8,9 @@ import {
   updateCookSessionSchema,
   type UpdateCookSessionInput,
 } from "@/features/cook/schemas";
+import { hasActiveCookSession } from "@/features/cook/data";
+import { requireCompletedProfile } from "@/features/profile/data";
+import { getRecipeCatalogue } from "@/features/recipes/data";
 import type { ActionResult } from "@/lib/action-result";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -19,11 +22,39 @@ interface CookMutationResult {
   completedSteps: number;
 }
 
+interface CookSetupContext {
+  householdSize: number;
+  hasActiveSession: boolean;
+}
+
+export async function getCookSetupContextAction(
+  recipeId: number,
+): Promise<ActionResult<CookSetupContext>> {
+  const parsed = startCookSessionSchema.shape.recipeId.safeParse(recipeId);
+  if (!parsed.success) {
+    return { status: "error", message: "That recipe could not be opened in Cook Mode." };
+  }
+
+  const catalogue = await getRecipeCatalogue();
+  if (!catalogue.some((recipe) => recipe.id === parsed.data)) {
+    return { status: "error", message: "That recipe could not be opened in Cook Mode." };
+  }
+
+  const { identity, profile } = await requireCompletedProfile(`/cook/${parsed.data}`);
+  const activeSession = await hasActiveCookSession(identity.sub, parsed.data);
+  return {
+    status: "success",
+    data: {
+      householdSize: profile.household_size,
+      hasActiveSession: activeSession,
+    },
+  };
+}
+
 export async function startCookSessionAction(
   _state: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  await requireUser();
   const parsed = startCookSessionSchema.safeParse({
     recipeId: formData.get("recipeId"),
     servings: formData.get("servings"),
@@ -35,6 +66,8 @@ export async function startCookSessionAction(
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
   }
+
+  await requireCompletedProfile(`/cook/${parsed.data.recipeId}`);
 
   const supabase = await createClient();
   const { error } = await supabase.rpc("mutate_cook_session", {

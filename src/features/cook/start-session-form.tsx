@@ -13,11 +13,12 @@ interface StartSessionFormProps {
   recipeId: number;
   defaultServings: number;
   compact?: boolean;
+  submitLabel?: string;
 }
 
 const initialState: ActionResult = { status: "idle" };
 
-export function StartSessionForm({ recipeId, defaultServings, compact = false }: StartSessionFormProps) {
+export function StartSessionForm({ recipeId, defaultServings, compact = false, submitLabel = "Start cooking" }: StartSessionFormProps) {
   const [state, action, pending] = useActionState(startCookSessionAction, initialState);
   const fieldId = `cook-servings-${recipeId}`;
   return (
@@ -29,7 +30,7 @@ export function StartSessionForm({ recipeId, defaultServings, compact = false }:
       </div>
       <Button type="submit" disabled={pending} className={compact ? "h-8 min-h-8 rounded-lg px-2 text-[0.68rem]" : "w-full"}>
         {pending ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : compact ? null : <ChefHat className="size-4" aria-hidden="true" />}
-        {pending ? "Starting..." : "Start cooking"}
+        {pending ? "Starting..." : submitLabel}
       </Button>
       {state.message ? <p id={`${fieldId}-message`} role="alert" className={`${compact ? "sr-only" : "text-sm"} text-destructive`}>{state.message}</p> : null}
     </form>
