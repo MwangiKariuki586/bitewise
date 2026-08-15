@@ -32,7 +32,9 @@ export default async function CookPage({ searchParams }: CookPageProps) {
     getRecipeCatalogue(),
   ]);
   const activeSessions = await getActiveCookSessions(identity.sub);
-  const activeRecipeIds = new Set(activeSessions.map((session) => session.recipe_id));
+  const activeRecipeIds = new Set(
+    activeSessions.map((session) => session.recipe_id),
+  );
   const starterRecipes = catalogue
     .filter((recipe) => !activeRecipeIds.has(recipe.id))
     .slice(0, 6);
@@ -47,7 +49,11 @@ export default async function CookPage({ searchParams }: CookPageProps) {
       />
 
       <Link
-        href={activeSessions[0] ? `/cook/${activeSessions[0].recipe_id}` : "#start-recipe"}
+        href={
+          activeSessions[0]
+            ? `/cook/${activeSessions[0].recipe_id}`
+            : "#start-recipe"
+        }
         className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-card px-4 text-sm font-semibold shadow-sm ring-1 ring-border/65 outline-none transition-colors hover:bg-secondary/45 focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="flex items-center gap-2.5">
@@ -58,12 +64,16 @@ export default async function CookPage({ searchParams }: CookPageProps) {
       </Link>
 
       {query.completed === "1" ? (
-        <Card role="status" className="flex items-start gap-3 border-primary/20 bg-primary/5 p-4 text-sm text-primary">
+        <Card
+          role="status"
+          className="flex items-start gap-3 border-primary/20 bg-primary/5 p-4 text-sm text-primary"
+        >
           <CheckCircle2 className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
           <div>
             <p className="font-bold">Meal complete.</p>
             <p className="mt-0.5 text-muted-foreground">
-              BiteWise saved this cooked meal for future variety and personalisation.
+              BiteWise saved this cooked meal for future variety and
+              personalisation.
             </p>
           </div>
         </Card>
@@ -71,9 +81,16 @@ export default async function CookPage({ searchParams }: CookPageProps) {
 
       <section aria-labelledby="resume-cooking" className="space-y-3">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Your kitchen now</p>
-          <h2 id="resume-cooking" className="font-display text-2xl font-semibold">
-            {activeSessions.length ? "Resume cooking" : "Nothing on the stove yet"}
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+            Your kitchen now
+          </p>
+          <h2
+            id="resume-cooking"
+            className="font-display text-2xl font-semibold"
+          >
+            {activeSessions.length
+              ? "Resume cooking"
+              : "Nothing on the stove yet"}
           </h2>
           <p className="mt-1 max-w-2xl text-sm leading-5 text-muted-foreground">
             {activeSessions.length
@@ -103,7 +120,8 @@ export default async function CookPage({ searchParams }: CookPageProps) {
                 <div className="flex min-w-0 flex-col p-4">
                   <Badge className="w-fit bg-accent/20 text-accent-foreground">
                     <PlayCircle className="mr-1 size-4" aria-hidden="true" />
-                    Step {session.current_step} of {session.recipe.instructions.length}
+                    Step {session.current_step} of{" "}
+                    {session.recipe.instructions.length}
                   </Badge>
                   <h3 className="mt-2 truncate font-display text-xl font-semibold">
                     {session.recipe.name}
@@ -111,7 +129,7 @@ export default async function CookPage({ searchParams }: CookPageProps) {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {session.servings} servings · progress saved
                   </p>
-                  <Button asChild size="sm" className="mt-auto w-full sm:w-fit">
+                  <Button asChild size="sm" className="mt-2 w-full sm:w-fit">
                     <Link href={`/cook/${session.recipe_id}`}>
                       Resume session
                       <ArrowRight className="size-4" aria-hidden="true" />
@@ -127,8 +145,15 @@ export default async function CookPage({ searchParams }: CookPageProps) {
       <section aria-labelledby="start-recipe" className="space-y-3">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">Choose what to make</p>
-            <h2 id="start-recipe" className="mt-1 font-display text-xl font-semibold">Popular picks for you</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">
+              Choose what to make
+            </p>
+            <h2
+              id="start-recipe"
+              className="mt-1 font-display text-xl font-semibold"
+            >
+              Popular picks for you
+            </h2>
           </div>
           <Button asChild variant="ghost" size="sm">
             <Link href="/discover">
@@ -160,7 +185,10 @@ export default async function CookPage({ searchParams }: CookPageProps) {
                 </h3>
                 <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 text-[0.68rem] font-semibold text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    <Clock3 className="size-3.5 text-primary" aria-hidden="true" />
+                    <Clock3
+                      className="size-3.5 text-primary"
+                      aria-hidden="true"
+                    />
                     {recipe.totalMinutes} min
                   </span>
                 </div>

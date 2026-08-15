@@ -102,26 +102,24 @@ test.describe("guided cooking and isolation", () => {
     await page.getByLabel("Servings").fill("4");
     await page.getByRole("button", { name: "Start cooking" }).click();
 
-    await expect(page.getByText("Step 1 of " + stepCount)).toBeVisible();
+    await expect(page.getByText("Step 1 of " + stepCount).first()).toBeVisible();
     await expect(page.getByText(expectedScaledIngredient)).toBeVisible();
-    await page.getByRole("button", { name: "Next", exact: true }).click();
-    await expect(page.getByText("Step 2 of " + stepCount)).toBeVisible();
+    await page.getByRole("button", { name: "Complete step & continue" }).click();
+    await expect(page.getByText("Step 2 of " + stepCount).first()).toBeVisible();
 
     await page.reload();
-    await expect(page.getByText("Step 2 of " + stepCount)).toBeVisible();
+    await expect(page.getByText("Step 2 of " + stepCount).first()).toBeVisible();
     await page.goto("/cook");
     await page.getByRole("link", { name: "Resume session" }).click();
-    await expect(page.getByText("Step 2 of " + stepCount)).toBeVisible();
+    await expect(page.getByText("Step 2 of " + stepCount).first()).toBeVisible();
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
 
     for (let step = 2; step < stepCount; step += 1) {
-      await page.getByRole("button", { name: "Next", exact: true }).click();
-      await expect(page.getByText(`Step ${step + 1} of ${stepCount}`)).toBeVisible();
+      await page.getByRole("button", { name: "Complete step & continue" }).click();
+      await expect(page.getByText(`Step ${step + 1} of ${stepCount}`).first()).toBeVisible();
     }
-    await page.getByRole("button", { name: "Mark step done" }).click();
-    await expect(page.getByRole("button", { name: "Finish meal" })).toBeEnabled();
     await page.getByRole("button", { name: "Finish meal" }).click();
 
     await expect(page).toHaveURL(/\/cook\?completed=1/);

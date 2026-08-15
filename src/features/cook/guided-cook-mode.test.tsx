@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { GuidedCookMode } from "@/features/cook/guided-cook-mode";
+import { cookStepCopy } from "@/features/cook/step-copy";
 import type { RecipeCatalogueItem } from "@/features/recipes/data";
 
 const mocks = vi.hoisted(() => ({
@@ -72,13 +73,12 @@ describe("GuidedCookMode", () => {
         servings={4}
         initialStep={1}
         initialCompletedSteps={[]}
-        personalisation={{ feedback: null, isSaved: false, lastEatenAt: null }}
       />,
     );
 
     expect(screen.getByText("200 g")).toBeVisible();
     expect(screen.getByText("Prepare the ingredients.")).toBeVisible();
-    fireEvent.click(screen.getByRole("button", { name: "Next" }));
+    fireEvent.click(screen.getByRole("button", { name: "Complete step & continue" }));
 
     await waitFor(() => expect(screen.getByText("Cook until ready.")).toBeVisible());
     expect(mocks.update).toHaveBeenCalledWith({
@@ -88,5 +88,35 @@ describe("GuidedCookMode", () => {
       currentStep: 2,
       completed: true,
     });
+  });
+
+  it("turns a concise opening clause into the visible step heading", () => {
+    expect(cookStepCopy("Brown the beef, add onion and tomato, then simmer until tender.")).toEqual({
+      title: "Brown the beef",
+      description: "Add onion and tomato, then simmer until tender.",
+    });
+  });
+
+  it("saves an incomplete final step before finishing the meal", async () => {
+    render(
+      <GuidedCookMode
+        recipe={recipe}
+        servings={2}
+        initialStep={2}
+        initialCompletedSteps={[1]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Finish meal" }));
+
+    await waitFor(() => expect(mocks.push).toHaveBeenCalledWith("/cook?completed=1"));
+    expect(mocks.update).toHaveBeenNthCalledWith(1, {
+      operation: "step",
+      recipeId: 8,
+      stepNumber: 2,
+      currentStep: 2,
+      completed: true,
+    });
+    expect(mocks.update).toHaveBeenNthCalledWith(2, { operation: "complete", recipeId: 8 });
   });
 });
