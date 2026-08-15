@@ -70,7 +70,7 @@ export function DiscoverSearchForm({ input }: DiscoverSearchFormProps) {
               </select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="discover-cost">Maximum per serving (KES)</Label>
+              <Label htmlFor="discover-cost">Maximum ingredient value/serving (KES)</Label>
               <Input id="discover-cost" name="maxCostKes" type="number" min={1} max={1_000_000} defaultValue={input.maxCostKes} placeholder="e.g. 250" />
             </div>
             <div className="space-y-2">
@@ -121,7 +121,7 @@ export function DiscoverSearchForm({ input }: DiscoverSearchFormProps) {
 
       <nav aria-label="Quick filters" className="flex gap-2 overflow-x-auto pb-1">
         <Link className="inline-flex min-h-9 shrink-0 items-center rounded-full bg-card px-3 text-xs font-bold text-primary shadow-sm ring-1 ring-border/60" href={discoverHref({ ...input, maxMinutes: 30 }, 1)}>Quick (≤ 30 min)</Link>
-        <Link className="inline-flex min-h-9 shrink-0 items-center rounded-full bg-card px-3 text-xs font-bold text-primary shadow-sm ring-1 ring-border/60" href={discoverHref({ ...input, maxCostKes: 150 }, 1)}>Under KES 150</Link>
+        <Link className="inline-flex min-h-9 shrink-0 items-center rounded-full bg-card px-3 text-xs font-bold text-primary shadow-sm ring-1 ring-border/60" href={discoverHref({ ...input, maxCostKes: 150 }, 1)}>Ingredients under KES 150/serving</Link>
         <Link className="inline-flex min-h-9 shrink-0 items-center rounded-full bg-card px-3 text-xs font-bold text-primary shadow-sm ring-1 ring-border/60" href={discoverHref({ ...input, diet: quickDiet }, 1)}>Vegetarian</Link>
       </nav>
     </form>

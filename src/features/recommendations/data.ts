@@ -28,6 +28,12 @@ export interface RecommendationResponse {
     maxMinutes: number;
     dietaryPreferences: string[];
   };
+  pricing: {
+    location: string | null;
+    capturedOn: string | null;
+    sourceLabel: string | null;
+    sourceUrl: string | null;
+  };
 }
 
 function nairobiDateKey() {
@@ -137,6 +143,7 @@ export async function getRecommendations(
       preferredDishes: profile.preferredDishes,
       today: nairobiDateKey(),
       personalisation,
+      affordabilityMode: "purchase-cost",
     },
   ).slice(0, 5);
   const meals = rankedMeals.map((meal) => ({
@@ -158,6 +165,12 @@ export async function getRecommendations(
       servings: input.servings,
       maxMinutes: input.maxMinutes,
       dietaryPreferences,
+    },
+    pricing: {
+      location: catalogue[0]?.costLocation ?? null,
+      capturedOn: catalogue[0]?.costCapturedOn ?? null,
+      sourceLabel: catalogue[0]?.costSourceLabel ?? null,
+      sourceUrl: catalogue[0]?.costSourceUrl ?? null,
     },
   };
 }

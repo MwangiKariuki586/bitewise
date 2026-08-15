@@ -140,6 +140,41 @@ test.describe("curated recipe catalogue", () => {
     expect(accessibilityScanResults.violations).toEqual([]);
   });
 
+  test("Eat Now applies the budget to missing-item purchase costs", async ({ page }) => {
+    await page.goto("/auth/sign-in");
+    await page.getByLabel("Email address").fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(/\/eat-now$/);
+
+    const budget = page.getByLabel("Meal budget (KES)");
+    await budget.fill("100");
+    await page.getByRole("button", { name: "Find meals that fit" }).click();
+    await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
+    const lowBudgetCards = page.locator("[data-cash-needed-minor]");
+    const lowBudgetCount = await lowBudgetCards.count();
+    expect(lowBudgetCount).toBeGreaterThan(0);
+    expect(lowBudgetCount).toBeLessThan(5);
+    const lowBudgetCosts = await lowBudgetCards.evaluateAll((elements) =>
+      elements.map((element) => Number(element.getAttribute("data-cash-needed-minor"))),
+    );
+    expect(lowBudgetCosts.every((cost) => cost <= 10_000)).toBe(true);
+
+    if (await budget.count() === 0) {
+      await page.getByRole("button", { name: /Edit/ }).click();
+    }
+    await page.getByLabel("Meal budget (KES)").fill("1680");
+    await page.getByRole("button", { name: "Refresh my matches" }).click();
+    await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
+    const cards = page.locator("[data-cash-needed-minor]");
+    await expect(cards).toHaveCount(5);
+    const costs = await cards.evaluateAll((elements) =>
+      elements.map((element) => Number(element.getAttribute("data-cash-needed-minor"))),
+    );
+    expect(costs.every((cost) => cost <= 168_000)).toBe(true);
+    await expect(page.getByText(/practical 100 g or 100 ml buying quantities/i)).toBeVisible();
+  });
+
   test("keeps each primary task above the mobile navigation at compact widths", async ({ page }, testInfo) => {
     test.skip(testInfo.project.name !== "mobile-chromium", "Compact layout is covered by the mobile project.");
 

@@ -76,7 +76,7 @@ export function RecipeCatalogueCard({ recipe }: RecipeCatalogueCardProps) {
 
         <div className="border-t border-border/70 pt-3 text-xs leading-5 text-muted-foreground">
           <p>
-            Estimated {formatKes(recipe.estimatedCostMinor)} total in {recipe.costLocation}
+            Ingredient value {formatKes(recipe.estimatedCostMinor)} in {recipe.costLocation}
             {recipe.costCapturedOn ? ` · updated ${recipe.costCapturedOn}` : ""}.
           </p>
           {recipe.image ? (

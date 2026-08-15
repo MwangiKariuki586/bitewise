@@ -44,6 +44,7 @@ const recipe = {
     isOptional: false,
     preparation: null,
     estimatedCostMinor: 1_000,
+    purchasePack: { quantity: 1_000, unit: "g", priceMinor: 10_000 },
     alternatives: [],
   }],
   estimatedCostMinor: 2_000,

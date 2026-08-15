@@ -27,12 +27,14 @@ function candidate(
         unit: "g",
         isOptional: false,
         estimatedCostMinor: 20_000,
+        purchasePack: { quantity: 1_000, unit: "g", priceMinor: 20_000 },
         alternatives: [
           {
             ingredient: { id: 11, name: "Green grams" },
             scaledQuantity: 300,
             alternativeUnit: "g",
             estimatedCostMinor: 15_000,
+            purchasePack: { quantity: 1_000, unit: "g", priceMinor: 15_000 },
             note: "Use green grams when they cost less.",
           },
         ],
@@ -71,6 +73,7 @@ describe("deterministic recommendation ranking", () => {
           unit: "g",
           isOptional: false,
           estimatedCostMinor: 20_000,
+          purchasePack: { quantity: 1_000, unit: "g", priceMinor: 20_000 },
           alternatives: [],
         },
       ],
@@ -115,7 +118,15 @@ describe("deterministic recommendation ranking", () => {
 
     expect(meal.pantryCoveragePercent).toBe(0);
     expect(meal.missingIngredients).toEqual([
-      { ingredientId: 10, name: "Beans", quantity: 400, unit: "g" },
+      {
+        ingredientId: 10,
+        name: "Beans",
+        quantity: 400,
+        unit: "g",
+        purchaseQuantity: 400,
+        purchaseUnit: "g",
+        purchaseCostMinor: 8_000,
+      },
     ]);
   });
 
@@ -127,6 +138,11 @@ describe("deterministic recommendation ranking", () => {
       name: "A Meal",
       estimatedCostMinor: 35_000,
       affordableCostMinor: 30_000,
+      ingredients: [{
+        ...candidate().ingredients[0],
+        purchasePack: { quantity: 1_000, unit: "g", priceMinor: 30_000 },
+        alternatives: [],
+      }],
     });
     const ranked = rankRecommendations([higherCost, lowerCost], [], preferences);
 
@@ -136,6 +152,55 @@ describe("deterministic recommendation ranking", () => {
       alternativeIngredient: "Green grams",
       estimatedSavingMinor: 5_000,
     });
+  });
+
+  it("applies the budget to purchasable missing packs after pantry coverage", () => {
+    const meal = candidate();
+
+    expect(rankRecommendations([meal], [], {
+      ...preferences,
+      budgetMinor: 7_999,
+      affordabilityMode: "purchase-cost",
+    })).toEqual([]);
+
+    const [withPantry] = rankRecommendations([meal], [{
+      ingredientId: 10,
+      quantity: 400,
+      unit: "g",
+      expiryDate: null,
+    }], {
+      ...preferences,
+      budgetMinor: 7_999,
+      affordabilityMode: "purchase-cost",
+    });
+
+    expect(withPantry.cashNeededMinor).toBe(0);
+    expect(withPantry.missingIngredients).toEqual([]);
+  });
+
+  it("uses practical buying increments instead of charging for a full pantry restock", () => {
+    const sweetPotatoBreakfast = candidate({
+      baseServings: 4,
+      ingredients: [
+        { id: 1, name: "Sweet potato", quantity: 800, unit: "g", isOptional: false, estimatedCostMinor: 8_000, purchasePack: { quantity: 1_000, unit: "g", priceMinor: 10_000 }, alternatives: [] },
+        { id: 2, name: "Eggs", quantity: 4, unit: "piece", isOptional: false, estimatedCostMinor: 8_000, purchasePack: { quantity: 1, unit: "piece", priceMinor: 2_000 }, alternatives: [] },
+        { id: 3, name: "Tomato", quantity: 2, unit: "piece", isOptional: false, estimatedCostMinor: 2_000, purchasePack: { quantity: 1, unit: "piece", priceMinor: 1_000 }, alternatives: [] },
+        { id: 4, name: "Avocado", quantity: 1, unit: "piece", isOptional: false, estimatedCostMinor: 3_000, purchasePack: { quantity: 1, unit: "piece", priceMinor: 3_000 }, alternatives: [] },
+        { id: 5, name: "Salt", quantity: 4, unit: "g", isOptional: false, estimatedCostMinor: 32, purchasePack: { quantity: 1_000, unit: "g", priceMinor: 8_000 }, alternatives: [] },
+      ],
+    });
+
+    const [meal] = rankRecommendations([sweetPotatoBreakfast], [], {
+      ...preferences,
+      servings: 1,
+      budgetMinor: 10_000,
+      affordabilityMode: "purchase-cost",
+    });
+
+    expect(meal.cashNeededMinor).toBe(8_800);
+    expect(meal.missingIngredients.map((item) => item.purchaseQuantity)).toEqual([
+      200, 1, 1, 1, 100,
+    ]);
   });
 
   it("excludes disliked meals without changing the hard-constraint candidate set", () => {

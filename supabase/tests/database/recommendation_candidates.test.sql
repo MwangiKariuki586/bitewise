@@ -53,10 +53,16 @@ select cmp_ok(
   50::bigint,
   'candidate query is capped at fifty rows'
 );
-select is(
-  (select count(*) from candidate_fixture where affordable_cost_minor > 100000),
+select cmp_ok(
+  (
+    select count(*)
+    from public.get_recommendation_candidates(
+      array['vegan'], array['gas_cooker'], 90, 10000, 4, 'dinner'
+    )
+  ),
+  '>',
   0::bigint,
-  'no candidate exceeds the meal budget'
+  'valid low budgets still return candidates for pantry-aware application filtering'
 );
 select is(
   (

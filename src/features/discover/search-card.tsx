@@ -57,7 +57,7 @@ export function DiscoverSearchCard({ recipe }: DiscoverSearchCardProps) {
             <span className="capitalize">{formatDiscoverLabel(recipe.difficulty)}</span>
             <span className="flex items-center gap-1">
               <Coins className="size-3.5 text-primary" aria-hidden="true" />
-              {formatDiscoverKes(recipe.estimatedCostPerServingMinor)}
+              {formatDiscoverKes(recipe.estimatedCostPerServingMinor)} ingredients/serving
             </span>
           </div>
           <div className="mt-auto flex min-w-0 flex-wrap gap-1 pt-1.5">

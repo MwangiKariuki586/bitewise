@@ -40,7 +40,7 @@ interface ActiveConstraints {
 type SortOption = "best" | "cost" | "time" | "pantry";
 
 interface StoredEatNowState {
-  version: 1;
+  version: 2;
   result: ActionResult<RecommendationResponse>;
   constraints: ActiveConstraints;
   sort: SortOption;
@@ -48,7 +48,7 @@ interface StoredEatNowState {
 }
 
 const storageKey = "bitewise:eat-now-state";
-const storageVersion = 1;
+const storageVersion = 2;
 const initialState: ActionResult<RecommendationResponse> = { status: "idle" };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -110,7 +110,7 @@ function RecommendationCard({
   rememberScroll: () => void;
 }) {
   return (
-    <Card className="overflow-visible p-2.5 sm:p-3 xl:rounded-2xl xl:p-2">
+    <Card data-cash-needed-minor={meal.cashNeededMinor} className="overflow-visible p-2.5 sm:p-3 xl:rounded-2xl xl:p-2">
       <div className="grid gap-3 sm:grid-cols-[10.5rem_minmax(0,1fr)] xl:grid-cols-[11rem_minmax(0,1fr)_8.5rem_9.5rem] xl:items-stretch xl:gap-3">
         <div className="relative aspect-[4/3] overflow-hidden rounded-[1rem] bg-secondary sm:aspect-auto sm:min-h-40 xl:min-h-[8rem]">
           {meal.image ? (
@@ -128,7 +128,7 @@ function RecommendationCard({
           </div>
           <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted-foreground">{meal.summary}</p>
           <div className="mt-2 grid grid-cols-4 gap-2 sm:mt-auto sm:pt-2">
-            <Metric label="Est. cost" value={formatKes(meal.affordableCostMinor)}><Coins className="size-3.5" aria-hidden="true" /></Metric>
+            <Metric label="Cash needed" value={formatKes(meal.cashNeededMinor)}><Coins className="size-3.5" aria-hidden="true" /></Metric>
             <Metric label="Prep time" value={`${meal.totalMinutes} min`}><Clock3 className="size-3.5" aria-hidden="true" /></Metric>
             <Metric label="Difficulty" value={meal.difficulty}><ChefHat className="size-3.5" aria-hidden="true" /></Metric>
             <Metric label="Serves" value={String(meal.servings)}><UsersRound className="size-3.5" aria-hidden="true" /></Metric>
@@ -253,7 +253,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
   const meals = useMemo(() => {
     if (state.status !== "success" || !state.data) return [];
     return [...state.data.meals].sort((left, right) => {
-      if (sort === "cost") return left.affordableCostMinor - right.affordableCostMinor;
+      if (sort === "cost") return left.cashNeededMinor - right.cashNeededMinor;
       if (sort === "time") return left.totalMinutes - right.totalMinutes;
       if (sort === "pantry") return right.pantryCoveragePercent - left.pantryCoveragePercent;
       return right.score - left.score;
@@ -263,6 +263,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
   const mealTypeLabel = constraints.mealType
     ? constraints.mealType[0].toUpperCase() + constraints.mealType.slice(1)
     : "Any meal";
+  const pricing = state.status === "success" ? state.data?.pricing : null;
 
   return (
     <div className="space-y-7 xl:grid xl:grid-cols-[19rem_minmax(0,1fr)] xl:items-start xl:gap-4 xl:space-y-0">
@@ -292,7 +293,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
           <form action={submit} className="mt-4 space-y-4">
             {defaults.dietaryPreferences.map((value) => <input key={value} type="hidden" name="dietaryPreferences" value={value} />)}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-2">
-              <div className="space-y-1.5"><Label htmlFor="budgetKes">Meal budget (KES)</Label><Input id="budgetKes" name="budgetKes" type="number" min="100" max="1000000" defaultValue={constraints.budgetKes} aria-describedby="pricing-context" /><FieldError errors={state.fieldErrors?.budgetKes} /></div>
+              <div className="space-y-1.5"><Label htmlFor="budgetKes">Meal budget (KES)</Label><Input id="budgetKes" name="budgetKes" type="number" min="100" max="1000000" defaultValue={constraints.budgetKes} aria-describedby="budget-pricing-context" /><p id="budget-pricing-context" className="text-[0.68rem] leading-4 text-muted-foreground">Maximum cash available for missing items today.</p><FieldError errors={state.fieldErrors?.budgetKes} /></div>
               <div className="space-y-1.5"><Label htmlFor="servings">Servings</Label><Input id="servings" name="servings" type="number" min="1" max="30" defaultValue={constraints.servings} /><FieldError errors={state.fieldErrors?.servings} /></div>
               <div className="space-y-1.5"><Label htmlFor="maxMinutes">Time available</Label><Input id="maxMinutes" name="maxMinutes" type="number" min="5" max="480" defaultValue={constraints.maxMinutes} /><FieldError errors={state.fieldErrors?.maxMinutes} /></div>
               <div className="space-y-1.5"><Label htmlFor="mealType">Meal type</Label><div className="relative"><select id="mealType" name="mealType" defaultValue={constraints.mealType} className="h-12 w-full appearance-none rounded-xl bg-background px-3 pr-8 text-sm ring-1 ring-input"><option value="">Any meal</option><option value="breakfast">Breakfast</option><option value="lunch">Lunch</option><option value="dinner">Dinner</option><option value="snack">Snack</option></select><ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2" /></div></div>
@@ -319,7 +320,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
 
       <section ref={resultsRef} aria-labelledby="recommendation-results" aria-live="polite" aria-busy={pending} className="min-w-0 scroll-mt-[5.5rem] space-y-3 lg:scroll-mt-20 xl:rounded-[1.5rem] xl:bg-card xl:p-4 xl:ring-1 xl:ring-border/65">
         <div className="flex flex-wrap items-end justify-between gap-3 px-1">
-          <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Your shortlist</p><h2 id="recommendation-results" className="mt-1 font-display text-3xl font-semibold tracking-tight">{pending ? "Checking every constraint…" : meals.length ? "Best fits first" : "Ready when you are"}</h2><p className="mt-1 text-sm text-muted-foreground">{state.status === "success" ? state.message : "Set today’s constraints to find your strongest matches."}</p></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">Your shortlist</p><h2 id="recommendation-results" className="mt-1 font-display text-3xl font-semibold tracking-tight">{pending ? "Checking every constraint…" : meals.length ? "Best fits first" : "Ready when you are"}</h2><p className="mt-1 text-sm text-muted-foreground">{state.status === "success" ? state.message : "Set today’s constraints to find your strongest matches."}</p>{meals.length ? <p className="mt-1 text-xs text-muted-foreground">Cash needed uses whole produce and practical 100 g or 100 ml buying quantities for missing staples. Pantry ingredients cost KES 0 today.{pricing?.capturedOn ? <> Indicative {pricing.location ?? "local"} prices captured <time dateTime={pricing.capturedOn}>{pricing.capturedOn}</time>{pricing.sourceUrl && pricing.sourceLabel ? <> from <a href={pricing.sourceUrl} target="_blank" rel="noreferrer" className="font-semibold underline underline-offset-2">{pricing.sourceLabel}</a></> : null}.</> : null}</p> : null}</div>
           {meals.length ? <label className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground">Sort by <ListFilter className="size-4 text-primary" /><select value={sort} onChange={(event) => { const nextSort = event.target.value as SortOption; setSort(nextSort); persist(window.scrollY, nextSort); }} className="h-10 rounded-xl bg-card px-3 font-semibold text-foreground ring-1 ring-border"><option value="best">Best fit</option><option value="cost">Lowest cost</option><option value="time">Quickest</option><option value="pantry">Most from pantry</option></select></label> : null}
         </div>
         {pending ? <div className="grid gap-3"><div className="h-44 animate-pulse rounded-[1.5rem] bg-muted" /><div className="h-44 animate-pulse rounded-[1.5rem] bg-muted" /></div> : null}

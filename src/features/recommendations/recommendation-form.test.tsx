@@ -38,6 +38,12 @@ const successfulResult = {
       maxMinutes: 30,
       dietaryPreferences: [],
     },
+    pricing: {
+      location: "Nairobi",
+      capturedOn: "2026-08-06",
+      sourceLabel: "Indicative retail snapshot",
+      sourceUrl: "https://example.com/prices",
+    },
     meals: [{
       id: 1,
       slug: "githeri",
@@ -53,6 +59,7 @@ const successfulResult = {
       reasons: ["Fits the budget."],
       estimatedCostMinor: 15000,
       affordableCostMinor: 14000,
+      cashNeededMinor: 18_000,
       estimatedCostPerServingMinor: 3500,
       pantryCoveragePercent: 75,
       pantryIngredientNames: ["maize"],
@@ -88,6 +95,8 @@ describe("RecommendationForm", () => {
     await waitFor(() => expect(screen.queryByLabelText("Meal budget (KES)")).not.toBeInTheDocument());
     expect(screen.getByText("KES 350")).toBeVisible();
     expect(await screen.findByRole("link", { name: /View details/ })).toHaveAttribute("href", "/recipes/githeri");
+    expect(screen.getByText("KES 180")).toBeVisible();
+    expect(screen.getByText(/practical 100 g or 100 ml buying quantities/i)).toBeVisible();
     await waitFor(() => {
       expect(scrollIntoView).toHaveBeenCalledWith({
         behavior: "smooth",

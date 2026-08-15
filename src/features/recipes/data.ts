@@ -103,6 +103,9 @@ async function loadRecipeCatalogue() {
     priceMinor: cost.price_minor,
     quantity: cost.quantity,
   }));
+  const costsByIngredient = new Map(
+    costResult.data.map((cost) => [cost.ingredient_id, cost]),
+  );
 
   return recipeResult.data.map((recipe) => {
     const primaryImage = recipe.recipe_images.find((image) => image.is_primary);
@@ -126,6 +129,12 @@ async function loadRecipeCatalogue() {
           ],
           costs,
         ),
+        purchasePack: (() => {
+          const cost = costsByIngredient.get(recipeIngredient.ingredient_id);
+          return cost
+            ? { quantity: cost.quantity, unit: cost.unit, priceMinor: cost.price_minor }
+            : null;
+        })(),
         alternatives: substitutionResult.data
           .filter(
             (substitution) =>
@@ -152,6 +161,12 @@ async function loadRecipeCatalogue() {
                 ],
                 costs,
               ),
+              purchasePack: (() => {
+                const cost = costsByIngredient.get(substitution.alternative.id);
+                return cost
+                  ? { quantity: cost.quantity, unit: cost.unit, priceMinor: cost.price_minor }
+                  : null;
+              })(),
               note: substitution.note,
             };
           }),

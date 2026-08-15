@@ -3,7 +3,14 @@ export interface RecommendationIngredientAlternative {
   scaledQuantity: number;
   alternativeUnit: string;
   estimatedCostMinor: number | null;
+  purchasePack: RecommendationPurchasePack | null;
   note: string;
+}
+
+export interface RecommendationPurchasePack {
+  quantity: number;
+  unit: string;
+  priceMinor: number;
 }
 
 export interface RecommendationIngredient {
@@ -13,6 +20,7 @@ export interface RecommendationIngredient {
   unit: string;
   isOptional: boolean;
   estimatedCostMinor: number | null;
+  purchasePack: RecommendationPurchasePack | null;
   alternatives: RecommendationIngredientAlternative[];
 }
 
@@ -57,6 +65,7 @@ export interface RecommendationPreferences {
   healthGoals: string[];
   today: string;
   personalisation?: ReadonlyMap<number, RecommendationPersonalisationSignal>;
+  affordabilityMode?: "ingredient-value" | "purchase-cost";
 }
 
 export interface RecommendationPersonalisationSignal {
@@ -70,6 +79,9 @@ export interface RecommendationMissingIngredient {
   name: string;
   quantity: number;
   unit: string;
+  purchaseQuantity: number;
+  purchaseUnit: string;
+  purchaseCostMinor: number;
 }
 
 export interface RecommendationSubstitution {
@@ -96,11 +108,33 @@ export interface RecommendedMeal {
   reasons: string[];
   estimatedCostMinor: number;
   affordableCostMinor: number;
+  cashNeededMinor: number;
   estimatedCostPerServingMinor: number;
   pantryCoveragePercent: number;
   pantryIngredientNames: string[];
   missingIngredients: RecommendationMissingIngredient[];
   substitutions: RecommendationSubstitution[];
+}
+
+function purchaseCostForQuantity(
+  quantity: number,
+  unit: string,
+  pack: RecommendationPurchasePack | null,
+) {
+  if (!pack || pack.unit !== unit || quantity <= 0 || pack.quantity <= 0) return null;
+  const practicalIncrement =
+    unit === "g" ? 100 :
+    unit === "kg" ? 0.1 :
+    unit === "ml" ? 100 :
+    unit === "l" ? 0.1 :
+    unit === "cup" ? 0.25 :
+    1;
+  const purchaseQuantity = Math.ceil(quantity / practicalIncrement) * practicalIncrement;
+  return {
+    quantity: purchaseQuantity,
+    unit: pack.unit,
+    costMinor: Math.ceil((purchaseQuantity / pack.quantity) * pack.priceMinor),
+  };
 }
 
 interface NormalizedQuantity {
@@ -169,6 +203,8 @@ export function rankRecommendations(
     let expiringTotal = 0;
     const pantryIngredientNames: string[] = [];
     const missingIngredients: RecommendationMissingIngredient[] = [];
+    let cashNeededMinor = 0;
+    let hasCompletePurchasePricing = true;
 
     for (const ingredient of requiredIngredients) {
       const requiredQuantity = ingredient.quantity * scale;
@@ -184,11 +220,23 @@ export function rankRecommendations(
       coverageTotal += coverage;
       if (coverage > 0) pantryIngredientNames.push(ingredient.name);
       if (coverage < 1) {
+        const missingQuantity = Number((requiredQuantity - availableQuantity).toFixed(2));
+        const purchase = purchaseCostForQuantity(
+          missingQuantity,
+          ingredient.unit,
+          ingredient.purchasePack,
+        );
+
+        if (purchase) cashNeededMinor += purchase.costMinor;
+        else hasCompletePurchasePricing = false;
         missingIngredients.push({
           ingredientId: ingredient.id,
           name: ingredient.name,
-          quantity: Number((requiredQuantity - availableQuantity).toFixed(2)),
+          quantity: missingQuantity,
           unit: ingredient.unit,
+          purchaseQuantity: purchase?.quantity ?? missingQuantity,
+          purchaseUnit: purchase?.unit ?? ingredient.unit,
+          purchaseCostMinor: purchase?.costMinor ?? 0,
         });
       }
 
@@ -210,9 +258,15 @@ export function rankRecommendations(
     const ingredientCount = Math.max(1, requiredIngredients.length);
     const pantryCoverage = coverageTotal / ingredientCount;
     const expiringUse = expiringTotal / ingredientCount;
+    const cashNeededForMealMinor = hasCompletePurchasePricing
+      ? cashNeededMinor
+      : candidate.affordableCostMinor;
+    const budgetedCostMinor = preferences.affordabilityMode === "purchase-cost"
+      ? cashNeededForMealMinor
+      : candidate.affordableCostMinor;
     const budgetHeadroom = Math.max(
       0,
-      Math.min(1, (preferences.budgetMinor - candidate.affordableCostMinor) / preferences.budgetMinor),
+      Math.min(1, (preferences.budgetMinor - budgetedCostMinor) / preferences.budgetMinor),
     );
     const timeHeadroom = Math.max(
       0,
@@ -279,7 +333,7 @@ export function rankRecommendations(
     }
     if (budgetHeadroom >= 0.05) {
       reasonCandidates.push({
-        reason: `Leaves about KES ${Math.floor((preferences.budgetMinor - candidate.affordableCostMinor) / 100).toLocaleString("en-KE")} in your meal budget.`,
+        reason: `Leaves about KES ${Math.floor((preferences.budgetMinor - budgetedCostMinor) / 100).toLocaleString("en-KE")} in your meal budget.`,
         strength: budgetHeadroom * 15,
       });
     }
@@ -361,6 +415,7 @@ export function rankRecommendations(
         .map(({ reason }) => reason),
       estimatedCostMinor: candidate.estimatedCostMinor,
       affordableCostMinor: candidate.affordableCostMinor,
+      cashNeededMinor: cashNeededForMealMinor,
       estimatedCostPerServingMinor: Math.ceil(
         candidate.affordableCostMinor / preferences.servings,
       ),
@@ -371,11 +426,16 @@ export function rankRecommendations(
     };
   });
 
-  return ranked.sort(
+  return ranked
+    .filter((meal) =>
+      preferences.affordabilityMode !== "purchase-cost" ||
+      meal.cashNeededMinor <= preferences.budgetMinor,
+    )
+    .sort(
     (left, right) =>
       right.score - left.score ||
-      left.affordableCostMinor - right.affordableCostMinor ||
+      left.cashNeededMinor - right.cashNeededMinor ||
       left.totalMinutes - right.totalMinutes ||
       left.name.localeCompare(right.name),
-  );
+    );
 }
