@@ -56,16 +56,27 @@ export function RecipeDetailView({ recipe, personalisation, authenticated }: Rec
   return (
     <article className="-mx-4 -my-4 overflow-hidden bg-card sm:-mx-6 sm:-my-6 lg:-mx-8 lg:-my-8">
       <div className="xl:grid xl:grid-cols-[minmax(0,1.75fr)_minmax(22rem,.85fr)]">
-        <div className="min-w-0 xl:border-r xl:border-border/60">
-          <section className="relative overflow-hidden border-b border-border/35 lg:min-h-[25rem]">
-            <div className="relative h-64 sm:h-80 lg:absolute lg:inset-y-0 lg:right-0 lg:h-auto lg:w-[48%]">
+        <div className="min-w-0">
+          <section className="relative overflow-hidden md:min-h-[25rem]">
+            <div
+              data-testid="recipe-hero-image"
+              className="relative h-60 overflow-hidden sm:h-72 md:absolute md:inset-y-0 md:right-0 md:h-auto md:w-[52%] xl:w-[52%]"
+            >
               {recipe.image ? (
-                <Image src={recipe.image.path} alt={recipe.image.alt} fill priority sizes="(max-width: 1023px) 100vw, 44vw" className="object-cover" />
+                <Image
+                  src={recipe.image.path}
+                  alt={recipe.image.alt}
+                  fill
+                  preload
+                  sizes="(max-width: 767px) 100vw, (max-width: 1279px) 52vw, 37vw"
+                  className="object-cover object-center"
+                />
               ) : <div className="grid h-full place-items-center bg-secondary text-sm text-muted-foreground">Image unavailable</div>}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-card via-card/70 to-transparent lg:inset-y-0 lg:left-0 lg:h-auto lg:w-32 lg:bg-gradient-to-r" aria-hidden="true" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-card via-card/80 to-transparent md:inset-y-0 md:left-0 md:h-auto md:w-[44%] md:bg-gradient-to-r md:via-card/75" aria-hidden="true" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-12 bg-gradient-to-t from-card/90 to-transparent md:block" aria-hidden="true" />
             </div>
 
-            <div className="relative z-10 px-5 pb-7 sm:px-8 lg:flex lg:min-h-[25rem] lg:w-[58%] lg:flex-col lg:justify-center lg:py-8">
+            <div className="relative z-10 px-5 pb-7 sm:px-8 md:flex md:min-h-[25rem] md:w-[62%] md:flex-col md:justify-center md:py-8 xl:w-[60%]">
               <Button asChild variant="ghost" className="-ml-3 mb-4 w-fit text-primary hover:text-primary">
                 <Link href="/eat-now"><ArrowLeft aria-hidden="true" />Back to Eat Now</Link>
               </Button>

@@ -45,3 +45,44 @@
 - Verify day selection, whole-week toggle, meal edit disclosure, shopping-list generation, and week regeneration.
 
 final result: blocked
+
+---
+
+# Recipe hero image blend — design QA
+
+**Source visual truth**
+
+- User-provided recipe-detail mockup in the current conversation, showing a borderless right-side photograph with a long white dissolve into the recipe copy.
+- The source attachment is conversation-hosted and has no local filesystem path.
+
+**Implementation evidence**
+
+- Route: `http://localhost:3000/recipes/maize-porridge-milk`
+- Browser: connected Chrome
+- State: signed-in recipe detail at desktop, tablet, and phone geometry.
+- Desktop screenshot: captured inline during this review; Chrome repeatedly timed out when saving a local screenshot artifact.
+- Verified geometry: desktop image uses 52% of the hero and the blend covers 44% of the image; phone image is 375 × 240 CSS px with a 112 px bottom dissolve.
+- Primary interactions: route rendering and responsive viewport changes.
+
+**Findings and comparison history**
+
+- [P1, fixed] The explicit desktop column divider touched the image's right edge and visually framed it. Removed the divider; Chrome reports a `0px` right border.
+- [P1, fixed] The 80–96 px fade exposed the image's rectangular left edge. The image now overlaps the copy and uses a 44%-wide, more opaque dissolve.
+- [P2, fixed] The mobile 64 px fade ended abruptly. It is now 112 px tall with a softer midpoint.
+- [P2, fixed] The hero bottom rule and sharp image cutoff remained visible. The rule was removed and a shallow desktop/tablet bottom dissolve was added.
+- [P2, remaining] The catalogue photograph and source mockup use different subject composition and cannot be normalized for image-fidelity comparison without the original mockup asset.
+
+**Required fidelity surfaces**
+
+- Fonts and typography: unchanged and visually consistent with the existing BiteWise system.
+- Spacing and layout rhythm: image/content overlap now follows the source composition; surrounding recipe spacing is unchanged.
+- Colors and visual tokens: fade uses the existing card token and avoids a mismatched overlay color.
+- Image quality and asset fidelity: optimized catalogue photography remains sharp, but subject-level fidelity is blocked by the different source asset.
+- Copy and content: recipe content is intentionally data-driven and differs between catalogue records.
+
+**Implementation checklist**
+
+- Obtain the original mockup image as a local attachment if exact normalized comparison is required.
+- Re-run a single combined source/implementation comparison at matching content and viewport.
+
+final result: blocked
