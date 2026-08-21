@@ -27,6 +27,18 @@ export const recommendationInputSchema = z.object({
 
 export type RecommendationInput = z.infer<typeof recommendationInputSchema>;
 
+export const recommendationEventInputSchema = z.object({
+  runId: z.uuid(),
+  eventType: z.enum(["impression", "opened"]),
+  recipeIds: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(5)
+    .refine((recipeIds) => new Set(recipeIds).size === recipeIds.length, {
+      message: "Recommendation recipes must be unique.",
+    }),
+});
+
 export function defaultMealBudgetMinor(
   budgetMinor: number | null,
   budgetPeriod: string,

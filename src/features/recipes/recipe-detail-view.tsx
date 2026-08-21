@@ -70,6 +70,9 @@ export function RecipeDetailView({ recipe, personalisation, authenticated, viewC
   function hrefForServings(nextServings: number) {
     const params = new URLSearchParams({ servings: String(nextServings) });
     if (viewContext.source !== "direct") params.set("source", viewContext.source);
+    if (viewContext.recommendationRunId) {
+      params.set("recommendationRun", viewContext.recommendationRunId);
+    }
     return `/recipes/${recipe.slug}?${params}`;
   }
   const currentHref = hrefForServings(servings);
@@ -134,7 +137,7 @@ export function RecipeDetailView({ recipe, personalisation, authenticated, viewC
                 <AddToMealPlanControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} returnTo={currentHref} />
                 <CookSetupControl authenticated={authenticated} recipeId={recipe.id} recipeName={recipe.name} recipeSlug={recipe.slug} returnTo={currentHref} />
                 <div>
-                  <RecipePersonalisationControls recipeId={recipe.id} initialState={personalisation} authenticated={authenticated} compact detailActions returnTo={currentHref} />
+                  <RecipePersonalisationControls recommendationRunId={viewContext.recommendationRunId} recipeId={recipe.id} initialState={personalisation} authenticated={authenticated} compact detailActions returnTo={currentHref} />
                 </div>
               </div>
             </div>

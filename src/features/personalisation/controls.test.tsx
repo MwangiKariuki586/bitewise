@@ -26,6 +26,19 @@ describe("RecipePersonalisationControls", () => {
     await waitFor(() => expect(mocks.mutate).toHaveBeenLastCalledWith({ recipeId: 7, operation: "undo_feedback" }));
   });
 
+  it("attributes recommendation feedback to its originating run", async () => {
+    mocks.mutate.mockResolvedValueOnce({ status: "success", message: "Saved", data: { feedback: "liked", isSaved: false, lastEatenAt: null } });
+    render(<RecipePersonalisationControls recommendationRunId="10000000-0000-4000-8000-000000000001" recipeId={7} authenticated initialState={{ feedback: null, isSaved: false, lastEatenAt: null }} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Like" }));
+
+    await waitFor(() => expect(mocks.mutate).toHaveBeenCalledWith({
+      operation: "like",
+      recipeId: 7,
+      recommendationRunId: "10000000-0000-4000-8000-000000000001",
+    }));
+  });
+
   it("offers authentication instead of mutating for a guest", () => {
     render(<RecipePersonalisationControls recipeId={7} authenticated={false} returnTo="/recipes/githeri" initialState={{ feedback: null, isSaved: false, lastEatenAt: null }} />);
     expect(screen.getByRole("link", { name: "Sign in to save" })).toHaveAttribute(
@@ -41,6 +54,30 @@ describe("RecipePersonalisationControls", () => {
     expect(screen.getByLabelText("More meal actions")).toBeVisible();
     expect(screen.getByRole("button", { name: "Like" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Dislike" })).toBeInTheDocument();
+  });
+
+  it("keeps selected card actions neutral and marks only their icons with the primary colour", () => {
+    const { rerender } = render(<RecipePersonalisationControls cardActions recipeId={7} authenticated initialState={{ feedback: "liked", isSaved: true, lastEatenAt: null }} />);
+
+    const likeButton = screen.getByRole("button", { name: "Like" });
+    const saveButton = screen.getByRole("button", { name: "Saved" });
+    expect(likeButton).toHaveClass("border", "bg-background/80", "text-foreground");
+    expect(likeButton).toHaveClass("gap-1", "px-2");
+    expect(likeButton).not.toHaveClass("bg-primary", "text-primary-foreground");
+    expect(likeButton.querySelector("svg")).toHaveClass("shrink-0", "fill-current", "text-primary");
+    expect(likeButton.querySelector("svg")).toHaveAttribute("fill", "currentColor");
+    expect(saveButton).toHaveClass("border", "bg-background/80", "text-foreground");
+    expect(saveButton).not.toHaveClass("bg-primary", "bg-secondary");
+    expect(saveButton.querySelector("svg")).toHaveClass("shrink-0", "fill-current", "text-primary");
+
+    rerender(<RecipePersonalisationControls key="disliked" cardActions recipeId={7} authenticated initialState={{ feedback: "disliked", isSaved: false, lastEatenAt: null }} />);
+
+    const dislikeButton = screen.getByRole("button", { name: "Dislike" });
+    expect(dislikeButton).toHaveClass("border", "bg-background/80", "text-foreground");
+    expect(dislikeButton).toHaveClass("gap-1", "px-2");
+    expect(dislikeButton).not.toHaveClass("bg-primary", "text-primary-foreground");
+    expect(dislikeButton.querySelector("svg")).toHaveClass("shrink-0", "fill-current", "text-primary");
+    expect(dislikeButton.querySelector("svg")).toHaveAttribute("fill", "currentColor");
   });
 
   it("keeps save, feedback, and eaten actions inside the recipe overflow menu", () => {

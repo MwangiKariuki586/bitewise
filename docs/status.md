@@ -16,9 +16,68 @@
 
 Milestone 9 – Final polish, caching review & full e2e coverage
 
-Active feature: BiteWise MVP
+Active feature: Recommendation quality and first-party observability
 
-Status: Complete
+Status: Implementation verified; the complete repository Playwright gate still
+contains unrelated stale journey failures listed below.
+
+Eat Now recommendation v2 is implemented without paid recommendation or
+analytics services. Scoring now uses one versioned configuration
+(`eat-now-v2`) for pantry coverage, expiring ingredients, budget, preferences,
+time, saved/liked meals, and recent-meal penalties. The previous inert variety
+constant has been removed. After hard filtering and scoring, a deterministic
+greedy reranker keeps the strongest first result while reducing ingredient,
+cuisine, and meal-type repetition across the five-meal shortlist. Cost,
+quantity conversion, date handling, and preference matching are separated into
+small testable modules so the engine can evolve without another service.
+
+Every generated list now writes an owner-scoped recommendation run and ordered
+shortlist through one atomic security-invoker RPC. Bounded first-party events
+capture impressions, detail opens, likes, dislikes, feedback undo, saves,
+unsaves, and eaten outcomes only for recipes belonging to that run. Stored
+context contains aggregate constraint counts and operational values, not the
+user's raw dietary or health-goal arrays. Analytics failure is deliberately
+non-blocking for meal generation and personalisation. Three new public tables
+have RLS, explicit least-privilege grants, composite ownership constraints, and
+covering indexes. Hosted Supabase verification passed all 25 new pgTAP
+assertions; generated types match the checked-in types; the security advisor
+reports only the owner-controlled leaked-password setting, and the performance
+advisor reports only expected unused-index information.
+
+Recommendation querying remains request-scoped for private profile, pantry,
+personalisation, run, and event data; only the public recipe catalogue retains
+its existing shared tagged cache. These append-only writes do not invalidate UI
+data. Generation remains limited to 20 requests per authenticated user per 10
+minutes. Event batches are authenticated, schema-validated, owner-checked,
+limited to five unique shortlist recipe IDs, and emitted only from an already
+rate-limited generation or a user action, so no paid queue, vector database,
+LLM, or external analytics platform is required for this slice.
+
+Verification passed 140 unit/integration tests, strict typecheck,
+warning-free lint, production build, `git diff --check`, both mobile and desktop
+hosted Eat Now persistence journeys, and the 25-assertion hosted pgTAP suite.
+The complete 66-test Playwright run reached 41 passes, 13 failures, one
+intentional skip, and 11 tests not run. The new Eat Now observability journey
+passed in both projects; the failures reproduce pre-existing stale assumptions
+in Discover servings/results, Meal Plan fixture state, guest recipe actions,
+onboarding labels, Watch & Cook content, and shared hosted-test isolation. The
+recommendation change is therefore implemented and feature-verified, but is not
+marked fully complete until that existing repository-wide browser debt is
+resolved.
+
+Recommendation POC follow-up: `npm run poc:recommendations` now provides
+guarded `seed`, `exercise`, `verify`, and `cleanup` commands for one disposable
+development account. The seed is login-capable and supplies a completed
+profile, eight pantry items, expiring-food signals, a like, dislike, save, and
+recently-eaten signal. The automated Chrome exercise signs in through the real
+UI, generates five recommendations, opens a detail page, dislikes one result,
+and regenerates. Hosted proof passed: both runs used `eat-now-v2`, contained
+five unique meals, excluded the pre-seeded Matoke Beef Stew dislike, recorded
+impressions, attributed the detail open and new dislike, and replaced Maize
+Porridge with Milk with Tomato Beans with Rice on regeneration. The utility
+requires explicit `--allow-hosted`, never prints the service-role key, and its
+cleanup targets only `bitewise-recommendations-poc@example.com`; full operating
+instructions are in `docs/recommendation-poc.md`.
 
 Responsive pagination is now shared across Discover, Pantry, Leftovers, Saved
 Meals, and Shopping List. It uses numbered ranges with ellipses on tablet and
@@ -454,3 +513,20 @@ unit/integration tests, strict typecheck, warning-free lint, production build,
 `git diff --check`, and live Chrome geometry and link-handoff checks. Formal
 normalized visual comparison remains blocked because the conversation reference
 has no readable local file; see `design-qa.md`.
+
+Eat Now recommendation-card Like, Dislike, and Save actions now keep the same
+neutral outlined surface when selected. Active state is communicated through
+the aubergine icon colour and fill, matching the Saved bookmark. All three
+icons are non-shrinking, and compact thumb-button padding keeps the longer
+Dislike label and its 16 px icon visible in the narrow desktop action column.
+`aria-pressed`, mutations, labels, action-grid geometry, and responsive layout
+remain unchanged. This presentation-only refinement does not change data
+access, caching, invalidation, database behavior, or rate limits. Verified with
+141 passing unit/integration tests, the targeted Eat Now journey on mobile and
+desktop, strict typecheck, warning-free lint, production build,
+`git diff --check`, and live browser geometry/computed-style checks with no
+console warnings or errors. The most recent complete Playwright gate reproduced
+the 13 unrelated stale journey failures already documented above (41 passed, 1
+skipped, 11 not run). Formal normalized visual comparison remains blocked
+because the conversation reference has no readable local file; see
+`design-qa.md`.

@@ -18,6 +18,7 @@ interface RecipePersonalisationControlsProps {
   cardActions?: boolean;
   detailActions?: boolean;
   returnTo?: string;
+  recommendationRunId?: string | null;
 }
 
 interface PersonalisationSyncDetail {
@@ -56,6 +57,7 @@ export function RecipePersonalisationControls({
   cardActions = false,
   detailActions = false,
   returnTo = "/eat-now",
+  recommendationRunId = null,
 }: RecipePersonalisationControlsProps) {
   const [state, setState] = useState(initialState);
   const [message, setMessage] = useState("");
@@ -108,7 +110,11 @@ export function RecipePersonalisationControls({
     }
     if (pending) return;
     startTransition(async () => {
-      const result = await mutateRecipePersonalisationAction({ recipeId, operation });
+      const result = await mutateRecipePersonalisationAction({
+        recipeId,
+        operation,
+        ...(recommendationRunId ? { recommendationRunId } : {}),
+      });
       if (result.status === "success" && result.data) {
         setState(result.data);
         syncStoredEatNowState(recipeId, result.data);
@@ -149,11 +155,11 @@ export function RecipePersonalisationControls({
       <div className="relative">
         <div className="grid gap-2" aria-label="Meal preferences">
           <div className="grid grid-cols-2 gap-2">
-            <Button type="button" size="sm" variant={state.feedback === "liked" ? "default" : "outline"} aria-pressed={state.feedback === "liked"} disabled={pending} onClick={() => mutate(state.feedback === "liked" ? "undo_feedback" : "like")}><ThumbsUp className="size-4" />Like</Button>
-            <Button type="button" size="sm" variant={state.feedback === "disliked" ? "default" : "outline"} aria-pressed={state.feedback === "disliked"} disabled={pending} onClick={() => mutate(state.feedback === "disliked" ? "undo_feedback" : "dislike")}><ThumbsDown className="size-4" />Dislike</Button>
+            <Button type="button" size="sm" variant="outline" className="gap-1 px-2" aria-pressed={state.feedback === "liked"} disabled={pending} onClick={() => mutate(state.feedback === "liked" ? "undo_feedback" : "like")}><ThumbsUp className={state.feedback === "liked" ? "size-4 shrink-0 fill-current text-primary" : "size-4 shrink-0"} fill={state.feedback === "liked" ? "currentColor" : "none"} aria-hidden="true" />Like</Button>
+            <Button type="button" size="sm" variant="outline" className="gap-1 px-2" aria-pressed={state.feedback === "disliked"} disabled={pending} onClick={() => mutate(state.feedback === "disliked" ? "undo_feedback" : "dislike")}><ThumbsDown className={state.feedback === "disliked" ? "size-4 shrink-0 fill-current text-primary" : "size-4 shrink-0"} fill={state.feedback === "disliked" ? "currentColor" : "none"} aria-hidden="true" />Dislike</Button>
           </div>
           <div className="grid grid-cols-[minmax(0,1fr)_2.75rem] gap-2">
-            <Button type="button" size="sm" variant={state.isSaved ? "secondary" : "outline"} aria-pressed={state.isSaved} disabled={pending} onClick={() => mutate(state.isSaved ? "unsave" : "save")}><Bookmark className="size-4" fill={state.isSaved ? "currentColor" : "none"} aria-hidden="true" />{state.isSaved ? "Saved" : "Save"}</Button>
+            <Button type="button" size="sm" variant="outline" aria-pressed={state.isSaved} disabled={pending} onClick={() => mutate(state.isSaved ? "unsave" : "save")}><Bookmark className={state.isSaved ? "size-4 shrink-0 fill-current text-primary" : "size-4 shrink-0"} fill={state.isSaved ? "currentColor" : "none"} aria-hidden="true" />{state.isSaved ? "Saved" : "Save"}</Button>
             <div ref={menuRef} className="relative">
               <button type="button" aria-label="More meal actions" aria-expanded={menuOpen} aria-controls={menuId} onClick={() => setMenuOpen((current) => !current)} className="grid size-9 cursor-pointer place-items-center rounded-lg border border-border bg-background text-foreground hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"><MoreVertical className="size-4" aria-hidden="true" /></button>
               {menuOpen ? (

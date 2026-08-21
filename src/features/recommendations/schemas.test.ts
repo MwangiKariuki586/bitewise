@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   defaultMealBudgetMinor,
+  recommendationEventInputSchema,
   recommendationInputSchema,
 } from "@/features/recommendations/schemas";
 
@@ -42,6 +43,24 @@ describe("recommendation input", () => {
         equipment: ["bonfire"],
         dietaryPreferences: [],
       }).success,
+    ).toBe(false);
+  });
+
+  it("accepts bounded unique recommendation events", () => {
+    const input = {
+      runId: "10000000-0000-4000-8000-000000000001",
+      eventType: "impression",
+      recipeIds: [1, 2, 3],
+    };
+
+    expect(recommendationEventInputSchema.safeParse(input).success).toBe(true);
+    expect(
+      recommendationEventInputSchema.safeParse({ ...input, recipeIds: [1, 1] })
+        .success,
+    ).toBe(false);
+    expect(
+      recommendationEventInputSchema.safeParse({ ...input, eventType: "purchase" })
+        .success,
     ).toBe(false);
   });
 });

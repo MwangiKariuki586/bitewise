@@ -252,7 +252,7 @@ describe("deterministic recommendation ranking", () => {
       ]),
     })[0];
 
-    expect(neutral.score - personalised.score).toBe(penalty);
+    expect(neutral.score - personalised.score).toBeCloseTo(penalty, 2);
     expect(
       personalised.reasons.some((reason) => reason.includes("lower for variety")),
     ).toBe(penalty > 0);

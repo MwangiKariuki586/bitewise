@@ -98,9 +98,63 @@ test.describe("curated recipe catalogue", () => {
     await expect(page.getByText(/KES/).first()).toBeVisible();
     await expect(page.locator("[data-slot='card']")).toHaveCount(5);
     await expect(page.getByRole("img").first()).toBeVisible();
-    await expect(page.getByRole("link", { name: /View details/ }).first()).toHaveAttribute("href", /\/recipes\//);
+    const firstCard = page.locator("[data-slot='card']").first();
+    const likeButton = firstCard.getByRole("button", { name: "Like", exact: true });
+    const dislikeButton = firstCard.getByRole("button", { name: "Dislike", exact: true });
+    const dislikeIcon = dislikeButton.locator("svg");
+    await expect(dislikeIcon).toBeVisible();
+    expect((await dislikeIcon.boundingBox())?.width).toBeGreaterThanOrEqual(15);
+    await likeButton.click();
+    await expect(likeButton).toHaveAttribute("aria-pressed", "true");
+    const selectedLikeColours = await likeButton.evaluate((button) => {
+      const icon = button.querySelector("svg");
+      if (!icon) throw new Error("Like icon is missing.");
+      return {
+        buttonBackground: getComputedStyle(button).backgroundColor,
+        iconColour: getComputedStyle(icon).color,
+        iconFill: getComputedStyle(icon).fill,
+      };
+    });
+    expect(selectedLikeColours.iconFill).toBe(selectedLikeColours.iconColour);
+    expect(selectedLikeColours.buttonBackground).not.toBe(selectedLikeColours.iconColour);
+    const firstDetailsLink = page.getByRole("link", { name: /View details/ }).first();
+    await expect(firstDetailsLink).toHaveAttribute("href", /\/recipes\//);
+    const recommendationHref = await firstDetailsLink.getAttribute("href");
+    const recommendationRunId = new URL(
+      recommendationHref ?? "",
+      "https://bitewise.local",
+    ).searchParams.get("recommendationRun");
+    expect(recommendationRunId).toMatch(/^[0-9a-f-]{36}$/);
+
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const run = await admin
+      .from("recommendation_runs")
+      .select("scoring_version")
+      .eq("id", recommendationRunId)
+      .eq("user_id", userId)
+      .single();
+    if (run.error) throw run.error;
+    expect(run.data.scoring_version).toBe("eat-now-v2");
+    await expect.poll(async () => {
+      const result = await admin
+        .from("recommendation_run_items")
+        .select("recipe_id", { count: "exact", head: true })
+        .eq("run_id", recommendationRunId);
+      if (result.error) throw result.error;
+      return result.count;
+    }).toBe(5);
+    await expect.poll(async () => {
+      const result = await admin
+        .from("recommendation_events")
+        .select("recipe_id", { count: "exact", head: true })
+        .eq("run_id", recommendationRunId)
+        .eq("event_type", "impression");
+      if (result.error) throw result.error;
+      return result.count;
+    }).toBe(5);
     if (testInfo.project.name === "desktop-chromium") {
-      const firstCard = page.locator("[data-slot='card']").first();
       const [cardBox, imageBox, detailsBox] = await Promise.all([
         firstCard.boundingBox(),
         firstCard.getByRole("img").boundingBox(),
@@ -125,7 +179,9 @@ test.describe("curated recipe catalogue", () => {
 
     await page.getByLabel("Sort by").selectOption("cost");
     await page.getByRole("link", { name: /View details/ }).first().click();
-    await expect(page).toHaveURL(/\/recipes\/[^?]+\?source=eat-now&servings=4$/);
+    await expect(page).toHaveURL(
+      /\/recipes\/[^?]+\?source=eat-now&servings=4&recommendationRun=[0-9a-f-]+$/,
+    );
     await expect(page.getByText("Cash needed", { exact: true })).toBeVisible();
     await expect(page.locator("span:visible", { hasText: "Serves 4" })).toBeVisible();
     const recipeUrl = page.url();

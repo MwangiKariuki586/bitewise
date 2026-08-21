@@ -12,7 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RecipePersonalisationControls } from "@/features/personalisation/controls";
 import { dietaryOptions, equipmentOptions } from "@/features/profile/options";
-import { generateRecommendationsAction } from "@/features/recommendations/actions";
+import {
+  generateRecommendationsAction,
+  recordRecommendationEventAction,
+} from "@/features/recommendations/actions";
 import type { RecommendationResponse } from "@/features/recommendations/data";
 import type { RecommendedMeal } from "@/features/recommendations/ranking";
 import { recipeViewHref } from "@/features/recipes/view-context";
@@ -126,10 +129,12 @@ function RecommendationCard({
   meal,
   index,
   rememberScroll,
+  runId,
 }: {
   meal: RecommendedMeal & { personalisation: RecommendationResponse["meals"][number]["personalisation"] };
   index: number;
   rememberScroll: () => void;
+  runId: string | null;
 }) {
   return (
     <Card data-cash-needed-minor={meal.cashNeededMinor} className="overflow-visible p-2.5 sm:p-3 xl:rounded-2xl xl:p-2">
@@ -166,9 +171,22 @@ function RecommendationCard({
         </div>
         <div className="grid grid-cols-1 gap-2 sm:col-start-2 xl:col-start-auto xl:flex xl:flex-col xl:justify-center">
           <Button asChild className="w-full">
-            <Link href={recipeViewHref(meal.slug, "eat-now", meal.servings)} scroll={false} onClick={rememberScroll}>View details <span aria-hidden="true">→</span></Link>
+            <Link
+              href={recipeViewHref(meal.slug, "eat-now", meal.servings, runId)}
+              scroll={false}
+              onClick={() => {
+                rememberScroll();
+                if (runId) {
+                  void recordRecommendationEventAction({
+                    runId,
+                    eventType: "opened",
+                    recipeIds: [meal.id],
+                  }).catch(() => undefined);
+                }
+              }}
+            >View details <span aria-hidden="true">→</span></Link>
           </Button>
-          <RecipePersonalisationControls recipeId={meal.id} initialState={meal.personalisation} authenticated compact cardActions />
+          <RecipePersonalisationControls recommendationRunId={runId} recipeId={meal.id} initialState={meal.personalisation} authenticated compact cardActions />
         </div>
       </div>
     </Card>
@@ -191,6 +209,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
   const restoreScroll = useRef<number | null>(null);
   const resultsRef = useRef<HTMLElement>(null);
   const scrollToResultsAfterSuccess = useRef(false);
+  const recordedImpressions = useRef(new Set<string>());
 
   useEffect(() => {
     const raw = sessionStorage.getItem(storageKey);
@@ -244,6 +263,19 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
     });
   }, [pending, state]);
 
+  useEffect(() => {
+    if (state.status !== "success" || !state.data?.runId || !state.data.meals.length) {
+      return;
+    }
+    if (recordedImpressions.current.has(state.data.runId)) return;
+    recordedImpressions.current.add(state.data.runId);
+    void recordRecommendationEventAction({
+      runId: state.data.runId,
+      eventType: "impression",
+      recipeIds: state.data.meals.map((meal) => meal.id),
+    }).catch(() => undefined);
+  }, [state]);
+
   function persist(scrollY = window.scrollY, nextSort = sort) {
     if (state.status !== "success") return;
     sessionStorage.setItem(storageKey, JSON.stringify({ version: storageVersion, result: state, constraints, sort: nextSort, scrollY } satisfies StoredEatNowState));
@@ -285,11 +317,12 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
 
   const meals = useMemo(() => {
     if (state.status !== "success" || !state.data) return [];
+    if (sort === "best") return [...state.data.meals];
     return [...state.data.meals].sort((left, right) => {
       if (sort === "cost") return left.cashNeededMinor - right.cashNeededMinor;
       if (sort === "time") return left.totalMinutes - right.totalMinutes;
       if (sort === "pantry") return right.pantryCoveragePercent - left.pantryCoveragePercent;
-      return right.score - left.score;
+      return 0;
     });
   }, [sort, state]);
 
@@ -362,7 +395,7 @@ export function RecommendationForm({ defaults }: RecommendationFormProps) {
           {meals.length ? <label className="flex min-h-11 items-center gap-2 text-xs text-muted-foreground">Sort by <ListFilter className="size-4 text-primary" /><select value={sort} onChange={(event) => { const nextSort = event.target.value as SortOption; setSort(nextSort); persist(window.scrollY, nextSort); }} className="h-10 rounded-xl bg-card px-3 font-semibold text-foreground ring-1 ring-border"><option value="best">Best fit</option><option value="cost">Lowest cost</option><option value="time">Quickest</option><option value="pantry">Most from pantry</option></select></label> : null}
         </div>
         {!meals.length && state.status !== "success" ? <><div className="grid grid-cols-4 gap-2 py-2">{emptyStateMetrics.map(({ label, icon: Icon, tone }) => <div key={label} className="flex flex-col items-center gap-2 text-center text-[0.65rem] font-semibold leading-tight"><span className={cn("grid size-10 place-items-center rounded-full", tone)}><Icon className="size-4" /></span>{label}</div>)}</div><IllustrativeShortlist pending={pending} /></> : null}
-        {!pending && meals.map((meal, index) => <RecommendationCard key={meal.id} meal={meal} index={index} rememberScroll={() => persist()} />)}
+        {!pending && meals.map((meal, index) => <RecommendationCard key={meal.id} meal={meal} index={index} rememberScroll={() => persist()} runId={state.status === "success" ? state.data?.runId ?? null : null} />)}
         {!pending && state.status === "success" && state.data && !state.data.meals.length ? <Card className="p-6"><h3 className="font-display text-2xl font-semibold">Keep the hard rules. Adjust the situation.</h3><ul className="mt-3 space-y-2 text-sm text-muted-foreground">{state.data.suggestions.map((suggestion) => <li key={suggestion}>• {suggestion}</li>)}</ul></Card> : null}
       </section>
     </div>

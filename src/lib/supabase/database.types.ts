@@ -543,6 +543,110 @@ export type Database = {
         }
         Relationships: []
       }
+      recommendation_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: number
+          recipe_id: number
+          run_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: never
+          recipe_id: number
+          run_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: never
+          recipe_id?: number
+          run_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_events_run_id_user_id_recipe_id_fkey"
+            columns: ["run_id", "user_id", "recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_run_items"
+            referencedColumns: ["run_id", "user_id", "recipe_id"]
+          },
+        ]
+      }
+      recommendation_run_items: {
+        Row: {
+          cash_needed_minor: number
+          pantry_coverage_percent: number
+          position: number
+          recipe_id: number
+          run_id: string
+          score: number
+          user_id: string
+        }
+        Insert: {
+          cash_needed_minor: number
+          pantry_coverage_percent: number
+          position: number
+          recipe_id: number
+          run_id: string
+          score: number
+          user_id: string
+        }
+        Update: {
+          cash_needed_minor?: number
+          pantry_coverage_percent?: number
+          position?: number
+          recipe_id?: number
+          run_id?: string
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recommendation_run_items_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "recommendation_run_items_run_id_user_id_fkey"
+            columns: ["run_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "recommendation_runs"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      recommendation_runs: {
+        Row: {
+          context: Json
+          created_at: string
+          id: string
+          scoring_version: string
+          user_id: string
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          id?: string
+          scoring_version: string
+          user_id: string
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          id?: string
+          scoring_version?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recipe_feedback: {
         Row: {
           created_at: string
@@ -915,6 +1019,22 @@ export type Database = {
           recipe_id: number
           uses_substitution: boolean
         }[]
+      }
+      record_recommendation_events: {
+        Args: {
+          p_event_type: string
+          p_recipe_ids: number[]
+          p_run_id: string
+        }
+        Returns: number
+      }
+      record_recommendation_run: {
+        Args: {
+          p_context: Json
+          p_items: Json
+          p_scoring_version: string
+        }
+        Returns: string
       }
       mutate_cook_session: {
         Args: {

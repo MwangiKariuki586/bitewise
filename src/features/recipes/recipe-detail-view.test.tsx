@@ -60,7 +60,7 @@ describe("RecipeDetailView", () => {
         recipe={recipe}
         personalisation={{ isSaved: false, feedback: null, lastEatenAt: null }}
         authenticated
-        viewContext={{ source: "direct", servings: 1 }}
+        viewContext={{ source: "direct", servings: 1, recommendationRunId: null }}
         pantryItems={[]}
         today="2026-08-15"
       />,
@@ -82,7 +82,7 @@ describe("RecipeDetailView", () => {
         recipe={recipe}
         personalisation={{ isSaved: false, feedback: null, lastEatenAt: null }}
         authenticated
-        viewContext={{ source: "direct", servings: 1 }}
+        viewContext={{ source: "direct", servings: 1, recommendationRunId: null }}
         pantryItems={[]}
         today="2026-08-15"
       />,
@@ -105,7 +105,7 @@ describe("RecipeDetailView", () => {
         recipe={recipe}
         personalisation={{ isSaved: false, feedback: null, lastEatenAt: null }}
         authenticated
-        viewContext={{ source: "eat-now", servings: 4 }}
+        viewContext={{ source: "eat-now", servings: 4, recommendationRunId: null }}
         pantryItems={[]}
         today="2026-08-15"
       />,

@@ -1,3 +1,12 @@
+import { purchaseCostForQuantity } from "@/features/recommendations/affordability";
+import { recommendationScoringProfile } from "@/features/recommendations/config";
+import { recommendationPreferenceMatch } from "@/features/recommendations/preferences";
+import {
+  datePlusDays,
+  daysSince,
+  quantityInUnit,
+} from "@/features/recommendations/quantities";
+
 export interface RecommendationIngredientAlternative {
   ingredient: { id: number; name: string };
   scaledQuantity: number;
@@ -116,69 +125,6 @@ export interface RecommendedMeal {
   substitutions: RecommendationSubstitution[];
 }
 
-function purchaseCostForQuantity(
-  quantity: number,
-  unit: string,
-  pack: RecommendationPurchasePack | null,
-) {
-  if (!pack || pack.unit !== unit || quantity <= 0 || pack.quantity <= 0) return null;
-  const practicalIncrement =
-    unit === "g" ? 100 :
-    unit === "kg" ? 0.1 :
-    unit === "ml" ? 100 :
-    unit === "l" ? 0.1 :
-    unit === "cup" ? 0.25 :
-    1;
-  const purchaseQuantity = Math.ceil(quantity / practicalIncrement) * practicalIncrement;
-  return {
-    quantity: purchaseQuantity,
-    unit: pack.unit,
-    costMinor: Math.ceil((purchaseQuantity / pack.quantity) * pack.priceMinor),
-  };
-}
-
-interface NormalizedQuantity {
-  group: string;
-  value: number;
-}
-
-function normalizeQuantity(quantity: number, unit: string): NormalizedQuantity {
-  if (unit === "kg") return { group: "mass", value: quantity * 1_000 };
-  if (unit === "g") return { group: "mass", value: quantity };
-  if (unit === "l") return { group: "volume", value: quantity * 1_000 };
-  if (unit === "ml") return { group: "volume", value: quantity };
-  return { group: unit, value: quantity };
-}
-
-function quantityInUnit(quantity: number, fromUnit: string, toUnit: string) {
-  const from = normalizeQuantity(quantity, fromUnit);
-  const to = normalizeQuantity(1, toUnit);
-  if (from.group !== to.group) return 0;
-  return from.value / to.value;
-}
-
-function datePlusDays(dateKey: string, days: number) {
-  const date = new Date(`${dateKey}T00:00:00Z`);
-  date.setUTCDate(date.getUTCDate() + days);
-  return date.toISOString().slice(0, 10);
-}
-
-function daysSince(dateTime: string, today: string) {
-  const eatenAt = new Date(`${dateTime.slice(0, 10)}T00:00:00Z`).getTime();
-  const current = new Date(`${today}T00:00:00Z`).getTime();
-  if (!Number.isFinite(eatenAt) || !Number.isFinite(current)) return null;
-  return Math.floor((current - eatenAt) / 86_400_000);
-}
-
-function preferredDishMatch(name: string, preferredDishes: string[]) {
-  const normalizedName = name.toLocaleLowerCase("en-KE");
-  return preferredDishes.some((dish) => {
-    const normalizedDish = dish.trim().toLocaleLowerCase("en-KE");
-    return normalizedDish.length >= 2 &&
-      (normalizedName.includes(normalizedDish) || normalizedDish.includes(normalizedName));
-  });
-}
-
 export function rankRecommendations(
   candidates: RecommendationCandidate[],
   pantryItems: RecommendationPantryItem[],
@@ -275,47 +221,26 @@ export function rankRecommendations(
       Math.min(1, (preferences.maxMinutes - candidate.totalMinutes) / preferences.maxMinutes),
     );
 
-    const preferenceSignals: number[] = [];
-    if (preferences.preferredCuisines.length > 0) {
-      preferenceSignals.push(
-        preferences.preferredCuisines.includes(candidate.cuisine) ? 1 : 0,
-      );
-    }
-    if (preferences.healthGoals.length > 0) {
-      preferenceSignals.push(
-        candidate.healthTags.filter((tag) => preferences.healthGoals.includes(tag)).length /
-          preferences.healthGoals.length,
-      );
-    }
-    if (preferences.preferredDishes.length > 0) {
-      preferenceSignals.push(
-        preferredDishMatch(candidate.name, preferences.preferredDishes) ? 1 : 0,
-      );
-    }
-    const preferenceMatch = preferenceSignals.length
-      ? preferenceSignals.reduce((total, value) => total + value, 0) /
-        preferenceSignals.length
-      : 0.5;
-    const variety = 0.5;
+    const preferenceMatch = recommendationPreferenceMatch(candidate, preferences);
     const personalisation = preferences.personalisation?.get(candidate.id);
-    const likedBonus = personalisation?.feedback === "liked" ? 6 : 0;
-    const savedBonus = personalisation?.isSaved ? 8 : 0;
+    const weights = recommendationScoringProfile.weights;
+    const likedBonus = personalisation?.feedback === "liked" ? weights.liked : 0;
+    const savedBonus = personalisation?.isSaved ? weights.saved : 0;
     const daysSinceLastEaten = personalisation?.lastEatenAt
       ? daysSince(personalisation.lastEatenAt, preferences.today)
       : null;
     const recentlyEatenPenalty =
       daysSinceLastEaten !== null && daysSinceLastEaten >= 0 && daysSinceLastEaten <= 7
-        ? 20
+        ? weights.eatenWithinSevenDays
         : daysSinceLastEaten !== null && daysSinceLastEaten <= 14 && daysSinceLastEaten >= 8
-          ? 10
+          ? weights.eatenWithinFourteenDays
           : 0;
     const score =
-      pantryCoverage * 30 +
-      expiringUse * 20 +
-      budgetHeadroom * 15 +
-      preferenceMatch * 15 +
-      timeHeadroom * 10 +
-      variety * 10 +
+      pantryCoverage * weights.pantryCoverage +
+      expiringUse * weights.expiringFood +
+      budgetHeadroom * weights.budgetHeadroom +
+      preferenceMatch * weights.preferenceMatch +
+      timeHeadroom * weights.timeHeadroom +
       likedBonus +
       savedBonus -
       recentlyEatenPenalty;
@@ -324,25 +249,25 @@ export function rankRecommendations(
     if (pantryCoverage > 0) {
       reasonCandidates.push({
         reason: `You already have ${Math.round(pantryCoverage * 100)}% of the required ingredients.`,
-        strength: pantryCoverage * 30,
+        strength: pantryCoverage * weights.pantryCoverage,
       });
     }
     if (expiringUse > 0) {
       reasonCandidates.push({
         reason: `Uses ${Math.max(1, Math.round(expiringTotal))} ingredient${expiringTotal >= 1.5 ? "s" : ""} due within 3 days.`,
-        strength: expiringUse * 20,
+        strength: expiringUse * weights.expiringFood,
       });
     }
     if (budgetHeadroom >= 0.05) {
       reasonCandidates.push({
         reason: `Leaves about KES ${Math.floor((preferences.budgetMinor - budgetedCostMinor) / 100).toLocaleString("en-KE")} in your meal budget.`,
-        strength: budgetHeadroom * 15,
+        strength: budgetHeadroom * weights.budgetHeadroom,
       });
     }
     if (preferenceMatch > 0.5) {
       reasonCandidates.push({
         reason: "Matches your cuisine, dish, or health preferences.",
-        strength: preferenceMatch * 15,
+        strength: preferenceMatch * weights.preferenceMatch,
       });
     }
     if (savedBonus) {
@@ -366,7 +291,7 @@ export function rankRecommendations(
     if (timeHeadroom >= 0.1) {
       reasonCandidates.push({
         reason: `Fits with ${preferences.maxMinutes - candidate.totalMinutes} minutes to spare.`,
-        strength: timeHeadroom * 10,
+        strength: timeHeadroom * weights.timeHeadroom,
       });
     }
     reasonCandidates.push({

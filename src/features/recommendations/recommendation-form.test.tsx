@@ -5,10 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RecommendationForm } from "@/features/recommendations/recommendation-form";
 
 const generateRecommendationsAction = vi.fn();
+const recordRecommendationEventAction = vi.fn();
 const scrollIntoView = vi.fn();
 
 vi.mock("@/features/recommendations/actions", () => ({
   generateRecommendationsAction: (...args: unknown[]) => generateRecommendationsAction(...args),
+  recordRecommendationEventAction: (...args: unknown[]) => recordRecommendationEventAction(...args),
 }));
 
 vi.mock("@/features/personalisation/controls", () => ({
@@ -31,6 +33,8 @@ const successfulResult = {
   status: "success" as const,
   message: "Found 1 meal that fits.",
   data: {
+    runId: "10000000-0000-4000-8000-000000000001",
+    scoringVersion: "eat-now-v2",
     suggestions: [],
     applied: {
       budgetMinor: 20000,
@@ -74,6 +78,8 @@ describe("RecommendationForm", () => {
   beforeEach(() => {
     sessionStorage.clear();
     generateRecommendationsAction.mockReset();
+    recordRecommendationEventAction.mockReset();
+    recordRecommendationEventAction.mockResolvedValue({ status: "success" });
     scrollIntoView.mockReset();
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
     Object.defineProperty(window, "matchMedia", {
@@ -101,7 +107,15 @@ describe("RecommendationForm", () => {
 
     await waitFor(() => expect(screen.queryByLabelText("Meal budget (KES)")).not.toBeInTheDocument());
     expect(screen.getByText("KES 350")).toBeVisible();
-    expect(await screen.findByRole("link", { name: /View details/ })).toHaveAttribute("href", "/recipes/githeri?source=eat-now&servings=4");
+    expect(await screen.findByRole("link", { name: /View details/ })).toHaveAttribute(
+      "href",
+      "/recipes/githeri?source=eat-now&servings=4&recommendationRun=10000000-0000-4000-8000-000000000001",
+    );
+    await waitFor(() => expect(recordRecommendationEventAction).toHaveBeenCalledWith({
+      runId: "10000000-0000-4000-8000-000000000001",
+      eventType: "impression",
+      recipeIds: [1],
+    }));
     expect(screen.getByText("KES 180")).toBeVisible();
     expect(screen.getByText(/practical 100 g or 100 ml buying quantities/i)).toBeVisible();
     await waitFor(() => {
