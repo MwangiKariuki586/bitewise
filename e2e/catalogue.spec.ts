@@ -98,9 +98,63 @@ test.describe("curated recipe catalogue", () => {
     await expect(page.getByText(/KES/).first()).toBeVisible();
     await expect(page.locator("[data-slot='card']")).toHaveCount(5);
     await expect(page.getByRole("img").first()).toBeVisible();
-    await expect(page.getByRole("link", { name: /View details/ }).first()).toHaveAttribute("href", /\/recipes\//);
+    const firstCard = page.locator("[data-slot='card']").first();
+    const likeButton = firstCard.getByRole("button", { name: "Like", exact: true });
+    const dislikeButton = firstCard.getByRole("button", { name: "Dislike", exact: true });
+    const dislikeIcon = dislikeButton.locator("svg");
+    await expect(dislikeIcon).toBeVisible();
+    expect((await dislikeIcon.boundingBox())?.width).toBeGreaterThanOrEqual(15);
+    await likeButton.click();
+    await expect(likeButton).toHaveAttribute("aria-pressed", "true");
+    const selectedLikeColours = await likeButton.evaluate((button) => {
+      const icon = button.querySelector("svg");
+      if (!icon) throw new Error("Like icon is missing.");
+      return {
+        buttonBackground: getComputedStyle(button).backgroundColor,
+        iconColour: getComputedStyle(icon).color,
+        iconFill: getComputedStyle(icon).fill,
+      };
+    });
+    expect(selectedLikeColours.iconFill).toBe(selectedLikeColours.iconColour);
+    expect(selectedLikeColours.buttonBackground).not.toBe(selectedLikeColours.iconColour);
+    const firstDetailsLink = page.getByRole("link", { name: /View details/ }).first();
+    await expect(firstDetailsLink).toHaveAttribute("href", /\/recipes\//);
+    const recommendationHref = await firstDetailsLink.getAttribute("href");
+    const recommendationRunId = new URL(
+      recommendationHref ?? "",
+      "https://bitewise.local",
+    ).searchParams.get("recommendationRun");
+    expect(recommendationRunId).toMatch(/^[0-9a-f-]{36}$/);
+
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const run = await admin
+      .from("recommendation_runs")
+      .select("scoring_version")
+      .eq("id", recommendationRunId)
+      .eq("user_id", userId)
+      .single();
+    if (run.error) throw run.error;
+    expect(run.data.scoring_version).toBe("eat-now-v2");
+    await expect.poll(async () => {
+      const result = await admin
+        .from("recommendation_run_items")
+        .select("recipe_id", { count: "exact", head: true })
+        .eq("run_id", recommendationRunId);
+      if (result.error) throw result.error;
+      return result.count;
+    }).toBe(5);
+    await expect.poll(async () => {
+      const result = await admin
+        .from("recommendation_events")
+        .select("recipe_id", { count: "exact", head: true })
+        .eq("run_id", recommendationRunId)
+        .eq("event_type", "impression");
+      if (result.error) throw result.error;
+      return result.count;
+    }).toBe(5);
     if (testInfo.project.name === "desktop-chromium") {
-      const firstCard = page.locator("[data-slot='card']").first();
       const [cardBox, imageBox, detailsBox] = await Promise.all([
         firstCard.boundingBox(),
         firstCard.getByRole("img").boundingBox(),
@@ -110,27 +164,90 @@ test.describe("curated recipe catalogue", () => {
       expect(Math.abs((imageBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThanOrEqual(12);
       expect(Math.abs((detailsBox?.y ?? 0) - (cardBox?.y ?? 0))).toBeLessThanOrEqual(20);
     }
-    if (testInfo.project.name === "mobile-chromium") {
-      await expect(page.getByLabel("Meal budget (KES)")).toHaveCount(0);
-      await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
-    } else {
-      await expect(page.getByLabel("Meal budget (KES)")).toHaveValue("1666");
+    await expect(page.getByLabel("Meal budget (KES)")).toHaveCount(0);
+    await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
+    if (testInfo.project.name === "desktop-chromium") {
+      const constraintsSection = page.locator('section[aria-labelledby="constraints-heading"]');
+      const [constraintsBox, resultsBox] = await Promise.all([
+        constraintsSection.boundingBox(),
+        resultsSection.boundingBox(),
+      ]);
+      expect(constraintsBox).not.toBeNull();
+      expect(resultsBox).not.toBeNull();
+      expect((resultsBox?.x ?? 0)).toBeGreaterThan((constraintsBox?.x ?? 0) + (constraintsBox?.width ?? 0));
     }
 
     await page.getByLabel("Sort by").selectOption("cost");
     await page.getByRole("link", { name: /View details/ }).first().click();
-    await expect(page).toHaveURL(/\/recipes\//);
+    await expect(page).toHaveURL(
+      /\/recipes\/[^?]+\?source=eat-now&servings=4&recommendationRun=[0-9a-f-]+$/,
+    );
+    await expect(page.getByText("Cash needed", { exact: true })).toBeVisible();
+    await expect(page.locator("span:visible", { hasText: "Serves 4" })).toBeVisible();
+    const recipeUrl = page.url();
+    await page.getByRole("button", { name: "Start cooking" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await expect(page.getByRole("spinbutton", { name: "Servings" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Begin cooking" })).toBeVisible();
+    expect(page.url()).toBe(recipeUrl);
+    await page.getByRole("button", { name: "Close cook setup" }).click();
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
     await expect(page.getByLabel("Sort by")).toHaveValue("cost");
-    if (testInfo.project.name === "mobile-chromium") {
-      await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
-    } else {
-      await expect(page.getByLabel("Meal budget (KES)")).toHaveValue("1666");
-    }
+    await expect(page.getByText("KES 1,666", { exact: true })).toBeVisible();
 
     const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
     expect(accessibilityScanResults.violations).toEqual([]);
+  });
+
+  test("Discover opens recipe details at one serving with ingredient-value pricing", async ({ page }) => {
+    await page.goto("/discover");
+    await page.getByRole("link", { name: /Open .* to view or save/ }).first().click();
+
+    await expect(page).toHaveURL(/\/recipes\/[^?]+\?source=discover&servings=1$/);
+    await expect(page.getByRole("link", { name: "Back to Discover" })).toBeVisible();
+    await expect(page.getByText("Ingredient value", { exact: true })).toBeVisible();
+    await expect(page.locator("span:visible", { hasText: "Serves 1" })).toBeVisible();
+    await page.locator("button[aria-label='Increase servings']:visible").click();
+    await expect(page).toHaveURL(/servings=2/);
+  });
+
+  test("Eat Now applies the budget to missing-item purchase costs", async ({ page }) => {
+    await page.goto("/auth/sign-in");
+    await page.getByLabel("Email address").fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(/\/eat-now$/);
+
+    const budget = page.getByLabel("Meal budget (KES)");
+    await budget.fill("65");
+    await budget.press("ArrowUp");
+    await expect(budget).toHaveValue("70");
+    await budget.fill("100");
+    await page.getByRole("button", { name: "Find meals that fit" }).click();
+    await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
+    const lowBudgetCards = page.locator("[data-cash-needed-minor]");
+    const lowBudgetCount = await lowBudgetCards.count();
+    expect(lowBudgetCount).toBeGreaterThan(0);
+    expect(lowBudgetCount).toBeLessThan(5);
+    const lowBudgetCosts = await lowBudgetCards.evaluateAll((elements) =>
+      elements.map((element) => Number(element.getAttribute("data-cash-needed-minor"))),
+    );
+    expect(lowBudgetCosts.every((cost) => cost <= 10_000)).toBe(true);
+
+    if (await budget.count() === 0) {
+      await page.getByRole("button", { name: /Edit/ }).click();
+    }
+    await page.getByLabel("Meal budget (KES)").fill("1680");
+    await page.getByRole("button", { name: "Refresh my matches" }).click();
+    await expect(page.getByRole("heading", { name: "Best fits first" })).toBeVisible();
+    const cards = page.locator("[data-cash-needed-minor]");
+    await expect(cards).toHaveCount(5);
+    const costs = await cards.evaluateAll((elements) =>
+      elements.map((element) => Number(element.getAttribute("data-cash-needed-minor"))),
+    );
+    expect(costs.every((cost) => cost <= 168_000)).toBe(true);
+    await expect(page.getByText(/practical 100 g or 100 ml buying quantities/i)).toBeVisible();
   });
 
   test("keeps each primary task above the mobile navigation at compact widths", async ({ page }, testInfo) => {

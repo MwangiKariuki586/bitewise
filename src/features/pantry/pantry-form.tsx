@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { CheckCircle2, LoaderCircle, PackagePlus } from "lucide-react";
+import { useActionState, useEffect, useState } from "react";
+import { LoaderCircle, PackagePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { DateInput } from "@/components/ui/date-input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { savePantryItemAction } from "@/features/pantry/actions";
@@ -28,20 +29,27 @@ interface EditPantryItem {
 interface PantryFormProps {
   editItem: EditPantryItem | null;
   ingredients: IngredientOption[];
+  onSaved?: (message: string) => void;
 }
 
 function FieldError({ errors }: { errors?: string[] }) {
   return errors?.length ? <p className="text-xs font-medium text-destructive">{errors[0]}</p> : null;
 }
 
-export function PantryForm({ editItem, ingredients }: PantryFormProps) {
+const formControlClass = "border-transparent bg-[linear-gradient(135deg,rgba(245,233,237,0.78),rgba(255,246,241,0.72))] shadow-[inset_0_0_0_1px_rgba(91,23,51,0.05)] focus-visible:border-primary/30 focus-visible:ring-2 focus-visible:ring-ring/30 disabled:bg-muted disabled:opacity-60";
+
+export function PantryForm({ editItem, ingredients, onSaved }: PantryFormProps) {
   const initialIngredient = editItem?.ingredient_id ?? ingredients[0]?.id ?? 0;
   const initialUnit = editItem?.unit ?? ingredients.find(({ id }) => id === initialIngredient)?.default_unit ?? "g";
   const [unit, setUnit] = useState(initialUnit);
   const [state, formAction, pending] = useActionState(savePantryItemAction, initialActionResult);
 
+  useEffect(() => {
+    if (state.status === "success" && state.message) onSaved?.(state.message);
+  }, [onSaved, state.message, state.status]);
+
   return (
-    <form action={formAction} className="space-y-4" noValidate>
+    <form action={formAction} className="space-y-4">
       {editItem ? <input type="hidden" name="id" value={editItem.id} /> : null}
       <div className="space-y-2">
         <Label htmlFor="ingredientId">Ingredient</Label>
@@ -53,7 +61,7 @@ export function PantryForm({ editItem, ingredients }: PantryFormProps) {
             const ingredient = ingredients.find(({ id }) => id === Number(event.target.value));
             if (ingredient) setUnit(ingredient.default_unit);
           }}
-          className="h-12 w-full rounded-xl border border-input bg-background px-3.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          className={`h-12 w-full rounded-xl border px-3.5 text-sm outline-none ${formControlClass}`}
         >
           {ingredients.map((ingredient) => <option key={ingredient.id} value={ingredient.id}>{ingredient.name}</option>)}
         </select>
@@ -63,12 +71,12 @@ export function PantryForm({ editItem, ingredients }: PantryFormProps) {
       <div className="grid grid-cols-[1fr_1.25fr] gap-3">
         <div className="space-y-2">
           <Label htmlFor="quantity">Quantity</Label>
-          <Input id="quantity" name="quantity" type="number" inputMode="decimal" min="0.001" step="0.001" defaultValue={editItem?.quantity ?? ""} placeholder="2" />
+          <Input className={formControlClass} id="quantity" name="quantity" type="number" inputMode="decimal" min={editItem ? "0" : "0.001"} step="0.001" defaultValue={editItem?.quantity ?? ""} placeholder="2" required />
           <FieldError errors={state.fieldErrors?.quantity} />
         </div>
         <div className="space-y-2">
           <Label htmlFor="unit">Unit</Label>
-          <select id="unit" name="unit" value={unit} onChange={(event) => setUnit(event.target.value)} className="h-12 w-full rounded-xl border border-input bg-background px-3.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <select id="unit" name="unit" value={unit} onChange={(event) => setUnit(event.target.value)} className={`h-12 w-full rounded-xl border px-3.5 text-sm outline-none ${formControlClass}`}>
             {pantryUnits.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
           <FieldError errors={state.fieldErrors?.unit} />
@@ -77,20 +85,18 @@ export function PantryForm({ editItem, ingredients }: PantryFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="expiryDate">Expiry date <span className="font-normal text-muted-foreground">(optional)</span></Label>
-        <Input id="expiryDate" name="expiryDate" type="date" defaultValue={editItem?.expiry_date ?? ""} />
+        <DateInput className={formControlClass} id="expiryDate" name="expiryDate" defaultValue={editItem?.expiry_date ?? ""} />
         <FieldError errors={state.fieldErrors?.expiryDate} />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="notes">Notes <span className="font-normal text-muted-foreground">(optional)</span></Label>
-        <textarea id="notes" name="notes" rows={2} maxLength={300} defaultValue={editItem?.notes ?? ""} placeholder="For example: opened packet" className="w-full resize-y rounded-xl border border-input bg-background px-3.5 py-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+        <textarea id="notes" name="notes" rows={3} maxLength={300} defaultValue={editItem?.notes ?? ""} placeholder="For example: opened packet" className={`w-full resize-y rounded-xl border px-3.5 py-3 text-sm outline-none ${formControlClass}`} />
         <FieldError errors={state.fieldErrors?.notes} />
       </div>
 
-      {state.message ? (
-        <p role={state.status === "error" ? "alert" : "status"} className={state.status === "error" ? "rounded-xl bg-destructive/8 px-4 py-3 text-sm font-medium text-destructive" : "flex items-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm font-medium text-secondary-foreground"}>
-          {state.status === "success" ? <CheckCircle2 className="size-4" aria-hidden="true" /> : null}{state.message}
-        </p>
+      {state.status === "error" && state.message ? (
+        <p role="alert" className="rounded-xl bg-destructive/8 px-4 py-3 text-sm font-medium text-destructive">{state.message}</p>
       ) : null}
 
       <Button type="submit" className="w-full" disabled={pending || !ingredients.length}>

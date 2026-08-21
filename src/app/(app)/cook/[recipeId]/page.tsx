@@ -8,10 +8,6 @@ import { Card } from "@/components/ui/card";
 import { getCookSession } from "@/features/cook/data";
 import { GuidedCookMode } from "@/features/cook/guided-cook-mode";
 import { StartSessionForm } from "@/features/cook/start-session-form";
-import {
-  emptyRecipePersonalisation,
-  getRecipePersonalisation,
-} from "@/features/personalisation/data";
 import { requireCompletedProfile } from "@/features/profile/data";
 
 interface CookRecipePageProps {
@@ -25,10 +21,6 @@ export default async function CookRecipePage({ params }: CookRecipePageProps) {
   const { identity, profile } = await requireCompletedProfile(`/cook/${recipeId}`);
   const { recipe, session, completedSteps } = await getCookSession(identity.sub, parsed.data);
   if (!recipe) notFound();
-  const personalisation =
-    (await getRecipePersonalisation(identity.sub, [recipe.id])).get(recipe.id) ??
-    emptyRecipePersonalisation;
-
   if (!session) {
     return (
       <div className="mx-auto max-w-2xl space-y-5">
@@ -44,5 +36,5 @@ export default async function CookRecipePage({ params }: CookRecipePageProps) {
     );
   }
 
-  return <GuidedCookMode recipe={recipe} servings={session.servings} initialStep={session.current_step} initialCompletedSteps={completedSteps} personalisation={personalisation} />;
+  return <GuidedCookMode recipe={recipe} servings={session.servings} initialStep={session.current_step} initialCompletedSteps={completedSteps} />;
 }

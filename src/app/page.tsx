@@ -98,7 +98,9 @@ export default async function HomePage() {
 
   return (
     <main className="min-h-dvh overflow-hidden bg-[#fffdf9] text-[#241c1e]">
-      <header className={`${contentWidth} flex min-h-[92px] items-center justify-between gap-8 max-[760px]:min-h-[72px]`}>
+      <header
+        className={`${contentWidth} flex min-h-[92px] items-center justify-between gap-8 max-[760px]:min-h-[72px]`}
+      >
         <Link href="/" className="text-[#56112f]">
           <Brand />
         </Link>
@@ -136,10 +138,16 @@ export default async function HomePage() {
             A better answer to “what should we eat?”
           </h1>
           <p className="mt-[26px] max-w-[560px] text-[17px] leading-[1.65] text-[#40373a] max-[1050px]:text-[15px] max-[760px]:mx-auto max-[760px]:mt-5 max-[760px]:leading-[1.6] max-[480px]:text-sm">
-            BiteWise suggests meals that fit your budget, ingredients, time, health needs, and the people you’re feeding—so dinner just makes sense.
+            BiteWise suggests meals that fit your budget, ingredients, time,
+            health needs, and the people you’re feeding—so dinner just makes
+            sense.
           </p>
           <div className="mt-8 flex gap-4 max-[760px]:mt-[25px] max-[760px]:justify-center max-[760px]:[&>a]:min-w-0 max-[480px]:flex-col max-[480px]:items-stretch max-[480px]:gap-2.5 max-[480px]:[&>a]:w-full">
-            <Button asChild size="lg" className="h-[52px] min-w-[186px] rounded-[9px]">
+            <Button
+              asChild
+              size="lg"
+              className="h-[52px] min-w-[186px] rounded-[9px]"
+            >
               <Link href="/eat-now">Find my next meal</Link>
             </Button>
             <Button
@@ -162,13 +170,19 @@ export default async function HomePage() {
             ].map((benefit) => {
               const Icon = benefit.icon;
               return (
-                <li key={benefit.label} className="flex items-center gap-[11px] text-xs leading-[1.45] max-[480px]:text-[13px]">
+                <li
+                  key={benefit.label}
+                  className="flex items-center gap-[11px] text-xs leading-[1.45] max-[480px]:text-[13px]"
+                >
                   <Icon
                     className="size-[42px] shrink-0 rounded-full border-[1.5px] border-[#d99316] p-[9px] text-[#9d6504] max-[1050px]:size-9 max-[1050px]:p-2"
                     aria-hidden="true"
                   />
                   <span>
-                    <strong className="block font-semibold max-[480px]:inline">{benefit.label}</strong> {benefit.suffix}
+                    <strong className="block font-semibold max-[480px]:inline">
+                      {benefit.label}
+                    </strong>{" "}
+                    {benefit.suffix}
                   </span>
                 </li>
               );
@@ -193,13 +207,23 @@ export default async function HomePage() {
             </div>
             <div className="px-[22px] py-[18px] text-[#21191c] max-[480px]:px-3.5 max-[480px]:py-[13px]">
               <h2 className="font-display text-[29px] font-medium leading-[.94] tracking-[-.025em] max-[480px]:text-2xl">
-                Githeri with avocado<br />&amp; sukuma wiki
+                Githeri with avocado
+                <br />
+                &amp; sukuma wiki
               </h2>
               <div className="mt-4 flex items-center gap-[15px] text-[11px] font-semibold max-[480px]:mt-2.5 max-[480px]:grid max-[480px]:grid-cols-2 max-[480px]:gap-x-2.5 max-[480px]:gap-y-[7px] max-[480px]:text-[10px] [&>span]:inline-flex [&>span]:items-center [&>span]:gap-[5px] [&>span]:whitespace-nowrap [&_svg]:size-[15px] [&_svg]:text-[#6a173a]">
-                <span><Coins aria-hidden="true" /> KES 210</span>
-                <span><Clock3 aria-hidden="true" /> 25 min</span>
-                <span><ChefHat aria-hidden="true" /> Serves 4</span>
-                <span className="text-[#5d7c28] [&>svg]:text-[#6d9a2e]"><Check aria-hidden="true" /> Pantry match</span>
+                <span>
+                  <Coins aria-hidden="true" /> KES 210
+                </span>
+                <span>
+                  <Clock3 aria-hidden="true" /> 25 min
+                </span>
+                <span>
+                  <ChefHat aria-hidden="true" /> Serves 4
+                </span>
+                <span className="text-[#5d7c28] [&>svg]:text-[#6d9a2e]">
+                  <Check aria-hidden="true" /> Pantry match
+                </span>
               </div>
             </div>
           </div>
@@ -207,20 +231,43 @@ export default async function HomePage() {
             <span className="grid size-[46px] place-items-center rounded-full bg-[#f4f5ec] text-[#596238] max-[480px]:size-9 [&>svg]:w-6">
               <ShoppingBasket aria-hidden="true" />
             </span>
-            <p className="mt-[13px] text-[15px] leading-[1.35] max-[480px]:mt-2 max-[480px]:text-[11px]">You already<br />have 6 items</p>
-            <strong className="mt-2 block text-[17px] font-medium leading-[1.35] max-[480px]:mt-[5px] max-[480px]:text-[13px]">Only 3 things<br />to buy</strong>
+            <p className="mt-[13px] text-[15px] leading-[1.35] max-[480px]:mt-2 max-[480px]:text-[11px]">
+              You already
+              <br />
+              have 6 items
+            </p>
+            <strong className="mt-2 block text-[17px] font-medium leading-[1.35] max-[480px]:mt-[5px] max-[480px]:text-[13px]">
+              Only 3 things
+              <br />
+              to buy
+            </strong>
           </div>
-          <Leaf className="absolute bottom-[52px] right-[-30px] z-[2] size-11 -rotate-[35deg] text-[#496529] drop-shadow-[0_4px_3px_rgb(25_45_17_/_25%)] max-[480px]:hidden" aria-hidden="true" />
-          <Leaf className="absolute bottom-[-4px] right-8 z-[2] size-11 rotate-[22deg] text-[#496529] drop-shadow-[0_4px_3px_rgb(25_45_17_/_25%)] max-[480px]:hidden" aria-hidden="true" />
+          <Leaf
+            className="absolute bottom-[52px] right-[-30px] z-[2] size-11 -rotate-[35deg] text-[#496529] drop-shadow-[0_4px_3px_rgb(25_45_17_/_25%)] max-[480px]:hidden"
+            aria-hidden="true"
+          />
+          <Leaf
+            className="absolute bottom-[-4px] right-8 z-[2] size-11 rotate-[22deg] text-[#496529] drop-shadow-[0_4px_3px_rgb(25_45_17_/_25%)] max-[480px]:hidden"
+            aria-hidden="true"
+          />
         </div>
       </section>
 
-      <section className={`${contentWidth} pb-[58px] pt-7 max-[760px]:pt-2.5`} aria-labelledby="situations-title">
+      <section
+        className={`${contentWidth} pb-[58px] pt-7 max-[760px]:pt-2.5`}
+        aria-labelledby="situations-title"
+      >
         <div className="text-center">
-          <h2 id="situations-title" className="font-display text-[39px] font-medium leading-[1.1] tracking-[-.025em] text-[#651739] max-[760px]:text-[34px]">
+          <h2
+            id="situations-title"
+            className="font-display text-[39px] font-medium leading-[1.1] tracking-[-.025em] text-[#651739] max-[760px]:text-[34px]"
+          >
             Whatever today looks like.
           </h2>
-          <p className="mt-2 text-sm text-[#4f4749]">Tight budgets, little time, or not knowing what to cook—BiteWise meets you there.</p>
+          <p className="mt-2 text-sm text-[#4f4749]">
+            Tight budgets, little time, or not knowing what to cook—BiteWise
+            meets you there.
+          </p>
         </div>
         <div className="mt-7 grid grid-cols-4 gap-[18px] max-[1050px]:grid-cols-2 max-[480px]:grid-cols-1 max-[480px]:gap-3">
           {situationCards.map((card) => {
@@ -231,33 +278,57 @@ export default async function HomePage() {
                 key={card.title}
                 className={`relative grid min-h-[177px] grid-cols-[55px_1fr] gap-4 rounded-[14px] border border-[rgb(105_67_73_/_8%)] px-5 pb-[18px] pt-[22px] transition-[transform,box-shadow] duration-180 hover:-translate-y-[3px] hover:shadow-[0_12px_28px_rgb(73_36_45_/_10%)] max-[1050px]:min-h-[155px] max-[480px]:min-h-[145px] ${card.cardClassName}`}
               >
-                <span className={`grid size-[55px] place-items-center rounded-full text-white [&>svg]:size-[27px] ${card.iconClassName}`}>
+                <span
+                  className={`grid size-[55px] place-items-center rounded-full text-white [&>svg]:size-[27px] ${card.iconClassName}`}
+                >
                   <Icon aria-hidden="true" />
                 </span>
                 <div>
-                  <h3 className="mt-[9px] font-display text-lg font-semibold">{card.title}</h3>
-                  <p className="mt-[5px] text-xs text-[#51494b]">{card.detail}</p>
+                  <h3 className="mt-[9px] font-display text-lg font-semibold">
+                    {card.title}
+                  </h3>
+                  <p className="mt-[5px] text-xs text-[#51494b]">
+                    {card.detail}
+                  </p>
                 </div>
-                <strong className="col-span-full self-end border-t border-[rgb(58_45_48_/_15%)] pt-[15px] text-sm font-semibold">{card.result}</strong>
-                <ArrowRight aria-hidden="true" className="absolute bottom-[18px] right-[18px] w-[18px]" />
+                <strong className="col-span-full self-end border-t border-[rgb(58_45_48_/_15%)] pt-[15px] text-sm font-semibold">
+                  {card.result}
+                </strong>
+                <ArrowRight
+                  aria-hidden="true"
+                  className="absolute bottom-[18px] right-[18px] w-[18px]"
+                />
               </Link>
             );
           })}
         </div>
       </section>
 
-      <section id="how-it-works" className={`${contentWidth} pb-[52px] pt-1.5`} aria-labelledby="journey-title">
+      <section
+        id="how-it-works"
+        className={`${contentWidth} pb-[52px] pt-1.5`}
+        aria-labelledby="journey-title"
+      >
         <div className="text-center">
-          <h2 id="journey-title" className="font-display text-[39px] font-medium leading-[1.1] tracking-[-.025em] text-[#651739] max-[760px]:text-[34px]">
+          <h2
+            id="journey-title"
+            className="font-display text-[39px] font-medium leading-[1.1] tracking-[-.025em] text-[#651739] max-[760px]:text-[34px]"
+          >
             From decision to dinner.
           </h2>
-          <p className="mt-2 text-sm text-[#4f4749]">BiteWise helps you go from deciding what to eat to getting dinner on the table.</p>
+          <p className="mt-2 text-sm text-[#4f4749]">
+            BiteWise helps you go from deciding what to eat to getting dinner on
+            the table.
+          </p>
         </div>
         <ol className="mx-auto mt-[22px] grid max-w-[760px] grid-cols-4">
           {journeySteps.map((step, index) => {
             const Icon = step.icon;
             return (
-              <li key={step.label} className="relative grid justify-items-center gap-[7px] text-xs">
+              <li
+                key={step.label}
+                className="relative grid justify-items-center gap-[7px] text-xs"
+              >
                 <span className="grid size-[58px] place-items-center rounded-full border border-[#eccdaf] bg-[#fff8f2] text-[#6a173a] max-[480px]:size-[49px] [&>svg]:size-[26px] max-[480px]:[&>svg]:size-[22px]">
                   <Icon aria-hidden="true" />
                 </span>
@@ -274,31 +345,69 @@ export default async function HomePage() {
         </ol>
         <div className="mx-auto mt-[26px] grid max-w-[980px] grid-cols-3 max-[760px]:max-w-[510px] max-[760px]:grid-cols-1 max-[760px]:gap-[18px]">
           <article className="flex items-center gap-3.5 border-r border-[#ddd3d5] px-[34px] max-[1050px]:px-[18px] max-[760px]:border-r-0 max-[760px]:px-5">
-            <span className="grid size-[52px] shrink-0 place-items-center rounded-full border-[1.5px] border-[#b77915] text-[#b77915] [&>svg]:size-[26px]"><Coins aria-hidden="true" /></span>
-            <div><h3 className="font-display text-base font-semibold">Spend smarter</h3><p className="mt-[3px] text-[11px] leading-[1.5] text-[#534b4d]">Meals that fit your budget without the guesswork.</p></div>
+            <span className="grid size-[52px] shrink-0 place-items-center rounded-full border-[1.5px] border-[#b77915] text-[#b77915] [&>svg]:size-[26px]">
+              <Coins aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="font-display text-base font-semibold">
+                Spend smarter
+              </h3>
+              <p className="mt-[3px] text-[11px] leading-[1.5] text-[#534b4d]">
+                Meals that fit your budget without the guesswork.
+              </p>
+            </div>
           </article>
           <article className="flex items-center gap-3.5 border-r border-[#ddd3d5] px-[34px] max-[1050px]:px-[18px] max-[760px]:border-r-0 max-[760px]:px-5">
-            <span className="grid size-[52px] shrink-0 place-items-center rounded-full border-[1.5px] border-[#6a9436] text-[#6a9436] [&>svg]:size-[26px]"><PackageCheck aria-hidden="true" /></span>
-            <div><h3 className="font-display text-base font-semibold">Use more of what you have</h3><p className="mt-[3px] text-[11px] leading-[1.5] text-[#534b4d]">Smarter ideas that reduce waste and save money.</p></div>
+            <span className="grid size-[52px] shrink-0 place-items-center rounded-full border-[1.5px] border-[#6a9436] text-[#6a9436] [&>svg]:size-[26px]">
+              <PackageCheck aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="font-display text-base font-semibold">
+                Use more of what you have
+              </h3>
+              <p className="mt-[3px] text-[11px] leading-[1.5] text-[#534b4d]">
+                Smarter ideas that reduce waste and save money.
+              </p>
+            </div>
           </article>
           <article className="flex items-center gap-3.5 px-[34px] max-[1050px]:px-[18px] max-[760px]:px-5">
-            <span className="grid size-[52px] shrink-0 place-items-center rounded-full border-[1.5px] border-[#681039] text-[#681039] [&>svg]:size-[26px]"><Heart aria-hidden="true" /></span>
-            <div><h3 className="font-display text-base font-semibold">Cook with confidence</h3><p className="mt-[3px] text-[11px] leading-[1.5] text-[#534b4d]">Clear guidance for meals your people will love.</p></div>
+            <span className="grid size-[52px] shrink-0 place-items-center rounded-full border-[1.5px] border-[#681039] text-[#681039] [&>svg]:size-[26px]">
+              <Heart aria-hidden="true" />
+            </span>
+            <div>
+              <h3 className="font-display text-base font-semibold">
+                Cook with confidence
+              </h3>
+              <p className="mt-[3px] text-[11px] leading-[1.5] text-[#534b4d]">
+                Clear guidance for meals your people will love.
+              </p>
+            </div>
           </article>
         </div>
       </section>
 
       <section
-        className="relative mx-auto min-h-[190px] w-[min(calc(100%_-_40px),1240px)] overflow-hidden rounded-2xl text-white max-[1050px]:w-[min(calc(100%_-_48px),920px)] max-[760px]:w-full max-[760px]:rounded-none"
+        className="relative mx-auto mb-5 min-h-[190px] w-[min(calc(100%_-_40px),1240px)] overflow-hidden rounded-2xl text-white max-[1050px]:mb-6 max-[1050px]:w-[min(calc(100%_-_48px),920px)] max-[760px]:mb-0 max-[760px]:w-full max-[760px]:rounded-none"
         aria-labelledby="final-cta-title"
       >
-        <Image src="/images/recipes/githeri.webp" alt="" fill sizes="100vw" className="object-cover object-[center_52%]" />
+        <Image
+          src="/images/recipes/githeri.webp"
+          alt=""
+          fill
+          sizes="100vw"
+          className="object-cover object-[center_52%]"
+        />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgb(75_8_40_/_96%)_16%,rgb(86_11_47_/_87%)_55%,rgb(39_10_22_/_48%))]" />
         <div className="relative z-[1] grid min-h-[190px] place-content-center justify-items-center text-center max-[480px]:px-[18px] max-[480px]:py-[30px]">
-          <h2 id="final-cta-title" className="font-display text-[34px] font-medium max-[480px]:text-[30px] max-[480px]:leading-[1.05]">
+          <h2
+            id="final-cta-title"
+            className="font-display text-[34px] font-medium max-[480px]:text-[30px] max-[480px]:leading-[1.05]"
+          >
             Your next meal doesn’t need to be a guess.
           </h2>
-          <p className="mt-[5px] text-base">Tell BiteWise what today looks like.</p>
+          <p className="mt-[5px] text-base">
+            Tell BiteWise what today looks like.
+          </p>
           <div className="mt-[17px] flex items-center gap-[30px] max-[480px]:w-full max-[480px]:flex-col max-[480px]:gap-[15px]">
             <Button
               asChild
@@ -307,7 +416,10 @@ export default async function HomePage() {
             >
               <Link href="/eat-now">Find my next meal</Link>
             </Button>
-            <Link href="/discover" className="inline-flex items-center gap-2 font-semibold text-[#f4dce5] hover:text-white [&>svg]:w-[19px]">
+            <Link
+              href="/discover"
+              className="inline-flex items-center gap-2 font-semibold text-[#f4dce5] hover:text-white [&>svg]:w-[19px]"
+            >
               Browse recipes <ArrowRight aria-hidden="true" />
             </Link>
           </div>

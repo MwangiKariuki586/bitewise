@@ -5,10 +5,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RecommendationForm } from "@/features/recommendations/recommendation-form";
 
 const generateRecommendationsAction = vi.fn();
+const recordRecommendationEventAction = vi.fn();
 const scrollIntoView = vi.fn();
 
 vi.mock("@/features/recommendations/actions", () => ({
   generateRecommendationsAction: (...args: unknown[]) => generateRecommendationsAction(...args),
+  recordRecommendationEventAction: (...args: unknown[]) => recordRecommendationEventAction(...args),
 }));
 
 vi.mock("@/features/personalisation/controls", () => ({
@@ -31,12 +33,20 @@ const successfulResult = {
   status: "success" as const,
   message: "Found 1 meal that fits.",
   data: {
+    runId: "10000000-0000-4000-8000-000000000001",
+    scoringVersion: "eat-now-v2",
     suggestions: [],
     applied: {
       budgetMinor: 20000,
       servings: 4,
       maxMinutes: 30,
       dietaryPreferences: [],
+    },
+    pricing: {
+      location: "Nairobi",
+      capturedOn: "2026-08-06",
+      sourceLabel: "Indicative retail snapshot",
+      sourceUrl: "https://example.com/prices",
     },
     meals: [{
       id: 1,
@@ -53,6 +63,7 @@ const successfulResult = {
       reasons: ["Fits the budget."],
       estimatedCostMinor: 15000,
       affordableCostMinor: 14000,
+      cashNeededMinor: 18_000,
       estimatedCostPerServingMinor: 3500,
       pantryCoveragePercent: 75,
       pantryIngredientNames: ["maize"],
@@ -67,6 +78,8 @@ describe("RecommendationForm", () => {
   beforeEach(() => {
     sessionStorage.clear();
     generateRecommendationsAction.mockReset();
+    recordRecommendationEventAction.mockReset();
+    recordRecommendationEventAction.mockResolvedValue({ status: "success" });
     scrollIntoView.mockReset();
     HTMLElement.prototype.scrollIntoView = scrollIntoView;
     Object.defineProperty(window, "matchMedia", {
@@ -81,13 +94,30 @@ describe("RecommendationForm", () => {
     render(<RecommendationForm defaults={defaults} />);
 
     expect(screen.getByLabelText("Meal budget (KES)")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Your best matches will appear here" })).toBeVisible();
+    expect(screen.getAllByText("Gas cooker").some((element) => element.tagName === "SPAN")).toBe(true);
+    expect(screen.getByText("No dietary restrictions")).toBeVisible();
+    expect(screen.getByText("More constraints").closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByLabelText("Meal budget (KES)")).toHaveAttribute("min", "0");
+    expect(screen.getByLabelText("Meal budget (KES)")).toHaveAttribute("step", "5");
+    expect(screen.getByRole("button", { name: "Find meals that fit" })).toHaveAttribute("formnovalidate");
     await user.clear(screen.getByLabelText("Meal budget (KES)"));
     await user.type(screen.getByLabelText("Meal budget (KES)"), "350");
     await user.click(screen.getByRole("button", { name: "Find meals that fit" }));
 
     await waitFor(() => expect(screen.queryByLabelText("Meal budget (KES)")).not.toBeInTheDocument());
     expect(screen.getByText("KES 350")).toBeVisible();
-    expect(await screen.findByRole("link", { name: /View details/ })).toHaveAttribute("href", "/recipes/githeri");
+    expect(await screen.findByRole("link", { name: /View details/ })).toHaveAttribute(
+      "href",
+      "/recipes/githeri?source=eat-now&servings=4&recommendationRun=10000000-0000-4000-8000-000000000001",
+    );
+    await waitFor(() => expect(recordRecommendationEventAction).toHaveBeenCalledWith({
+      runId: "10000000-0000-4000-8000-000000000001",
+      eventType: "impression",
+      recipeIds: [1],
+    }));
+    expect(screen.getByText("KES 180")).toBeVisible();
+    expect(screen.getByText(/practical 100 g or 100 ml buying quantities/i)).toBeVisible();
     await waitFor(() => {
       expect(scrollIntoView).toHaveBeenCalledWith({
         behavior: "smooth",
@@ -107,10 +137,13 @@ describe("RecommendationForm", () => {
     const user = userEvent.setup();
     render(<RecommendationForm defaults={defaults} />);
 
+    await user.clear(screen.getByLabelText("Meal budget (KES)"));
+    await user.type(screen.getByLabelText("Meal budget (KES)"), "275");
     await user.click(screen.getByRole("button", { name: "Find meals that fit" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("could not generate");
     expect(screen.getByLabelText("Meal budget (KES)")).toBeVisible();
+    expect(screen.getByLabelText("Meal budget (KES)")).toHaveValue(275);
     expect(screen.queryByRole("button", { name: /Edit/ })).not.toBeInTheDocument();
     expect(scrollIntoView).not.toHaveBeenCalled();
   });

@@ -10,6 +10,8 @@ import {
   type RecommendationCandidate,
   type RecommendedMeal,
 } from "@/features/recommendations/ranking";
+import { recommendationScoringProfile } from "@/features/recommendations/config";
+import { selectDiverseRecommendations } from "@/features/recommendations/diversity";
 import type { RecommendationInput } from "@/features/recommendations/schemas";
 import { createClient } from "@/lib/supabase/server";
 
@@ -20,6 +22,8 @@ export interface RecommendationProfilePreferences {
 }
 
 export interface RecommendationResponse {
+  runId: string | null;
+  scoringVersion: string;
   meals: (RecommendedMeal & { personalisation: RecipePersonalisationState })[];
   suggestions: string[];
   applied: {
@@ -27,6 +31,12 @@ export interface RecommendationResponse {
     servings: number;
     maxMinutes: number;
     dietaryPreferences: string[];
+  };
+  pricing: {
+    location: string | null;
+    capturedOn: string | null;
+    sourceLabel: string | null;
+    sourceUrl: string | null;
   };
 }
 
@@ -78,6 +88,8 @@ export async function getRecommendations(
     .from("pantry_items")
     .select("ingredient_id,quantity,unit,expiry_date")
     .eq("user_id", userId)
+    .is("archived_at", null)
+    .gt("quantity", 0)
     .order("id")
     .limit(500);
 
@@ -137,9 +149,11 @@ export async function getRecommendations(
       preferredDishes: profile.preferredDishes,
       today: nairobiDateKey(),
       personalisation,
+      affordabilityMode: "purchase-cost",
     },
-  ).slice(0, 5);
-  const meals = rankedMeals.map((meal) => ({
+  );
+  const shortlist = selectDiverseRecommendations(rankedMeals, candidates);
+  const meals = shortlist.map((meal) => ({
     ...meal,
     personalisation: personalisation.get(meal.id) ?? {
       feedback: null,
@@ -147,8 +161,30 @@ export async function getRecommendations(
       lastEatenAt: null,
     },
   }));
+  const runResult = await supabase.rpc("record_recommendation_run", {
+    p_context: {
+      budget_minor: input.budgetKes * 100,
+      candidate_count: candidates.length,
+      dietary_requirement_count: dietaryPreferences.length,
+      equipment_count: input.equipment.length,
+      max_minutes: input.maxMinutes,
+      meal_type: input.mealType,
+      pantry_item_count: pantryResult.data.length,
+      servings: input.servings,
+    },
+    p_items: meals.map((meal, index) => ({
+      cash_needed_minor: meal.cashNeededMinor,
+      pantry_coverage_percent: meal.pantryCoveragePercent,
+      position: index + 1,
+      recipe_id: meal.id,
+      score: meal.score,
+    })),
+    p_scoring_version: recommendationScoringProfile.version,
+  });
 
   return {
+    runId: runResult.error ? null : runResult.data,
+    scoringVersion: recommendationScoringProfile.version,
     meals,
     suggestions: meals.length
       ? []
@@ -158,6 +194,12 @@ export async function getRecommendations(
       servings: input.servings,
       maxMinutes: input.maxMinutes,
       dietaryPreferences,
+    },
+    pricing: {
+      location: catalogue[0]?.costLocation ?? null,
+      capturedOn: catalogue[0]?.costCapturedOn ?? null,
+      sourceLabel: catalogue[0]?.costSourceLabel ?? null,
+      sourceUrl: catalogue[0]?.costSourceUrl ?? null,
     },
   };
 }

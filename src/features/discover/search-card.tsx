@@ -5,6 +5,7 @@ import { Bookmark, Clock3, Coins } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import type { DiscoverRecipe } from "@/features/discover/data";
+import { recipeViewHref } from "@/features/recipes/view-context";
 
 interface DiscoverSearchCardProps {
   recipe: DiscoverRecipe;
@@ -24,7 +25,7 @@ export function DiscoverSearchCard({ recipe }: DiscoverSearchCardProps) {
   return (
     <Card className="group min-h-[7.5rem] overflow-hidden shadow-[0_16px_44px_-36px_rgba(91,23,51,0.7)] transition-[transform,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_52px_-34px_rgba(91,23,51,0.75)] motion-reduce:transition-none">
       <Link
-        href={`/recipes/${recipe.slug}`}
+        href={recipeViewHref(recipe.slug, "discover", 1)}
         aria-label={`Open ${recipe.name} to view or save`}
         className="grid min-h-[7.5rem] grid-cols-[7rem_minmax(0,1fr)] rounded-[inherit] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 sm:grid-cols-[8rem_minmax(0,1fr)]"
       >
@@ -57,7 +58,7 @@ export function DiscoverSearchCard({ recipe }: DiscoverSearchCardProps) {
             <span className="capitalize">{formatDiscoverLabel(recipe.difficulty)}</span>
             <span className="flex items-center gap-1">
               <Coins className="size-3.5 text-primary" aria-hidden="true" />
-              {formatDiscoverKes(recipe.estimatedCostPerServingMinor)}
+              {formatDiscoverKes(recipe.estimatedCostPerServingMinor)} ingredients/serving
             </span>
           </div>
           <div className="mt-auto flex min-w-0 flex-wrap gap-1 pt-1.5">

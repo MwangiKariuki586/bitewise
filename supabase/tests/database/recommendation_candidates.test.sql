@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(11);
+select plan(12);
 
 select has_function(
   'public',
@@ -53,10 +53,27 @@ select cmp_ok(
   50::bigint,
   'candidate query is capped at fifty rows'
 );
-select is(
-  (select count(*) from candidate_fixture where affordable_cost_minor > 100000),
+select cmp_ok(
+  (
+    select count(*)
+    from public.get_recommendation_candidates(
+      array['vegan'], array['gas_cooker'], 90, 10000, 4, 'dinner'
+    )
+  ),
+  '>',
   0::bigint,
-  'no candidate exceeds the meal budget'
+  'valid low budgets still return candidates for pantry-aware application filtering'
+);
+select cmp_ok(
+  (
+    select count(*)
+    from public.get_recommendation_candidates(
+      array['vegan'], array['gas_cooker'], 90, 0, 4, 'dinner'
+    )
+  ),
+  '>',
+  0::bigint,
+  'a zero budget still returns candidates for pantry-aware application filtering'
 );
 select is(
   (
@@ -102,7 +119,7 @@ select is(
   (
     select count(*)
     from public.get_recommendation_candidates(
-      array[]::text[], array['gas_cooker'], 90, 9999, 4, null
+      array[]::text[], array['gas_cooker'], 90, -1, 4, null
     )
   ),
   0::bigint,

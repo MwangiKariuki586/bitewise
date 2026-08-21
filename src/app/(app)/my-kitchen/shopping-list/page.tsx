@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { CheckCircle2, ChevronLeft, ChevronRight, ListChecks, ShoppingBasket, Sparkles } from "lucide-react";
+import { CheckCircle2, ListChecks, ShoppingBasket, Sparkles } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { getActiveShoppingList } from "@/features/shopping-list/data";
 import { formatKes, formatShoppingWeek } from "@/features/shopping-list/format";
 import { KitchenNav } from "@/features/shopping-list/kitchen-nav";
@@ -88,7 +89,7 @@ export default async function ShoppingListPage({ searchParams }: ShoppingListPag
           {!list.totalItems ? <Card className="px-6 py-12 text-center"><CheckCircle2 className="mx-auto size-10 text-primary" aria-hidden="true" /><h2 className="mt-4 font-display text-3xl font-semibold">Your pantry covers the plan.</h2><p className="mt-2 text-sm text-muted-foreground">Add any household extras here, or return to Meal Plan to choose another week.</p></Card> : null}
           {toBuy.length ? <section aria-labelledby="shopping-to-buy" className="space-y-3"><div className="flex items-center justify-between gap-3"><h2 id="shopping-to-buy" className="font-display text-2xl font-semibold">Still to buy</h2><Badge>{list.totalItems - list.completedCount}</Badge></div><div className="grid gap-3 xl:grid-cols-2">{toBuy.map((item) => <ShoppingListItemRow key={item.id} item={item} shoppingListId={list.id} />)}</div></section> : null}
           {completed.length ? <section aria-labelledby="shopping-completed" className="space-y-3"><div className="flex items-center gap-2"><h2 id="shopping-completed" className="font-display text-2xl font-semibold">In the basket</h2><Badge className="bg-secondary text-secondary-foreground">{list.completedCount}</Badge></div><div className="grid gap-3 xl:grid-cols-2">{completed.map((item) => <ShoppingListItemRow key={item.id} item={item} shoppingListId={list.id} />)}</div></section> : null}
-          {pages > 1 ? <nav aria-label="Shopping list pages" className="flex items-center justify-between rounded-2xl bg-card p-3 ring-1 ring-border/55"><Button asChild={query.page > 1} variant="ghost" disabled={query.page <= 1}>{query.page > 1 ? <Link href={listHref(query.page - 1)}><ChevronLeft className="size-4" aria-hidden="true" />Previous</Link> : <span><ChevronLeft className="size-4" aria-hidden="true" />Previous</span>}</Button><span className="text-sm font-medium text-muted-foreground">Page {query.page} of {pages}</span><Button asChild={query.page < pages} variant="ghost" disabled={query.page >= pages}>{query.page < pages ? <Link href={listHref(query.page + 1)}>Next<ChevronRight className="size-4" aria-hidden="true" /></Link> : <span>Next<ChevronRight className="size-4" aria-hidden="true" /></span>}</Button></nav> : null}
+          {pages > 1 ? <Pagination currentPage={query.page} totalPages={pages} getHref={listHref} ariaLabel="Shopping list pages" /> : null}
         </div>
       </div>
     </div>

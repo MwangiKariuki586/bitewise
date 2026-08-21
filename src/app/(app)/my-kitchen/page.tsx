@@ -1,153 +1,58 @@
-import Link from "next/link";
-import { CalendarClock, ChevronLeft, ChevronRight, PackageOpen, Search, Trash2 } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { deletePantryItemAction } from "@/features/pantry/actions";
-import { getPantryFormData, getPantryPage } from "@/features/pantry/data";
-import { PantryForm } from "@/features/pantry/pantry-form";
-import { pantryQuerySchema } from "@/features/pantry/schemas";
-import { getActiveShoppingListSummary } from "@/features/shopping-list/data";
-import { formatKes, formatShoppingWeek } from "@/features/shopping-list/format";
+import { getPantryFormData, getPantryHighlights, getPantryPage } from "@/features/pantry/data";
+import { PantryView } from "@/features/pantry/pantry-view";
+import { normalizePantryFilterConflicts, pantryQuerySchema, restrictPantryDeveloperFilters } from "@/features/pantry/schemas";
 import { KitchenNav } from "@/features/shopping-list/kitchen-nav";
 import { requireUser } from "@/lib/auth/session";
 
 interface MyKitchenPageProps {
-  searchParams: Promise<{ edit?: string; page?: string; search?: string }>;
-}
-
-type PantryItem = Awaited<ReturnType<typeof getPantryPage>>["items"][number];
-
-function dateKey(date = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Nairobi", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
-}
-
-function addDaysKey(days: number) {
-  const date = new Date();
-  date.setUTCDate(date.getUTCDate() + days);
-  return dateKey(date);
-}
-
-function pantryHref(page: number, search: string) {
-  const params = new URLSearchParams();
-  if (search) params.set("search", search);
-  if (page > 1) params.set("page", String(page));
-  return `/my-kitchen${params.size ? `?${params}` : ""}`;
-}
-
-function PantrySection({ items, title, tone }: { items: PantryItem[]; title: string; tone?: "urgent" | "expired" }) {
-  if (!items.length) return null;
-  return (
-    <section aria-labelledby={`section-${tone ?? "fresh"}`}>
-      <div className="mb-3 flex items-center gap-2">
-        <h2 id={`section-${tone ?? "fresh"}`} className="font-display text-2xl font-semibold">{title}</h2>
-        <Badge className={tone === "urgent" ? "bg-accent/25 text-accent-foreground" : tone === "expired" ? "bg-destructive/10 text-destructive" : undefined}>{items.length}</Badge>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-        {items.map((item) => (
-          <article key={item.id} className="rounded-2xl bg-card p-4 shadow-[0_12px_35px_-28px_rgba(45,39,27,0.8)]">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-semibold">{item.ingredient.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{Number(item.quantity).toLocaleString("en-KE")} {item.unit}</p>
-              </div>
-              <div className="flex gap-1">
-                <Button asChild size="sm" variant="ghost"><Link href={`/my-kitchen?edit=${item.id}`} aria-label={`Edit ${item.ingredient.name}`}>Edit</Link></Button>
-                <form action={deletePantryItemAction}>
-                  <input type="hidden" name="id" value={item.id} />
-                  <Button type="submit" size="sm" variant="ghost" aria-label={`Delete ${item.ingredient.name}`} className="text-destructive"><Trash2 className="size-4" aria-hidden="true" /></Button>
-                </form>
-              </div>
-            </div>
-            {item.expiry_date ? <p className="mt-3 flex items-center gap-1.5 text-xs font-medium text-muted-foreground"><CalendarClock className="size-3.5" aria-hidden="true" />Expires {new Intl.DateTimeFormat("en-KE", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${item.expiry_date}T00:00:00Z`))}</p> : <p className="mt-3 text-xs text-muted-foreground">No expiry date</p>}
-            {item.notes ? <p className="mt-2 line-clamp-2 text-xs text-muted-foreground">{item.notes}</p> : null}
-          </article>
-        ))}
-      </div>
-    </section>
-  );
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export default async function MyKitchenPage({ searchParams }: MyKitchenPageProps) {
   const rawQuery = await searchParams;
-  const parsed = pantryQuerySchema.parse(rawQuery);
+  const showDeveloperFilters = process.env.NODE_ENV === "development";
+  const parsed = normalizePantryFilterConflicts(
+    restrictPantryDeveloperFilters(pantryQuerySchema.parse(rawQuery), showDeveloperFilters),
+  );
   const returnParams = new URLSearchParams();
-  if (rawQuery.edit) returnParams.set("edit", rawQuery.edit);
-  if (rawQuery.page) returnParams.set("page", rawQuery.page);
-  if (rawQuery.search) returnParams.set("search", rawQuery.search);
-  const identity = await requireUser(`/my-kitchen${returnParams.size ? `?${returnParams}` : ""}`);
-  const [{ items, total, pageSize }, { ingredients, editItem }, shoppingList] = await Promise.all([
-    getPantryPage({ page: parsed.page, search: parsed.search }),
+  for (const [key, value] of Object.entries(rawQuery)) {
+    if (typeof value === "string") returnParams.set(key, value);
+  }
+  await requireUser(`/my-kitchen${returnParams.size ? `?${returnParams}` : ""}`);
+
+  const [{ items, total, pageSize }, { ingredients, editItem }, highlights] = await Promise.all([
+    getPantryPage(parsed),
     getPantryFormData(parsed.edit),
-    getActiveShoppingListSummary(identity.sub),
+    getPantryHighlights(parsed),
   ]);
-  const today = dateKey();
-  const soonCutoff = addDaysKey(3);
-  const expired = items.filter((item) => item.expiry_date && item.expiry_date < today);
-  const expiring = items.filter((item) => item.expiry_date && item.expiry_date >= today && item.expiry_date <= soonCutoff);
-  const usable = items.filter((item) => !expired.includes(item) && !expiring.includes(item));
-  const pages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <div className="mx-auto max-w-7xl space-y-7">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">My Kitchen</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold sm:text-5xl">Use what you have. Waste less.</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">Keep ingredients accurate so BiteWise can spot useful food, reduce missing items, and prioritise what needs using soon.</p>
+    <div className="mx-auto max-w-7xl">
+      <header className="max-w-4xl">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">My Kitchen</p>
+        <h1 className="mt-2 max-w-3xl font-display text-[2.55rem] font-semibold leading-[0.98] tracking-[-0.025em] sm:text-6xl lg:text-5xl xl:text-6xl">
+          Use what you have. Waste less.
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base sm:leading-7">
+          Keep ingredients accurate so BiteWise can spot useful food, reduce missing items, and prioritise what needs using soon.
+        </p>
       </header>
 
-      <KitchenNav active="pantry" />
-
-      <Link href="/my-kitchen/shopping-list" className="flex flex-col gap-3 rounded-[1.5rem] bg-primary px-5 py-4 text-primary-foreground shadow-[0_18px_45px_-30px_rgba(17,55,39,0.9)] transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:flex-row sm:items-center sm:justify-between">
-        <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary-foreground/70">Active shopping list</p><p className="mt-1 font-display text-2xl font-semibold">{shoppingList ? `${shoppingList.itemCount} items · ${formatKes(shoppingList.estimatedTotalMinor)}` : "Build one from Meal Plan"}</p></div>
-        <p className="text-sm font-semibold text-primary-foreground/80">{shoppingList ? formatShoppingWeek(shoppingList.weekStart) : "Pantry-aware and ready to check off"} →</p>
-      </Link>
-
-      <div className="grid items-start gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
-        <aside className="rounded-[1.5rem] bg-card p-5 shadow-sm lg:sticky lg:top-24">
-          <div className="mb-5 flex items-center justify-between gap-3">
-            <div><p className="text-xs font-bold uppercase tracking-wide text-primary">{editItem ? "Update item" : "Add ingredient"}</p><h2 className="mt-1 font-display text-2xl font-semibold">{editItem ? "Keep it accurate" : "What’s in your kitchen?"}</h2></div>
-            {editItem ? <Button asChild size="sm" variant="ghost"><Link href="/my-kitchen">Cancel</Link></Button> : null}
-          </div>
-          <PantryForm
-            key={editItem ? `edit-${editItem.id}` : "new"}
-            ingredients={ingredients}
-            editItem={editItem}
-          />
-        </aside>
-
-        <div className="min-w-0 space-y-7">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <form className="relative w-full sm:max-w-sm">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
-              <Input name="search" defaultValue={parsed.search} placeholder="Search your pantry" aria-label="Search pantry" className="pl-10" />
-            </form>
-            <p className="text-sm font-medium text-muted-foreground">{total} {total === 1 ? "item" : "items"}</p>
-          </div>
-
-          {!items.length ? (
-            <section className="rounded-[1.5rem] bg-card px-6 py-14 text-center shadow-sm">
-              <PackageOpen className="mx-auto size-10 text-primary/55" aria-hidden="true" />
-              <h2 className="mt-4 font-display text-3xl font-semibold">{parsed.search ? "Nothing matches that search." : "Your pantry is ready for its first item."}</h2>
-              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">{parsed.search ? "Try a broader ingredient name." : "Add what you already have. Even a few ingredients make meal suggestions more useful."}</p>
-            </section>
-          ) : (
-            <>
-              <PantrySection items={expired} title="Check before using" tone="expired" />
-              <PantrySection items={expiring} title="Use within 3 days" tone="urgent" />
-              <PantrySection items={usable} title="In your pantry" />
-            </>
-          )}
-
-          {pages > 1 ? (
-            <nav aria-label="Pantry pages" className="flex items-center justify-between rounded-2xl bg-card p-3">
-              <Button asChild={parsed.page > 1} variant="ghost" disabled={parsed.page <= 1}>{parsed.page > 1 ? <Link href={pantryHref(parsed.page - 1, parsed.search)}><ChevronLeft className="size-4" aria-hidden="true" />Previous</Link> : <span><ChevronLeft className="size-4" aria-hidden="true" />Previous</span>}</Button>
-              <span className="text-sm font-medium text-muted-foreground">Page {parsed.page} of {pages}</span>
-              <Button asChild={parsed.page < pages} variant="ghost" disabled={parsed.page >= pages}>{parsed.page < pages ? <Link href={pantryHref(parsed.page + 1, parsed.search)}>Next<ChevronRight className="size-4" aria-hidden="true" /></Link> : <span>Next<ChevronRight className="size-4" aria-hidden="true" /></span>}</Button>
-            </nav>
-          ) : null}
-        </div>
+      <div className="mt-7 sm:mt-9"><KitchenNav active="pantry" /></div>
+      <div className="mt-5 sm:mt-7">
+        <PantryView
+          attentionCount={highlights.attentionCount}
+          editItem={editItem}
+          ingredients={ingredients}
+          items={items}
+          noExpiryCount={highlights.noExpiryCount}
+          pageSize={pageSize}
+          query={parsed}
+          showDeveloperFilters={showDeveloperFilters}
+          today={highlights.today}
+          total={total}
+          useSoonItems={highlights.useSoonItems}
+        />
       </div>
     </div>
   );

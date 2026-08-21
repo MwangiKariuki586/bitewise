@@ -6,6 +6,8 @@ import { AppShell } from "@/components/navigation/app-shell";
 import { ProfileMenu } from "@/components/navigation/profile-menu";
 import { RecipeDetailView } from "@/features/recipes/recipe-detail-view";
 import { getPublicRecipeBySlug } from "@/features/recipes/data";
+import { getRecipePantryItems } from "@/features/recipes/private-data";
+import { parseRecipeViewContext } from "@/features/recipes/view-context";
 import {
   emptyRecipePersonalisation,
   getRecipePersonalisation,
@@ -14,6 +16,7 @@ import { getSessionIdentity } from "@/lib/auth/session";
 
 interface RecipeDetailPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
 export async function generateMetadata({ params }: RecipeDetailPageProps): Promise<Metadata> {
@@ -24,8 +27,9 @@ export async function generateMetadata({ params }: RecipeDetailPageProps): Promi
     : { title: "Recipe not found" };
 }
 
-export default async function RecipeDetailPage({ params }: RecipeDetailPageProps) {
-  const { slug } = await params;
+export default async function RecipeDetailPage({ params, searchParams }: RecipeDetailPageProps) {
+  const [{ slug }, rawSearchParams] = await Promise.all([params, searchParams]);
+  const viewContext = parseRecipeViewContext(rawSearchParams);
   const [recipe, identity] = await Promise.all([
     getPublicRecipeBySlug(slug),
     getSessionIdentity(),
@@ -33,10 +37,25 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
 
   if (!recipe) notFound();
 
-  const personalisation = identity
-    ? (await getRecipePersonalisation(identity.sub, [recipe.id])).get(recipe.id) ??
-      emptyRecipePersonalisation
-    : emptyRecipePersonalisation;
+  const [personalisation, pantryItems] = await Promise.all([
+    identity
+      ? getRecipePersonalisation(identity.sub, [recipe.id]).then(
+          (items) => items.get(recipe.id) ?? emptyRecipePersonalisation,
+        )
+      : Promise.resolve(emptyRecipePersonalisation),
+    identity && viewContext.source === "eat-now"
+      ? getRecipePantryItems(
+          identity.sub,
+          recipe.ingredients.filter((item) => !item.isOptional).map((item) => item.id),
+        )
+      : Promise.resolve([]),
+  ]);
+  const today = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Nairobi",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
 
   return (
     <AppShell
@@ -50,6 +69,9 @@ export default async function RecipeDetailPage({ params }: RecipeDetailPageProps
         recipe={recipe}
         personalisation={personalisation}
         authenticated={Boolean(identity)}
+        viewContext={viewContext}
+        pantryItems={pantryItems}
+        today={today}
       />
     </AppShell>
   );

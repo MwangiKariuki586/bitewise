@@ -16,9 +16,76 @@
 
 Milestone 9 – Final polish, caching review & full e2e coverage
 
-Active feature: BiteWise MVP
+Active feature: Recommendation quality and first-party observability
 
-Status: Complete
+Status: Implementation verified; the complete repository Playwright gate still
+contains unrelated stale journey failures listed below.
+
+Eat Now recommendation v2 is implemented without paid recommendation or
+analytics services. Scoring now uses one versioned configuration
+(`eat-now-v2`) for pantry coverage, expiring ingredients, budget, preferences,
+time, saved/liked meals, and recent-meal penalties. The previous inert variety
+constant has been removed. After hard filtering and scoring, a deterministic
+greedy reranker keeps the strongest first result while reducing ingredient,
+cuisine, and meal-type repetition across the five-meal shortlist. Cost,
+quantity conversion, date handling, and preference matching are separated into
+small testable modules so the engine can evolve without another service.
+
+Every generated list now writes an owner-scoped recommendation run and ordered
+shortlist through one atomic security-invoker RPC. Bounded first-party events
+capture impressions, detail opens, likes, dislikes, feedback undo, saves,
+unsaves, and eaten outcomes only for recipes belonging to that run. Stored
+context contains aggregate constraint counts and operational values, not the
+user's raw dietary or health-goal arrays. Analytics failure is deliberately
+non-blocking for meal generation and personalisation. Three new public tables
+have RLS, explicit least-privilege grants, composite ownership constraints, and
+covering indexes. Hosted Supabase verification passed all 25 new pgTAP
+assertions; generated types match the checked-in types; the security advisor
+reports only the owner-controlled leaked-password setting, and the performance
+advisor reports only expected unused-index information.
+
+Recommendation querying remains request-scoped for private profile, pantry,
+personalisation, run, and event data; only the public recipe catalogue retains
+its existing shared tagged cache. These append-only writes do not invalidate UI
+data. Generation remains limited to 20 requests per authenticated user per 10
+minutes. Event batches are authenticated, schema-validated, owner-checked,
+limited to five unique shortlist recipe IDs, and emitted only from an already
+rate-limited generation or a user action, so no paid queue, vector database,
+LLM, or external analytics platform is required for this slice.
+
+Verification passed 140 unit/integration tests, strict typecheck,
+warning-free lint, production build, `git diff --check`, both mobile and desktop
+hosted Eat Now persistence journeys, and the 25-assertion hosted pgTAP suite.
+The complete 66-test Playwright run reached 41 passes, 13 failures, one
+intentional skip, and 11 tests not run. The new Eat Now observability journey
+passed in both projects; the failures reproduce pre-existing stale assumptions
+in Discover servings/results, Meal Plan fixture state, guest recipe actions,
+onboarding labels, Watch & Cook content, and shared hosted-test isolation. The
+recommendation change is therefore implemented and feature-verified, but is not
+marked fully complete until that existing repository-wide browser debt is
+resolved.
+
+Recommendation POC follow-up: `npm run poc:recommendations` now provides
+guarded `seed`, `exercise`, `verify`, and `cleanup` commands for one disposable
+development account. The seed is login-capable and supplies a completed
+profile, eight pantry items, expiring-food signals, a like, dislike, save, and
+recently-eaten signal. The automated Chrome exercise signs in through the real
+UI, generates five recommendations, opens a detail page, dislikes one result,
+and regenerates. Hosted proof passed: both runs used `eat-now-v2`, contained
+five unique meals, excluded the pre-seeded Matoke Beef Stew dislike, recorded
+impressions, attributed the detail open and new dislike, and replaced Maize
+Porridge with Milk with Tomato Beans with Rice on regeneration. The utility
+requires explicit `--allow-hosted`, never prints the service-role key, and its
+cleanup targets only `bitewise-recommendations-poc@example.com`; full operating
+instructions are in `docs/recommendation-poc.md`.
+
+Responsive pagination is now shared across Discover, Pantry, Leftovers, Saved
+Meals, and Shopping List. It uses numbered ranges with ellipses on tablet and
+desktop, larger circular tablet targets, compact desktop controls, a subtle
+container-free treatment, and an `x of y` mobile summary. Current,
+previous/next, disabled, focus, and accessible-label states are covered by
+component tests. Querying, caching, invalidation, and rate limiting are
+unchanged because this is a presentation-only refactor of existing page links.
 
 Eat Now responsive refinement completed from the supplied desktop, tablet, and
 mobile mockups. The page now uses a branded food hero, exposes the complete
@@ -246,6 +313,10 @@ Owner-only release checks still required: verify real registration, confirmation
 
 ## Notes
 
+Eat Now collapsed-constraints follow-up replaces the cramped successful-results 19rem sidebar with a balanced 22rem desktop rail beside the shortlist. Its summary chips use a two-column grid instead of a tall one-chip-per-row stack. Tablets use a compact full-width row above the shortlist, while phones retain a two-column wrap. Chip height, typography, and padding are reduced only for this summary state while the editable form and result cards keep their established touch targets. No recommendation, persistence, query, cache, invalidation, or rate-limit behavior changed.
+
+Eat Now pre-results refinement implemented from the supplied desktop, tablet, and mobile mockups. A follow-up removes the oversized, non-essential meal photograph so Eat Now now uses the same compact text-only `PageIntro` header as Meal Plan, Discover, and Cook. Before generation, the full essential-constraints form stays visible; More constraints starts collapsed; saved equipment and dietary preferences appear as soft filled chips; and the shortlist uses a text-led empty state, four comparison metrics, and light illustrative rows without fake meals or idle skeleton animation. Illustrative rows animate only during a real request. Successful generation transitions to the existing result cards, scrolls to the shortlist, and collapses constraints at every breakpoint; failed generation leaves the form open and preserves all entered values. A profile-derived budget may be any whole KES value even though keyboard/spinner increments remain KES 5, so submission bypasses mismatched native step validation and continues through the existing server-side Zod bounds. Existing recommendation queries, public catalogue caching, private request-scoped reads, narrow invalidation, and the 20-per-10-minute generation rate limit are unchanged. Verified with 118 unit/integration tests, the focused hosted Eat Now journey on mobile and desktop, strict typecheck, warning-free lint, production build, and `git diff --check`. The complete 64-test Playwright run reached 30 passes, 14 failures from stale Discover, Meal Plan, onboarding, personalisation, Watch & Cook, and the now-corrected Eat Now desktop-collapse expectation, with 20 tests not run before the command timeout; the focused Eat Now rerun passed after correcting its expectation. Screenshot-backed three-viewport comparison remains blocked because the in-app browser is unavailable; see `design-qa.md`. This feature is not marked visually complete.
+
 Meal-specific planning durations completed. Profile Kitchen settings now keep Eat Now's quick-meal duration separate and expose strict breakfast, lunch, and dinner maximums. Existing profiles are backfilled from their current duration. Weekly candidate queries and ranking use the matching meal-specific limit, Recommendation Health links directly to the constrained meal field, and the profile summary displays all three planning values. The migration preserves the existing weekly RPC's internal upper-bound compatibility while adding a database trigger that rejects any inserted or updated plan item exceeding its own meal-type limit, including direct authenticated RPC use. Profile writes update all four preferences atomically and invalidate Profile, Eat Now, and Meal Plan through the existing workflow. Reads add four scalar profile columns and remain request-scoped and uncached; candidate query count, recommendation generation rate limits, and mutation invalidation remain unchanged. Verified locally with 100 unit/integration tests, strict typecheck, warning-free lint, production build, and `git diff --check`; a pgTAP migration regression covers column and trigger presence plus database rejection. Hosted migration `20260814174031_add_meal_specific_planning_minutes.sql` is applied to project `ksxnlsncisnllkfwrtkr`. Live verification confirmed all four columns, all five constraints, the enforcement trigger, and zero invalid profiles across the 17 existing rows. Post-migration advisors introduced no new findings; leaked-password protection remains the existing owner-controlled security warning and unused-index notices remain informational. The hosted pgTAP suite and authenticated browser journey were not rerun in this session.
 
 Meal Plan constraint diagnostics completed. When any breakfast, lunch, or dinner pool has fewer than seven eligible recipes, the page now shows a Recommendation Health panel that preserves the user's hard constraints, states the current matching count, and runs bounded comparison probes to quantify whether 15 additional cooking minutes or a 20% weekly-budget increase would unlock more choices. It links directly to the relevant available-time or budget field; when neither adjustment helps, it explains that combined dietary, kitchen, and catalogue constraints are limiting variety and links to preferences without encouraging unsafe dietary relaxation. Diagnostics never mutate settings or the plan, and users must explicitly save changes and regenerate. Normal plans make no diagnostic reads; constrained plans make at most six parallel calls to the existing security-invoker recommendation RPC, select no additional private rows, remain request-scoped and uncached, and need no new rate limit because they are bounded read-only checks behind authenticated Meal Plan access. Existing Meal Plan invalidation is unchanged. Verified with 99 unit/integration tests, strict typecheck, warning-free lint, production build, and `git diff --check`. Authenticated browser validation remains unavailable in the connected signed-out browser.
@@ -260,6 +331,202 @@ Recipe details now provides a real Add to meal plan workflow instead of navigati
 
 Recipe details responsive revamp implemented from the supplied mobile and desktop mockups. The route now uses an image-led mobile hero, compact recipe facts and actions, recommendation-fit cards, expandable kitchen readiness, live serving scaling, ingredients/nutrition tabs, tutorial access, and a clearer preparation timeline. Desktop uses a persistent ingredient/preparation rail while tablet intentionally keeps the richer two-column kitchen cards but returns the recipe body to one readable column. The follow-up visual refinement removes the duplicated shell/page gutter and framed-card border, adds a responsive image-to-details fade, keeps Add to meal plan, Start cooking, and the overflow trigger on one row at every breakpoint, and moves Save, Like, Dislike, and Mark as eaten/Mark as eaten again into that overflow menu. Selected feedback now has visible filled styling and toggles to Unlike or Remove dislike instead of changing only its screen-reader state. Successful personalisation mutations now synchronize every mounted control for the same recipe, update the stored Eat Now card snapshot, and refresh server-rendered route data so detail, recommendation, Cook, and Saved Meals surfaces do not retain stale states. Existing catalogue querying and tagged caching, database ownership rules, personalisation mutation semantics, Cook Mode, Meal Plan, and YouTube search behavior are preserved; no database, rate-limit, or shared-cache changes were introduced. Verified with 93 unit/integration tests, strict typecheck, warning-free lint, production build, and `git diff --check`. Browser DOM inspection confirmed the route renders without console errors, but screenshot-backed visual QA remains blocked because the connected Chrome capture timed out; see `design-qa.md`. The focused updated Playwright journey remains to be verified before this feature is marked complete.
 
+Recipe hero positioning follow-up implemented and reviewed in Chrome. Phones retain a stacked, image-first hero with a centred cover crop and a taller bottom dissolve. Tablet and desktop images now occupy 52% of the hero, begin behind the content, and use a long 44%-wide opaque-to-transparent blend instead of a narrow edge fade. The explicit desktop divider and hero bottom rule were removed, while a shallow lower dissolve softens the photograph's remaining exposed edge, so the image reads as part of the content rather than a bordered panel. The responsive image `sizes` hint matches those regions and the deprecated Next.js image priority prop was replaced with preload. The current landscape catalogue photograph cannot reproduce the mockup's different portrait-friendly meal composition. No data access, caching, invalidation, database, or rate-limit behavior changed. Verified with 101 unit/integration tests, strict typecheck, warning-free lint, and production build. Chrome confirmed the desktop blend and computed phone/tablet geometry; final normalized side-by-side design QA remains blocked because the conversation mockup and browser capture are not available as a single saved comparison artifact.
+
+Recipe guest overflow refinement completed. The detail-page kebab trigger and its grid track now use the shared 44 px button height and radius, matching Add to meal plan and Start cooking. Signed-out users no longer see the narrow "Sign in to save" control: they can open the same Save, Like, Dislike, and Mark as eaten menu as authenticated users, and selecting any action redirects to sign-in with the current recipe preserved as the safe return path before any personalisation mutation can run. Other non-detail personalisation surfaces retain their existing sign-in handoff. No database, RLS, caching, invalidation, or rate-limit behavior changed. Verified in Chrome with the signed-out menu open and a Save-to-sign-in redirect, plus 102 unit/integration tests, strict typecheck, warning-free lint, production build, and `git diff --check`.
+
+Personalisation overflow dismissal completed. Recipe-detail and recommendation-card overflow menus now use controlled accessible triggers with `aria-expanded` and close on outside click, Escape, or action selection while keeping clicks inside the menu usable. Chrome confirmed the detail menu transitions from open to closed after a blank-page click without changing the route. No data access, authentication, mutation, caching, invalidation, database, or rate-limit behavior changed. Verified with 104 unit/integration tests, strict typecheck, warning-free lint, production build, and `git diff --check`.
+
+Recipe-detail Cook Mode setup completed. Start cooking now opens an accessible responsive serving picker in place: a bottom sheet on phones and a centred dialog on larger screens. It defaults to the authenticated household size and keeps the recipe URL unchanged until Begin cooking creates the session and enters the immersive `/cook/[recipeId]` experience. An existing active session resumes directly, signed-out visitors retain the recipe route through authentication, and direct Cook Mode URLs keep the original full-page setup as a refresh/deep-link fallback. The private setup context is loaded only after interaction, selects only one owned active-session ID, remains request-scoped and uncached, and continues to use the existing validated atomic cook-session RPC, Cook-route invalidation, ownership policies, and inexpensive-mutation rate-limit decision. No schema, RLS, grant, shared-cache, or new rate-limit changes were required. Verified with 107 unit/integration tests, strict typecheck, warning-free lint, production build, `git diff --check`, two hosted mobile/desktop recipe-page dialog journeys, and two hosted mobile/desktop guided-session start, scale, persistence, resume, and completion journeys.
+
+Eat Now purchase-cost affordability completed and corrected after full-pack rounding proved too aggressive for single meals. Meal budgets now apply after user-owned pantry quantities are deducted; remaining staples round to practical 100 g or 100 ml buying increments, cups to quarter-cup increments, and produce, eggs, bunches, and packets to whole units. The shortlist displays this result as `Cash needed` and sorts budget results by the same value. The one-serving Sweet Potato with Boiled Eggs regression fixture now calculates KES 88 instead of charging KES 240 to restock full packages. The prorated amount remains a separately labelled `Ingredient value` on catalogue and recipe-detail surfaces instead of being presented as checkout spend. Price location, source, and capture date are visible, stale session snapshots were versioned out, and the recipe detail no longer fabricates an 80% pantry match or classify required ingredients as already owned. The hosted security-invoker candidate RPC returns a bounded 50-row non-budget hard-constraint pool so request-scoped application ranking can apply pantry-aware purchase affordability without relaxing dietary, equipment, time, serving, or meal-type rules. Public catalogue prices remain in the existing tagged 24-hour cache; private pantry reads remain request-scoped and uncached; the existing 20-per-10-minute generation limit and invalidation behavior are unchanged. Hosted migration `20260815175803_use_purchase_cost_for_recommendation_budget.sql` is applied to project `ksxnlsncisnllkfwrtkr`; live SQL confirmed a valid KES 100 request returns 16 hard-constraint candidates, including 16 above the old prorated cutoff, for application filtering. Security and performance advisors introduced no new findings; leaked-password protection remains the existing owner-controlled warning and unused-index notices remain informational. Verified after the correction with 111 unit/integration tests, strict typecheck, warning-free lint, production build, `git diff --check`, and the focused hosted low-versus-high-budget journey on mobile and desktop. The earlier broader 62-test Playwright run reached 39 passes, one skip, 12 unrelated failures in stale Discover, Meal Plan, onboarding, personalisation, and removed Watch & Cook expectations, and 10 tests not run after those failures; this feature is not claiming a green full-suite gate until that existing E2E debt is repaired.
+
+Discover price semantics clarified after comparing the seeded basket with current primary Kenyan sources. June 2026 KNBS national averages report packeted milk at KES 57.33/500 ml, eggs at KES 20.53 each, maize flour at KES 83.43/kg loose or KES 178.27/2 kg fortified, while current Carrefour Nairobi listings show common 2 kg maize flour around KES 149-196 and rice around KES 373/2 kg; these broadly support the catalogue's underlying milk, egg, flour, and rice references. The unexpectedly small Discover figures are therefore explicitly labelled as raw `ingredients/serving`, not a purchased basket, cash needed today, takeaway price, or cooked-meal selling price. The cost filter and KES 150 quick filter use the same `ingredient value/serving` wording. No query, cache, database, invalidation, or rate-limit behavior changed. Verified with 111 unit/integration tests, strict typecheck, and warning-free lint.
+
+Recipe-detail origin and serving continuity completed. Discover, Eat Now, and Saved Meals links now carry a validated source and serving count into the recipe route; invalid or direct URLs safely start at one serving instead of the catalogue's four-serving recipe base. Discover, Saved Meals, and direct views show the prorated raw `Ingredient value`, while Eat Now reuses the same purchase-cost calculation as its shortlist and deducts only the authenticated user's usable pantry quantities before showing `Cash needed`. Serving controls scale ingredients and price together, replace the URL in place for refresh/new-tab continuity, and preserve that contextual URL through sign-in, personalisation, Add to meal plan, and Start cooking handoffs. Back navigation returns to the originating product area. Public recipe data continues to use the existing tagged catalogue cache; the Eat Now-only pantry read selects only required ingredient quantities and expiry dates, is user-scoped, bounded, request-scoped, and uncached. No schema, mutation invalidation, or rate-limit change was required. Verified with 118 unit/integration tests, two focused hosted journeys on both mobile and desktop, strict typecheck, warning-free lint, production build, and `git diff --check`.
+
+Eat Now's arbitrary KES 100 meal-budget floor removed. Any non-negative whole-KES amount is now accepted through matching HTML, Zod, ranking, and hosted RPC bounds, so values such as KES 65 no longer trigger browser or server validation. The number-input spinner and keyboard increment/decrement behavior use KES 5 steps, while the existing KES 1,000,000 safety ceiling remains. Zero-budget ranking explicitly avoids division by zero and can still return fully pantry-covered meals. Hosted migration `20260815184640_allow_zero_meal_budget.sql` is applied; live SQL confirmed KES 0 and KES 65 return the 16 valid hard-constraint candidates for pantry-aware application filtering, while a negative budget returns none. No caching, invalidation, query-count, or rate-limit behavior changed. Security and performance advisors introduced no new findings beyond the existing owner-controlled leaked-password warning and informational unused-index notices. Verified with 118 unit/integration tests, the focused hosted affordability journey on mobile and desktop, strict typecheck, warning-free lint, production build, and `git diff --check`.
+
+Cook details responsive refinement implemented from the supplied desktop and compact/tablet mockups. Active sessions now use a mockup-aligned Cook intro, recipe progress summary, responsive focused-step card, concise data-derived step headings, time and heat context, next-step preview, source recipe imagery, scaled fractional ingredient quantities, working screen-wake control, tutorial and recipe-overview links, contextual mobile Cook navigation, and desktop search. Desktop places ingredients and tools beside the cooking step with persistent actions; compact/tablet layouts prioritize the step before ingredients and tools; the additional 390 px check keeps actions in document flow so persistent navigation cannot cover cooking content. The final-step action now atomically sequences the existing validated step-save and completion mutations from the UI, so users are not stranded on an incomplete last step. The active Cook page no longer performs the unrelated personalisation read; public recipe and owned cook-session access remain request-scoped and uncached, with no schema, RLS, shared-cache, invalidation, or rate-limit changes. The highlighted outer gutter follow-up removes only the shared `main` max-width and horizontal/top padding on Cook details rather than offsetting it with negative margins. The sidebar was restored to its original 272 px width, BiteWise tagline, product-area order, active styling, and kitchen footer after the user clarified it was outside scope. Browser geometry at 1592 x 900 confirms the Cook surface now runs directly from the unchanged sidebar to the scrollbar with zero horizontal page padding. Verified with 123 unit/integration tests, four hosted mobile/desktop Cook journeys, strict typecheck, production build, `git diff --check`, and fresh browser captures at 1450 x 1085, 942 x 1670, and 390 x 845 CSS viewports. Lint has no errors; three pre-existing warnings remain in the user's unrelated dirty `src/app/(app)/my-kitchen/page.tsx`. Formal Product Design sign-off remains blocked because the conversation mockups are not available as local image files for the required normalized same-input comparison; see `design-qa.md`.
+
 - Agent must update this file after every completed feature.
 - Every feature must pass its tests + typecheck + lint + build before being marked done.
 - Caching, rate limiting and efficient querying rules must be followed on all data features.
+
+Pantry responsive refinement implemented from the supplied desktop, tablet,
+mobile, and filter mockups. Inventory now leads the route; Add Ingredient opens
+as a full-screen phone sheet and a right-side tablet/desktop drawer; search,
+filtering, and sorting are distinct; and the filter sheet supports status,
+category, expiry, zero-quantity, and archived controls with an active count.
+Closest-expiry items remain prominent without KPI-style cards, while the main
+inventory groups same-ingredient batches and keeps batch-level edit, archive,
+restore, and delete actions available. The existing Pantry, Leftovers, Shopping
+list, and Saved meals tabs are unchanged. Form controls use restrained
+rose-stone/aubergine gradient surfaces with preserved focus, error, disabled,
+and contrast states; page hierarchy relies primarily on spacing, surface
+contrast, and soft elevation.
+
+Migration `20260815203718_refine_pantry_inventory_controls.sql` is applied to
+the hosted project. It adds ingredient categories, soft pantry archival,
+zero-quantity support, an active-batch uniqueness rule, and partial indexes for
+active-expiry and archived reads. Pantry reads remain owner-scoped and
+request-scoped; the default query excludes archived and zero-quantity rows,
+selects only the displayed columns, filters/orders in Postgres, and keeps the
+existing 20-row pagination. A separate bounded four-row highlight query keeps
+Use soon ordered by expiry. Recommendation, recipe-detail, Meal Plan, and
+shopping-list consumers now ignore archived and zero-quantity stock. Mutations
+retain narrow Pantry/Eat Now/Meal Plan invalidation. No shared cache or new rate
+limit was introduced because these are authenticated, inexpensive inventory
+reads and mutations.
+
+Verified with 124 unit/integration tests, four hosted Pantry journeys on mobile
+and four on desktop, strict typecheck, warning-free lint, production build, and
+`git diff --check`. Hosted schema inspection confirmed the new columns;
+security/performance advisors introduced no new actionable findings beyond the
+existing owner-controlled leaked-password warning and informational unused-index
+notices. Browser geometry and interaction checks confirmed no horizontal
+overflow, tablet two-column inventory, compact desktop rows, adaptive form
+surfaces, working filter count, and no console errors. Formal normalized
+screenshot-to-mockup sign-off remains blocked because the conversation source
+images have no readable local path and populated-page Chrome captures repeatedly
+timed out; see `design-qa.md`. This feature is not marked visually complete.
+
+Landing-page final CTA spacing follow-up: the closing banner now keeps a 20 px
+desktop and 24 px tablet bottom gutter instead of touching the viewport edge,
+while the existing edge-to-edge mobile treatment remains unchanged. This is a
+presentation-only fix with no data access, caching, invalidation, database, or
+rate-limit changes. Verified with all 124 unit/integration tests, the four
+mobile/desktop foundation journeys, strict typecheck, warning-free lint,
+production build, and `git diff --check`. Browser inspection confirmed the
+20 px desktop margin and no horizontal overflow.
+
+Pantry quantity validation regression fixed. New pantry items now require an
+explicit quantity greater than zero in both native browser validation and the
+server-side Zod schema; blank form values are no longer coerced to zero and can
+no longer reach the database or surface a misleading duplicate-batch error.
+Editing an existing item to zero remains supported so users can mark stock as
+depleted and reveal it with the existing zero-quantity filter. No query,
+database, cache, invalidation, or rate-limit behavior changed. Verified with
+125 unit/integration tests, all eight hosted Pantry Playwright journeys on
+mobile and desktop, strict typecheck, warning-free lint, production build, and
+`git diff --check`. The repository-wide 66-test Playwright run reached 39
+passes, one skip, 14 unrelated failures across Discover, Meal Plan, Cook,
+Personalisation, Profile, and Watch & Cook, and 12 tests did not run; the
+focused Pantry suite remained green.
+
+Pantry internal inventory filters are now development-only. The Filter panel
+continues to expose status, category, and expiry in every environment, while
+`Show zero quantity` and `Show archived` render only under `next dev`.
+Production requests also normalize both developer-only query parameters to
+false before building the owner-scoped Pantry query, so manually adding them to
+the URL cannot silently expose depleted or archived rows or inflate the active
+filter count. No database, cache, invalidation, or rate-limit behavior changed.
+Verified with 126 unit/integration tests, all eight hosted Pantry Playwright
+journeys in the development environment, strict typecheck, warning-free lint,
+production build, and `git diff --check`. The previously recorded unrelated
+repository-wide Playwright failures remain outstanding.
+
+Pantry filter consistency regression fixed after direct Chrome reproduction.
+The same active search, status, category, expiry, zero-quantity, and archived
+constraints now drive the alert counts, bounded four-row Use soon query, and
+paginated All ingredients query, so a filtered page no longer mixes matching
+inventory with unrelated highlights. The form treats No expiry and dated
+expiry windows as mutually exclusive, with server-side normalization for
+manually constructed contradictory URLs. Applying or clearing filters also
+dismisses stale add/edit success feedback. Query count remains three bounded,
+parallel, owner-scoped highlight reads plus the existing paginated inventory
+read; data remains request-scoped and uncached, with no mutation, invalidation,
+database, or rate-limit changes. Verified with 127 unit/integration tests, all
+eight hosted Pantry Playwright journeys on mobile and desktop, strict
+typecheck, warning-free lint, production build, `git diff --check`, and Chrome
+against the signed-in Pantry data. Chrome confirmed Dairy + Next 7 days shows
+only Milk in both inventory sections, reduces the attention count from five to
+one, clears stale save feedback, and emits no console warnings or errors.
+
+Pantry status and expiry semantics are now unambiguous. Selecting `Use soon`
+makes status authoritative, displays a disabled `Next 7 days` expiry value with
+an explanatory hint, submits only `status=use-soon`, and counts it as one active
+filter. `No expiry` similarly derives and locks `No expiry date`; choosing `All`
+or `In stock` restores the independent expiry control. Server-side query
+normalization also removes expiry windows from conflicting manually constructed
+status URLs. `Use soon` reads now apply both lower and upper date bounds (today
+through seven days), so already-expired stock remains available only through
+the explicit Expired expiry filter and cannot contradict the Use soon results.
+The existing owner-scoped, request-scoped query shape, parallel bounded
+highlight reads, pagination, cache behavior, invalidation, database schema, and
+rate-limit behavior are unchanged. Verified with 127 unit/integration tests,
+all eight hosted Pantry Playwright journeys on mobile and desktop, strict
+typecheck, warning-free lint, production build, and `git diff --check`. Direct
+Chrome verification confirmed the derived disabled states, canonical
+`?status=use-soon` URL, `Filter (1)` count, and exclusion of an existing expired
+item; the browser was restored to the unfiltered Pantry afterward.
+
+Pantry alert banners now render only when their count is greater than zero and
+act as real filter controls instead of decorative cards. The attention banner
+links to the authoritative `Use soon` status, while the no-expiry banner links
+to `No expiry`; both retain compatible active search/category/sort controls,
+clear conflicting expiry state, reset pagination, expose native link semantics,
+and retain visible keyboard focus. A single remaining banner spans the alert
+row rather than leaving an empty column. The attention count now uses the same
+inclusive today-through-seven-days bounds as the Use soon inventory, so expired
+items no longer inflate wording that says "this week." Existing owner scoping,
+query count, bounded reads, partial-index-compatible predicates, caching,
+invalidation, schema, and rate-limit behavior are unchanged. Verified with 127
+unit/integration tests, all eight hosted Pantry Playwright journeys on mobile
+and desktop (including both alert destinations and zero-count suppression),
+strict typecheck, warning-free lint, production build, and `git diff --check`.
+
+Pantry add/update success feedback now follows the shared BiteWise Sonner toast
+convention. The Pantry view no longer stores or renders a persistent page-level
+success strip; successful server-action results close the adaptive form and
+call `toast.success(...)` through the existing global toaster. Server validation
+and persistence errors remain inline within the open form so they stay adjacent
+to the controls requiring correction. This presentation-only correction does
+not change mutations, validation, queries, caching, invalidation, database
+schema, or rate limits. Verified with 127 unit/integration tests, all eight
+hosted Pantry Playwright journeys on mobile and desktop (including assertions
+that add/update feedback renders in a Sonner toast and not in `<main>`), strict
+typecheck, warning-free lint, production build, and `git diff --check`.
+
+Native date inputs now open their calendar picker when the user clicks anywhere
+on the field, rather than requiring a precise click on the browser's calendar
+icon. A shared client-side `DateInput` preserves native date entry, keyboard
+focus, consumer click handlers, and disabled/read-only behavior while invoking
+`showPicker()` only when supported. It is applied consistently to Pantry expiry
+and the Leftovers Prepared and Use by fields. This interaction-only refinement
+does not change form values, server validation, mutations, queries, caching,
+invalidation, database schema, or rate limits. Verified with 129 unit/integration
+tests, all eight hosted Pantry/Leftovers Playwright journeys on mobile and
+desktop (including whole-field picker activation), strict typecheck,
+warning-free lint, production build, and `git diff --check`.
+
+The shared mobile navigation now follows the supplied floating-pill reference
+without changing BiteWise's route structure or desktop sidebar. The current
+destination expands into a horizontal aubergine icon-and-label capsule, while
+the other four destinations remain 44 px-wide icon controls with screen-reader
+labels and 56 px-high touch targets. The centered card is capped at 30 rem,
+retains safe-area spacing and existing main-content clearance, and now uses the
+same treatment during active Cook sessions instead of reverting to a flat bar.
+This presentation-only refinement does not change data access, caching,
+invalidation, database behavior, or rate limits. Verified with 131 passing
+unit/integration tests, strict typecheck, warning-free lint, production build,
+`git diff --check`, and live Chrome geometry and link-handoff checks. Formal
+normalized visual comparison remains blocked because the conversation reference
+has no readable local file; see `design-qa.md`.
+
+Eat Now recommendation-card Like, Dislike, and Save actions now keep the same
+neutral outlined surface when selected. Active state is communicated through
+the aubergine icon colour and fill, matching the Saved bookmark. All three
+icons are non-shrinking, and compact thumb-button padding keeps the longer
+Dislike label and its 16 px icon visible in the narrow desktop action column.
+`aria-pressed`, mutations, labels, action-grid geometry, and responsive layout
+remain unchanged. This presentation-only refinement does not change data
+access, caching, invalidation, database behavior, or rate limits. Verified with
+141 passing unit/integration tests, the targeted Eat Now journey on mobile and
+desktop, strict typecheck, warning-free lint, production build,
+`git diff --check`, and live browser geometry/computed-style checks with no
+console warnings or errors. The most recent complete Playwright gate reproduced
+the 13 unrelated stale journey failures already documented above (41 passed, 1
+skipped, 11 not run). Formal normalized visual comparison remains blocked
+because the conversation reference has no readable local file; see
+`design-qa.md`.

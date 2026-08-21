@@ -7,7 +7,12 @@ import {
   getRecommendations,
   type RecommendationResponse,
 } from "@/features/recommendations/data";
-import { recommendationInputSchema } from "@/features/recommendations/schemas";
+import { recordRecommendationEvents } from "@/features/recommendations/events";
+import {
+  recommendationEventInputSchema,
+  recommendationInputSchema,
+} from "@/features/recommendations/schemas";
+import { requireUser } from "@/lib/auth/session";
 
 function stringValues(formData: FormData, key: string) {
   return [
@@ -84,4 +89,18 @@ export async function generateRecommendationsAction(
       message: "BiteWise could not generate meals right now. Please try again.",
     };
   }
+}
+
+export async function recordRecommendationEventAction(input: unknown) {
+  await requireUser();
+  const parsed = recommendationEventInputSchema.safeParse(input);
+  if (!parsed.success) return { status: "error" as const };
+  const recorded = await recordRecommendationEvents(
+    parsed.data.runId,
+    parsed.data.eventType,
+    [...new Set(parsed.data.recipeIds)],
+  );
+  return recorded === parsed.data.recipeIds.length
+    ? { status: "success" as const }
+    : { status: "error" as const };
 }

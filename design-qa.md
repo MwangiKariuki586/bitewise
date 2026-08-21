@@ -1,47 +1,75 @@
-# Meal Plan and application-shell responsive revamp — design QA
+# Eat Now selected action-state design QA
 
-**Source visual truth**
+- Source visual truth: the user-provided Eat Now recommendation-card screenshot attached in this conversation (1077 x 185 pixels); the attachment has no readable local source path
+- Browser-rendered implementation evidence: `artifacts/eat-now-active-actions-browser.png` (2735 x 2099 pixels)
+- Requested CSS viewport: 1440 x 900; the connected Chrome surface captured at host-scaled output density
+- State: signed-in Eat Now shortlist with the first card's Like action selected
 
-- User-provided Whole Week and shell composite mockup in the latest 2026-08-14 request.
-- Target states: BiteWise's established desktop sidebar with a two-column Whole Week grid; mobile with the established compact header and bottom navigation plus the new weekly summary and accordion day cards. The mockup's top navigation is not part of the requested shell change.
-- Source composite dimensions: 1676 × 909 px. The device frames and surrounding canvas prevent exact CSS viewport recovery.
+## Full-view comparison evidence
 
-**Implementation evidence**
+The live implementation preserves the reference composition: neutral outlined
+Like, Dislike, and Save actions remain in the right-hand action column beneath
+the filled View details button. The selected Like action no longer becomes a
+filled primary button.
 
-- Route: `http://127.0.0.1:3000/meal-plan`
-- Browser: connected Chrome
-- State reached: signed-out redirect to `/auth/sign-in?next=%2Fmeal-plan`
-- Browser console errors: none
-- Primary interactions tested: route navigation and protected-route redirect only
-- Implementation screenshot: unavailable because the protected Meal Plan UI was not rendered in the connected browser
-- Viewport and density comparison: unavailable; no authenticated implementation capture exists to normalize against the source
+A normalized same-input image comparison could not be completed because the
+conversation attachment has no readable local source file. Formal
+screenshot-backed fidelity approval is therefore blocked even though the
+browser-rendered state was captured and inspected.
 
-**Findings**
+## Focused region comparison evidence
 
-- [P0] Authenticated implementation cannot be captured
-  Location: `/meal-plan`
-  Evidence: the browser redirected to the sign-in route before the Meal Plan screen rendered.
-  Impact: desktop, tablet, and mobile visual fidelity cannot be assessed from browser evidence.
-  Fix: sign in to the connected browser with a completed BiteWise profile, then capture the same selected-day state at the three target widths.
+- Selected button: `aria-pressed="true"`; computed background remains the
+  neutral outlined background and computed label colour remains the standard
+  foreground.
+- Selected icon: the Thumbs Up icon receives matching primary stroke and fill,
+  both computed as `rgb(91, 23, 51)`; the same conditional fill is
+  regression-tested for Dislike and Saved.
+- Desktop icon visibility: the rendered Dislike icon is visible at 16 x 16 px
+  with full opacity. Like, Dislike, and Save icons are non-shrinking; the thumb
+  buttons use compact internal padding and gap so the longer Dislike label fits.
+- Layout: button height, borders, labels, two-column Like/Dislike row, Save row,
+  and overflow control remain unchanged.
+- Interaction: selecting Like completed successfully and retained the neutral
+  button surface.
+- Console: no warnings or errors were reported during the checked interaction.
 
-**Required fidelity surfaces**
+## Findings
 
-- Fonts and typography: blocked pending authenticated captures.
-- Spacing and layout rhythm: blocked pending authenticated captures.
-- Colors and visual tokens: blocked pending authenticated captures.
-- Image quality and asset fidelity: code uses the catalogue's optimized local WebP photography, but visual crop and sharpness remain blocked pending authenticated captures.
-- Copy and content: source-level review confirms the target heading, revised description, budget summary, day selector, meal metadata, Whole Week cards, preserved BiteWise sidebar navigation, and actions are represented; browser confirmation is blocked.
+- No browser-DOM P0/P1/P2 defect remains in the requested selected-state
+  treatment.
+- Formal normalized visual comparison remains blocked by the unavailable local
+  source-image file.
 
-**Comparison history**
+## Fidelity surfaces
 
-- Initial pass: blocked before visual comparison because the protected route redirected to sign-in.
-- No visual fixes were made from screenshot evidence, because no authenticated implementation screenshot was available.
+- Fonts and typography: existing BiteWise font families, weights, sizes, and
+  labels are unchanged.
+- Spacing and layout rhythm: existing action-grid tracks, button height, radii,
+  and alignment are unchanged; compact thumb-button padding prevents desktop
+  icon collapse within the existing column width.
+- Colors and visual tokens: selected icons use the existing aubergine
+  `primary` token; selected button surfaces use the existing neutral `outline`
+  variant.
+- Image quality and asset fidelity: recipe imagery and the existing Lucide icon
+  library are unchanged; no new image asset was required.
+- Copy and content: Like, Dislike, Save/Saved, and accessible pressed-state
+  semantics are unchanged.
 
-**Implementation checklist**
+## Comparison history
 
-- Authenticate the connected browser with a completed BiteWise profile.
-- Capture desktop and mobile Whole Week states plus the selected-day state.
-- Compare each capture together with the source mockup and fix all P0/P1/P2 differences.
-- Verify day selection, whole-week toggle, meal edit disclosure, shopping-list generation, and week regeneration.
+- Before: Like used the filled primary variant, while Save used the secondary
+  surface when selected.
+- First fix: all three card actions retain the outline variant and apply the
+  primary token only to the selected icon; Saved retains its filled bookmark.
+- Follow-up finding: the longer Dislike label could shrink its icon to zero in
+  the narrow desktop action column, and active thumbs were coloured but not
+  filled like Saved.
+- Follow-up fix: made all action icons non-shrinking, compacted thumb-button
+  padding/gap, and applied primary fill to active Like and Dislike icons.
+- Post-fix evidence: focused regression tests and the targeted mobile/desktop
+  Eat Now journey pass; live geometry confirms a visible 16 x 16 px Dislike
+  icon; live computed styles confirm matching primary stroke/fill on selected
+  Like; the browser console is clean.
 
 final result: blocked

@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Leaf } from "lucide-react";
+import {
+  CalendarDays,
+  ChefHat,
+  Compass,
+  CookingPot,
+  Home,
+  Leaf,
+  Refrigerator,
+  Search,
+  Settings,
+  Sparkles,
+} from "lucide-react";
 
 import { productAreas } from "@/features/navigation/product-areas";
 import { cn } from "@/lib/utils";
@@ -14,6 +25,23 @@ interface AppShellProps {
 
 export function AppShell({ accountMenu, children }: AppShellProps) {
   const pathname = usePathname();
+  const cookDetail = /^\/cook\/\d+$/.test(pathname);
+  const cookNavigation = [
+    { label: "Home", href: "/", icon: Home },
+    { label: "Plan", href: "/meal-plan", icon: CalendarDays },
+    { label: "Eat Now", href: "/eat-now", icon: Sparkles },
+    { label: "My Kitchen", href: "/my-kitchen", icon: Refrigerator },
+    { label: "Discover", href: "/discover", icon: Compass },
+    { label: "Cook", href: "/cook", icon: ChefHat },
+    { label: "Settings", href: "/profile/edit", icon: Settings },
+  ];
+  const mobileNavigation = cookDetail
+    ? cookNavigation.filter(({ label }) => ["Home", "Plan", "Eat Now", "My Kitchen", "Cook"].includes(label))
+    : productAreas;
+
+  function isActive(href: string) {
+    return href === "/" ? pathname === "/" : pathname.startsWith(href);
+  }
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -65,18 +93,26 @@ export function AppShell({ accountMenu, children }: AppShellProps) {
       </aside>
 
       <div className="min-w-0">
-        <header className="sticky top-0 z-30 flex h-[4.5rem] items-center justify-between border-b border-border/45 bg-card/82 px-4 backdrop-blur-xl lg:h-16 lg:px-8">
+        <header className={cn("sticky top-0 z-30 flex h-[4.5rem] items-center justify-between border-b border-border/45 bg-card/82 px-4 backdrop-blur-xl lg:h-16 lg:px-8", cookDetail && "sm:h-[5.5rem] lg:h-[5.5rem]")}>
           <Link href="/" className="flex items-center gap-2.5 font-display text-xl font-semibold lg:hidden">
-            <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-              <Leaf className="size-4" aria-hidden="true" />
-            </span>
-            BiteWise
+            {cookDetail ? <CookingPot className="size-8 text-primary" aria-hidden="true" /> : <span className="grid size-9 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm"><Leaf className="size-4" aria-hidden="true" /></span>}
+            <span className={cn(cookDetail && "text-3xl text-primary")}>BiteWise</span>
           </Link>
-          <p className="hidden text-sm text-muted-foreground lg:block">Practical food decisions, shaped around your day.</p>
+          {cookDetail ? (
+            <form action="/discover" role="search" className="relative hidden w-full max-w-[33rem] lg:block">
+              <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+              <input name="q" aria-label="Search recipes, ingredients, and skills" placeholder="Search recipes, ingredients, skills..." className="h-12 w-full rounded-xl border border-border bg-card pl-12 pr-4 text-sm outline-none transition-shadow placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring" />
+            </form>
+          ) : <p className="hidden text-sm text-muted-foreground lg:block">Practical food decisions, shaped around your day.</p>}
           {accountMenu}
         </header>
 
-        <main id="main-content" className="mx-auto w-full max-w-[92rem] px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pb-10 lg:pt-8">
+        <main
+          id="main-content"
+          className={cookDetail
+            ? "mx-auto w-full max-w-none px-0 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-0 lg:pb-10"
+            : "mx-auto w-full max-w-[92rem] px-4 pb-[calc(7.5rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 lg:px-8 lg:pb-10 lg:pt-8"}
+        >
           {children}
         </main>
       </div>
@@ -84,10 +120,10 @@ export function AppShell({ accountMenu, children }: AppShellProps) {
       <nav
         aria-label="Main navigation"
         data-slot="bottom-navigation"
-        className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-40 grid grid-cols-5 rounded-[1.35rem] border border-border/55 bg-card/96 p-1.5 shadow-[0_14px_40px_-18px_rgba(91,23,51,0.38)] backdrop-blur-xl lg:hidden"
+        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-1/2 z-40 flex w-[calc(100%-1.5rem)] max-w-[30rem] -translate-x-1/2 items-stretch gap-1 rounded-[1.75rem] border border-border/55 bg-card/96 p-2 shadow-[0_18px_46px_-20px_rgba(91,23,51,0.5)] backdrop-blur-xl lg:hidden"
       >
-        {productAreas.map((area) => {
-          const active = pathname.startsWith(area.href);
+        {mobileNavigation.map((area) => {
+          const active = isActive(area.href);
           const Icon = area.icon;
           return (
             <Link
@@ -96,12 +132,14 @@ export function AppShell({ accountMenu, children }: AppShellProps) {
               aria-label={area.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[0.64rem] font-semibold text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active && "bg-primary text-primary-foreground shadow-sm",
+                "flex min-h-14 items-center justify-center rounded-[1.25rem] font-semibold transition-[flex-grow,background-color,color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                active
+                  ? "min-w-0 flex-1 gap-1.5 bg-primary px-2 text-[0.8125rem] text-primary-foreground shadow-sm sm:gap-2 sm:px-3 sm:text-sm"
+                  : "basis-11 px-0 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <Icon className="size-5" aria-hidden="true" />
-              <span className="max-w-full truncate">{area.label}</span>
+              <Icon className="size-5 shrink-0" aria-hidden="true" />
+              <span className={cn("max-w-full truncate", !active && "sr-only")}>{area.label}</span>
             </Link>
           );
         })}

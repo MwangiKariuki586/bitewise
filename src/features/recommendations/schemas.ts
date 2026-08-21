@@ -13,7 +13,7 @@ export const recommendationInputSchema = z.object({
   budgetKes: z.coerce
     .number("Enter a valid meal budget.")
     .int("Use a whole KES amount.")
-    .min(100, "Meal budget must be at least KES 100.")
+    .min(0, "Meal budget cannot be negative.")
     .max(1_000_000, "Meal budget must be KES 1,000,000 or less."),
   servings: z.coerce.number().int().min(1).max(30),
   maxMinutes: z.coerce.number().int().min(5).max(480),
@@ -26,6 +26,18 @@ export const recommendationInputSchema = z.object({
 });
 
 export type RecommendationInput = z.infer<typeof recommendationInputSchema>;
+
+export const recommendationEventInputSchema = z.object({
+  runId: z.uuid(),
+  eventType: z.enum(["impression", "opened"]),
+  recipeIds: z
+    .array(z.number().int().positive())
+    .min(1)
+    .max(5)
+    .refine((recipeIds) => new Set(recipeIds).size === recipeIds.length, {
+      message: "Recommendation recipes must be unique.",
+    }),
+});
 
 export function defaultMealBudgetMinor(
   budgetMinor: number | null,

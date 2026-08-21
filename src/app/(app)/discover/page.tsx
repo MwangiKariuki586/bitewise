@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, SearchX } from "lucide-react";
+import { SearchX } from "lucide-react";
 
 import { PageIntro } from "@/components/product/page-intro";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { discoverPageSize, searchPublicRecipes } from "@/features/discover/data";
 import { enforceDiscoverSearchRateLimit } from "@/features/discover/rate-limit";
 import { discoverSearchSchema } from "@/features/discover/schemas";
@@ -74,15 +75,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
       )}
 
       {rateLimit.allowed && pageCount > 1 ? (
-        <nav aria-label="Discover pages" className="flex items-center justify-between rounded-2xl bg-card p-3 shadow-sm ring-1 ring-border/55">
-          <Button asChild={input.page > 1} variant="ghost" disabled={input.page <= 1}>
-            {input.page > 1 ? <Link href={discoverHref(input, input.page - 1)}><ChevronLeft className="size-4" aria-hidden="true" />Previous</Link> : <span><ChevronLeft className="size-4" aria-hidden="true" />Previous</span>}
-          </Button>
-          <span className="text-sm font-medium text-muted-foreground">Page {input.page} of {pageCount}</span>
-          <Button asChild={input.page < pageCount} variant="ghost" disabled={input.page >= pageCount}>
-            {input.page < pageCount ? <Link href={discoverHref(input, input.page + 1)}>Next<ChevronRight className="size-4" aria-hidden="true" /></Link> : <span>Next<ChevronRight className="size-4" aria-hidden="true" /></span>}
-          </Button>
-        </nav>
+        <Pagination currentPage={input.page} totalPages={pageCount} getHref={(page) => discoverHref(input, page)} ariaLabel="Discover pages" />
       ) : null}
     </div>
   );

@@ -48,7 +48,7 @@ describe("RecipeCatalogueCard", () => {
     expect(screen.getByRole("heading", { name: recipe.name })).toBeInTheDocument();
     expect(screen.getByText("40 min")).toBeInTheDocument();
     expect(screen.getByText("KES 30")).toBeInTheDocument();
-    expect(screen.getByText(/Estimated KES 120 total in Nairobi/)).toBeInTheDocument();
+    expect(screen.getByText(/Ingredient value KES 120 in Nairobi/)).toBeInTheDocument();
     expect(screen.getByText(/updated 2026-08-06/)).toBeInTheDocument();
   });
 

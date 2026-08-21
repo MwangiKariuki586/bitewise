@@ -1,13 +1,15 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Bookmark, ChevronLeft, ChevronRight, Clock3 } from "lucide-react";
+import { Bookmark, Clock3 } from "lucide-react";
 import { z } from "zod";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Pagination } from "@/components/ui/pagination";
 import { getSavedRecipePage } from "@/features/personalisation/data";
 import { RecipePersonalisationControls } from "@/features/personalisation/controls";
+import { recipeViewHref } from "@/features/recipes/view-context";
 import { KitchenNav } from "@/features/shopping-list/kitchen-nav";
 import { requireUser } from "@/lib/auth/session";
 
@@ -42,7 +44,7 @@ export default async function SavedMealsPage({ searchParams }: SavedMealsPagePro
           <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {saved.items.map(({ recipe, personalisation }) => (
               <Card key={recipe.id} className="overflow-hidden">
-                <Link href={`/recipes/${recipe.slug}`} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <Link href={recipeViewHref(recipe.slug, "saved", 1)} className="group block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   <div className="relative aspect-[16/9] bg-secondary">{recipe.image ? <Image src={recipe.image.path} alt={recipe.image.alt} fill sizes="(max-width: 639px) 92vw, (max-width: 1279px) 46vw, 30vw" className="object-cover transition duration-500 group-hover:scale-[1.025] motion-reduce:transition-none" /> : null}</div>
                   <div className="p-5 pb-3"><p className="flex items-center gap-1.5 text-xs font-bold text-primary"><Clock3 className="size-4" aria-hidden="true" />{recipe.totalMinutes} minutes</p><h3 className="mt-1 font-display text-2xl font-semibold">{recipe.name}</h3><p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{recipe.summary}</p></div>
                 </Link>
@@ -56,11 +58,7 @@ export default async function SavedMealsPage({ searchParams }: SavedMealsPagePro
       )}
 
       {pages > 1 ? (
-        <nav aria-label="Saved meal pages" className="flex items-center justify-between rounded-2xl bg-card p-3 ring-1 ring-border/55">
-          <Button asChild={query.page > 1} variant="ghost" disabled={query.page <= 1}>{query.page > 1 ? <Link href={`/my-kitchen/saved?page=${query.page - 1}`}><ChevronLeft className="size-4" aria-hidden="true" />Previous</Link> : <span><ChevronLeft className="size-4" aria-hidden="true" />Previous</span>}</Button>
-          <span className="text-sm font-medium text-muted-foreground">Page {query.page} of {pages}</span>
-          <Button asChild={query.page < pages} variant="ghost" disabled={query.page >= pages}>{query.page < pages ? <Link href={`/my-kitchen/saved?page=${query.page + 1}`}>Next<ChevronRight className="size-4" aria-hidden="true" /></Link> : <span>Next<ChevronRight className="size-4" aria-hidden="true" /></span>}</Button>
-        </nav>
+        <Pagination currentPage={query.page} totalPages={pages} getHref={(page) => `/my-kitchen/saved?page=${page}`} ariaLabel="Saved meal pages" />
       ) : null}
     </div>
   );
