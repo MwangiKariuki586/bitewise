@@ -440,3 +440,17 @@ invalidation, database schema, or rate limits. Verified with 129 unit/integratio
 tests, all eight hosted Pantry/Leftovers Playwright journeys on mobile and
 desktop (including whole-field picker activation), strict typecheck,
 warning-free lint, production build, and `git diff --check`.
+
+The shared mobile navigation now follows the supplied floating-pill reference
+without changing BiteWise's route structure or desktop sidebar. The current
+destination expands into a horizontal aubergine icon-and-label capsule, while
+the other four destinations remain 44 px-wide icon controls with screen-reader
+labels and 56 px-high touch targets. The centered card is capped at 30 rem,
+retains safe-area spacing and existing main-content clearance, and now uses the
+same treatment during active Cook sessions instead of reverting to a flat bar.
+This presentation-only refinement does not change data access, caching,
+invalidation, database behavior, or rate limits. Verified with 131 passing
+unit/integration tests, strict typecheck, warning-free lint, production build,
+`git diff --check`, and live Chrome geometry and link-handoff checks. Formal
+normalized visual comparison remains blocked because the conversation reference
+has no readable local file; see `design-qa.md`.

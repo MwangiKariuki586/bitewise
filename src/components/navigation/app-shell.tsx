@@ -120,12 +120,7 @@ export function AppShell({ accountMenu, children }: AppShellProps) {
       <nav
         aria-label="Main navigation"
         data-slot="bottom-navigation"
-        className={cn(
-          "fixed z-40 grid grid-cols-5 border border-border/55 bg-card/96 p-1.5 shadow-[0_14px_40px_-18px_rgba(91,23,51,0.38)] backdrop-blur-xl lg:hidden",
-          cookDetail
-            ? "inset-x-0 bottom-0 rounded-none border-x-0 border-b-0 px-3 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-1"
-            : "inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] rounded-[1.35rem]",
-        )}
+        className="fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-1/2 z-40 flex w-[calc(100%-1.5rem)] max-w-[30rem] -translate-x-1/2 items-stretch gap-1 rounded-[1.75rem] border border-border/55 bg-card/96 p-2 shadow-[0_18px_46px_-20px_rgba(91,23,51,0.5)] backdrop-blur-xl lg:hidden"
       >
         {mobileNavigation.map((area) => {
           const active = isActive(area.href);
@@ -137,12 +132,14 @@ export function AppShell({ accountMenu, children }: AppShellProps) {
               aria-label={area.label}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[0.64rem] font-semibold text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                active && (cookDetail ? "bg-transparent text-primary shadow-none" : "bg-primary text-primary-foreground shadow-sm"),
+                "flex min-h-14 items-center justify-center rounded-[1.25rem] font-semibold transition-[flex-grow,background-color,color,box-shadow] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                active
+                  ? "min-w-0 flex-1 gap-1.5 bg-primary px-2 text-[0.8125rem] text-primary-foreground shadow-sm sm:gap-2 sm:px-3 sm:text-sm"
+                  : "basis-11 px-0 text-muted-foreground hover:bg-muted hover:text-foreground",
               )}
             >
-              <Icon className="size-5" aria-hidden="true" />
-              <span className="max-w-full truncate">{area.label}</span>
+              <Icon className="size-5 shrink-0" aria-hidden="true" />
+              <span className={cn("max-w-full truncate", !active && "sr-only")}>{area.label}</span>
             </Link>
           );
         })}
