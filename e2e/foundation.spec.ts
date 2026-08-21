@@ -11,6 +11,10 @@ test("landing page establishes the BiteWise journey", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1 })).toContainText("what should we eat?");
   const hero = page.locator('section[aria-labelledby="landing-title"]');
   await expect(hero.getByRole("link", { name: "Find my next meal" })).toBeVisible();
+  const finalCta = page.locator('section[aria-labelledby="final-cta-title"]');
+  const viewportWidth = page.viewportSize()?.width ?? 1280;
+  const expectedBottomMargin = viewportWidth <= 760 ? "0px" : viewportWidth <= 1050 ? "24px" : "20px";
+  await expect(finalCta).toHaveCSS("margin-bottom", expectedBottomMargin);
 
   const accessibilityScanResults = await new AxeBuilder({ page }).analyze();
   expect(accessibilityScanResults.violations).toEqual([]);

@@ -332,6 +332,15 @@ screenshot-to-mockup sign-off remains blocked because the conversation source
 images have no readable local path and populated-page Chrome captures repeatedly
 timed out; see `design-qa.md`. This feature is not marked visually complete.
 
+Landing-page final CTA spacing follow-up: the closing banner now keeps a 20 px
+desktop and 24 px tablet bottom gutter instead of touching the viewport edge,
+while the existing edge-to-edge mobile treatment remains unchanged. This is a
+presentation-only fix with no data access, caching, invalidation, database, or
+rate-limit changes. Verified with all 124 unit/integration tests, the four
+mobile/desktop foundation journeys, strict typecheck, warning-free lint,
+production build, and `git diff --check`. Browser inspection confirmed the
+20 px desktop margin and no horizontal overflow.
+
 Pantry quantity validation regression fixed. New pantry items now require an
 explicit quantity greater than zero in both native browser validation and the
 server-side Zod schema; blank form values are no longer coerced to zero and can
