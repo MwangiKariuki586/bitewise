@@ -200,6 +200,7 @@ export type Database = {
       ingredients: {
         Row: {
           aliases: string[]
+          category: string
           created_at: string
           default_unit: string
           id: number
@@ -209,6 +210,7 @@ export type Database = {
         }
         Insert: {
           aliases?: string[]
+          category?: string
           created_at?: string
           default_unit: string
           id?: never
@@ -218,6 +220,7 @@ export type Database = {
         }
         Update: {
           aliases?: string[]
+          category?: string
           created_at?: string
           default_unit?: string
           id?: never
@@ -408,6 +411,7 @@ export type Database = {
       }
       pantry_items: {
         Row: {
+          archived_at: string | null
           created_at: string
           expiry_date: string | null
           id: number
@@ -419,6 +423,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           created_at?: string
           expiry_date?: string | null
           id?: never
@@ -430,6 +435,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           created_at?: string
           expiry_date?: string | null
           id?: never

@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import type { ActionResult } from "@/lib/action-result";
 import { requireUser } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { pantryItemIdSchema, pantryItemSchema } from "@/features/pantry/schemas";
+import { pantryItemIdSchema, pantryItemSchema, pantryItemUpdateSchema } from "@/features/pantry/schemas";
 
 function validationError(error: { flatten: () => { fieldErrors: Record<string, string[]> } }): ActionResult {
   return { status: "error", message: "Check the highlighted fields.", fieldErrors: error.flatten().fieldErrors };
@@ -22,7 +22,12 @@ export async function savePantryItemAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const identity = await requireUser();
-  const parsed = pantryItemSchema.safeParse({
+  const rawId = formData.get("id");
+  const itemId = rawId ? pantryItemIdSchema.safeParse(rawId) : null;
+  if (itemId && !itemId.success) return { status: "error", message: "That pantry item is invalid." };
+
+  const schema = itemId?.success ? pantryItemUpdateSchema : pantryItemSchema;
+  const parsed = schema.safeParse({
     ingredientId: formData.get("ingredientId"),
     quantity: formData.get("quantity"),
     unit: formData.get("unit"),
@@ -30,10 +35,6 @@ export async function savePantryItemAction(
     notes: formData.get("notes"),
   });
   if (!parsed.success) return validationError(parsed.error);
-
-  const rawId = formData.get("id");
-  const itemId = rawId ? pantryItemIdSchema.safeParse(rawId) : null;
-  if (itemId && !itemId.success) return { status: "error", message: "That pantry item is invalid." };
 
   const supabase = await createClient();
   const values = {
@@ -62,5 +63,19 @@ export async function deletePantryItemAction(formData: FormData) {
   if (!itemId.success) return;
   const supabase = await createClient();
   await supabase.from("pantry_items").delete().eq("id", itemId.data).eq("user_id", identity.sub);
+  revalidatePantryConsumers();
+}
+
+export async function setPantryItemArchivedAction(formData: FormData) {
+  const identity = await requireUser();
+  const itemId = pantryItemIdSchema.safeParse(formData.get("id"));
+  if (!itemId.success) return;
+  const archived = formData.get("archived") === "true";
+  const supabase = await createClient();
+  await supabase
+    .from("pantry_items")
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq("id", itemId.data)
+    .eq("user_id", identity.sub);
   revalidatePantryConsumers();
 }

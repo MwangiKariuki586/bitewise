@@ -1,53 +1,43 @@
-# Cook details responsive design QA
+# Pantry responsive design QA
 
-- Source visual truth: three user-provided Cook detail mockups attached in this conversation; no local source-image path is available
-- Implementation screenshots:
-  - `artifacts/cook-details/cook-desktop-css-1450-final.png`
-  - `artifacts/cook-details/cook-tablet-css-942-final.png`
-  - `artifacts/cook-details/cook-mobile-css-390-final.png`
-  - `artifacts/cook-details/cook-gutter-final.png`
-- Intended viewports: 1450 x 1085 desktop, 942 x 1670 compact/tablet, and an additional 390 x 845 mobile resilience check
-- Source pixels: 1450 x 1085, 942 x 1670, and 1450 x 1085 for the three conversation attachments
-- Implementation pixels and normalization:
-  - desktop capture 2154 x 1628, rendered at 1451 x 1085 CSS pixels and normalized to the 1450 x 1085 source frame
-  - tablet capture 1413 x 2505, rendered at 942 x 1670 CSS pixels and normalized to the 942 x 1670 source frame
-  - mobile full-page capture 563 x 2720, rendered at 390 CSS pixels wide with a 390 x 845 viewport
-- State: authenticated Beef Stew with Ugali and Kale session, one serving, step 1 of 4, in progress
+- Source visual truth: four user-provided Pantry mockups attached in this conversation; no readable local source-image path is available
+- Browser-rendered implementation evidence: `artifacts/pantry-qa/desktop-add-drawer.png`
+- Intended CSS viewports: desktop 1600 x 1000, tablet 630 x 900 browser override (945 x 1350 rendered CSS pixels), and mobile 390 x 845 browser override (585 x 1268 rendered CSS pixels)
+- Implementation capture: desktop Add Ingredient drawer, 2400 x 1500 pixels at browser density 0.6667
+- State: authenticated temporary QA account with grouped avocado batches, expiring tomato, cooking oil, salt, a hidden zero-quantity milk item, and a hidden archived rice item
 
 ## Full-view comparison evidence
 
-The implementation screenshots were opened and inspected at the target CSS sizes. They reproduce the source composition: contextual BiteWise shell, pale Cook intro, recipe progress summary, focused step before ingredients on compact screens, ingredients beside the focused step on desktop, cooking options, persistent desktop actions, and bottom navigation below the desktop breakpoint.
+The attached mockups were used to implement the inventory-first hierarchy, compact alert strip, search/add/filter/sort controls, closest-expiry section, grouped inventory, two-column tablet cards, dense desktop rows, and adaptive Add Ingredient surface. Browser DOM and computed-geometry checks confirmed no horizontal overflow at any inspected width, two tablet columns, one-column mobile cards, compact desktop rows, and correct mobile full-screen versus tablet/desktop side-drawer behavior.
 
-A strict normalized side-by-side composite could not be produced because the source mockups are available only as conversation attachments, not as readable local image files. The Product Design comparison gate therefore remains blocked even though fresh browser-rendered implementation captures are available.
+A normalized same-input visual comparison could not be completed. The source mockups are conversation attachments without readable local paths, and the connected Chrome capture timed out repeatedly for the populated desktop, tablet, and mobile page states. The one successful implementation capture covers the desktop drawer only. Formal screenshot-backed fidelity approval is therefore blocked.
 
 ## Focused region comparison evidence
 
-- Step card: browser capture confirms the display heading, instruction copy, time, heat, status, and next-step preview remain legible at 1450, 942, and 390 CSS pixels.
-- Ingredients: browser capture confirms scaled values use the source-style `1/2`, `3/4`, and `1/4` fractions and do not overflow.
-- Actions: browser geometry confirms the corrected 390 px layout places the action card after the cooking options with no overlap; desktop retains a sticky action footer.
-- Navigation: the detailed Cook route uses the source navigation order and contextual desktop search while preserving working links.
+- Add Ingredient: desktop/tablet drawer is right-aligned and full height; mobile content exactly fills the viewport. Inputs, selects, date field, and textarea expose the requested restrained rose-stone gradient, while focus rings and disabled states remain intact.
+- Inventory: desktop rows measured 72 px for single-batch items and 142 px for a grouped two-batch item; tablet inventory measured as two equal columns; mobile rows remained in document flow above the protected bottom-navigation clearance.
+- Filters: status, category, expiry, zero quantity, and archived controls update URL state; applying category plus both toggles displayed an active count of three. Sorting remained a separate control.
+- Interactions: add, edit, delete, search, filtering, zero-quantity opt-in, and grouped batches passed authenticated mobile and desktop hosted journeys. Browser logs contained no warnings or errors.
 
 ## Findings
 
-- No browser-rendered P0/P1/P2 implementation issue remains after the mobile action overlap was fixed.
-- Formal fidelity approval is blocked by the missing local source-image artifact required for a same-input normalized comparison.
-- P3: the live catalogue image is a wider ugali-and-greens crop than the plated beef-stew crop shown in the mockup. The implementation intentionally uses the recipe's current source-of-truth image rather than substituting unrelated imagery.
+- No browser-DOM P0/P1/P2 layout or interaction defect remains after the mobile toolbar and edit-drawer state fixes.
+- Formal visual fidelity approval remains blocked by unavailable source-image files and repeated populated-page screenshot timeouts.
+- P3: inventory uses the existing icon language instead of food photography because the product has no ingredient-image field or approved ingredient asset set.
 
 ## Fidelity surfaces
 
-- Fonts and typography: BiteWise Newsreader and Manrope tokens retained; display hierarchy and wrapping visually align at the inspected widths.
-- Spacing and layout rhythm: desktop two-column and compact stacked compositions match the source order and proportions; no horizontal overflow was detected.
-- Colors and visual tokens: existing aubergine, blush, card, border, and muted tokens were retained and map closely to the source.
-- Image quality and asset fidelity: the optimized live recipe image is sharp and correctly cropped in its slot; subject crop differs from the mockup as noted above.
-- Copy and content: source Cook intro, progress, status, ingredient/tool labels, and action copy are implemented using live recipe data.
-- Interactions and accessibility: step progression and return, final-step completion, wake-lock switch semantics, links, progressbar semantics, focusable controls, and mobile/desktop hosted journeys are covered. Browser console contained no application errors; only transient Fast Refresh warnings appeared while files were being edited.
+- Fonts and typography: existing BiteWise Newsreader and Manrope tokens are retained with responsive title wrapping and mockup-aligned hierarchy.
+- Spacing and layout rhythm: inventory precedes the form, borders are reduced, hierarchy relies on spacing/background/elevation, and desktop/tablet/mobile structures follow the supplied references.
+- Colors and visual tokens: aubergine, rose-stone, warm ivory, warning, and muted tokens are preserved; gradients are limited to form controls and selected states.
+- Image quality and asset fidelity: no new raster ingredient assets were introduced; the current product data model does not provide ingredient photography.
+- Copy and content: Pantry tabs remain unchanged; alerts, use-soon copy, filter labels, batch labels, and expiry/no-expiry states match the requested product behavior.
+- Accessibility: dialogs have titles/descriptions, controls have accessible names, focus treatment is visible, semantic status updates are announced, and the hosted journeys cover both responsive projects.
 
 ## Comparison history
 
-- Initial rendered pass: P2 mobile action/footer overlap at 390 px; the sticky action card covered the active-step content.
-- Fix: limited sticky positioning to desktop, kept tablet/mobile actions in document flow, and verified the action card begins after the cooking-options card with `overlap: false`.
-- Follow-up: refined fractional ingredient quantities and concise next-step copy, then recaptured desktop, tablet, and mobile views.
-- Gutter follow-up: removed the Cook detail route's shared `main` max-width and page padding instead of compensating with negative margins. The sidebar was restored unchanged after the user clarified it was outside the requested scope. At a 1592 x 900 CSS viewport, browser geometry confirmed the original sidebar is 272 px wide with its original brand tagline, product-area order, active treatment, and kitchen footer; the detail and intro begin exactly at that 272 px edge and extend to the 1577 px content edge. Computed `main` horizontal padding and body margin are both `0px`.
-- Final comparison: source and implementation could not be combined into one normalized comparison artifact because the attached source images have no accessible local path.
+- Initial implementation: mobile search and Add Ingredient stacked, and edit-route refresh could reopen the add form after a successful update.
+- Fixes: placed search and Add Ingredient on the same mobile toolbar row; synchronized edit drawer opening by item ID; removed the refresh race after successful mutations.
+- Post-fix evidence: strict DOM geometry confirmed zero horizontal overflow, full-screen mobile form, tablet side drawer, tablet two-column inventory, compact desktop rows, working filter count, and no console errors.
 
 final result: blocked

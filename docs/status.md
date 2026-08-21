@@ -293,3 +293,141 @@ Cook details responsive refinement implemented from the supplied desktop and com
 - Agent must update this file after every completed feature.
 - Every feature must pass its tests + typecheck + lint + build before being marked done.
 - Caching, rate limiting and efficient querying rules must be followed on all data features.
+
+Pantry responsive refinement implemented from the supplied desktop, tablet,
+mobile, and filter mockups. Inventory now leads the route; Add Ingredient opens
+as a full-screen phone sheet and a right-side tablet/desktop drawer; search,
+filtering, and sorting are distinct; and the filter sheet supports status,
+category, expiry, zero-quantity, and archived controls with an active count.
+Closest-expiry items remain prominent without KPI-style cards, while the main
+inventory groups same-ingredient batches and keeps batch-level edit, archive,
+restore, and delete actions available. The existing Pantry, Leftovers, Shopping
+list, and Saved meals tabs are unchanged. Form controls use restrained
+rose-stone/aubergine gradient surfaces with preserved focus, error, disabled,
+and contrast states; page hierarchy relies primarily on spacing, surface
+contrast, and soft elevation.
+
+Migration `20260815203718_refine_pantry_inventory_controls.sql` is applied to
+the hosted project. It adds ingredient categories, soft pantry archival,
+zero-quantity support, an active-batch uniqueness rule, and partial indexes for
+active-expiry and archived reads. Pantry reads remain owner-scoped and
+request-scoped; the default query excludes archived and zero-quantity rows,
+selects only the displayed columns, filters/orders in Postgres, and keeps the
+existing 20-row pagination. A separate bounded four-row highlight query keeps
+Use soon ordered by expiry. Recommendation, recipe-detail, Meal Plan, and
+shopping-list consumers now ignore archived and zero-quantity stock. Mutations
+retain narrow Pantry/Eat Now/Meal Plan invalidation. No shared cache or new rate
+limit was introduced because these are authenticated, inexpensive inventory
+reads and mutations.
+
+Verified with 124 unit/integration tests, four hosted Pantry journeys on mobile
+and four on desktop, strict typecheck, warning-free lint, production build, and
+`git diff --check`. Hosted schema inspection confirmed the new columns;
+security/performance advisors introduced no new actionable findings beyond the
+existing owner-controlled leaked-password warning and informational unused-index
+notices. Browser geometry and interaction checks confirmed no horizontal
+overflow, tablet two-column inventory, compact desktop rows, adaptive form
+surfaces, working filter count, and no console errors. Formal normalized
+screenshot-to-mockup sign-off remains blocked because the conversation source
+images have no readable local path and populated-page Chrome captures repeatedly
+timed out; see `design-qa.md`. This feature is not marked visually complete.
+
+Pantry quantity validation regression fixed. New pantry items now require an
+explicit quantity greater than zero in both native browser validation and the
+server-side Zod schema; blank form values are no longer coerced to zero and can
+no longer reach the database or surface a misleading duplicate-batch error.
+Editing an existing item to zero remains supported so users can mark stock as
+depleted and reveal it with the existing zero-quantity filter. No query,
+database, cache, invalidation, or rate-limit behavior changed. Verified with
+125 unit/integration tests, all eight hosted Pantry Playwright journeys on
+mobile and desktop, strict typecheck, warning-free lint, production build, and
+`git diff --check`. The repository-wide 66-test Playwright run reached 39
+passes, one skip, 14 unrelated failures across Discover, Meal Plan, Cook,
+Personalisation, Profile, and Watch & Cook, and 12 tests did not run; the
+focused Pantry suite remained green.
+
+Pantry internal inventory filters are now development-only. The Filter panel
+continues to expose status, category, and expiry in every environment, while
+`Show zero quantity` and `Show archived` render only under `next dev`.
+Production requests also normalize both developer-only query parameters to
+false before building the owner-scoped Pantry query, so manually adding them to
+the URL cannot silently expose depleted or archived rows or inflate the active
+filter count. No database, cache, invalidation, or rate-limit behavior changed.
+Verified with 126 unit/integration tests, all eight hosted Pantry Playwright
+journeys in the development environment, strict typecheck, warning-free lint,
+production build, and `git diff --check`. The previously recorded unrelated
+repository-wide Playwright failures remain outstanding.
+
+Pantry filter consistency regression fixed after direct Chrome reproduction.
+The same active search, status, category, expiry, zero-quantity, and archived
+constraints now drive the alert counts, bounded four-row Use soon query, and
+paginated All ingredients query, so a filtered page no longer mixes matching
+inventory with unrelated highlights. The form treats No expiry and dated
+expiry windows as mutually exclusive, with server-side normalization for
+manually constructed contradictory URLs. Applying or clearing filters also
+dismisses stale add/edit success feedback. Query count remains three bounded,
+parallel, owner-scoped highlight reads plus the existing paginated inventory
+read; data remains request-scoped and uncached, with no mutation, invalidation,
+database, or rate-limit changes. Verified with 127 unit/integration tests, all
+eight hosted Pantry Playwright journeys on mobile and desktop, strict
+typecheck, warning-free lint, production build, `git diff --check`, and Chrome
+against the signed-in Pantry data. Chrome confirmed Dairy + Next 7 days shows
+only Milk in both inventory sections, reduces the attention count from five to
+one, clears stale save feedback, and emits no console warnings or errors.
+
+Pantry status and expiry semantics are now unambiguous. Selecting `Use soon`
+makes status authoritative, displays a disabled `Next 7 days` expiry value with
+an explanatory hint, submits only `status=use-soon`, and counts it as one active
+filter. `No expiry` similarly derives and locks `No expiry date`; choosing `All`
+or `In stock` restores the independent expiry control. Server-side query
+normalization also removes expiry windows from conflicting manually constructed
+status URLs. `Use soon` reads now apply both lower and upper date bounds (today
+through seven days), so already-expired stock remains available only through
+the explicit Expired expiry filter and cannot contradict the Use soon results.
+The existing owner-scoped, request-scoped query shape, parallel bounded
+highlight reads, pagination, cache behavior, invalidation, database schema, and
+rate-limit behavior are unchanged. Verified with 127 unit/integration tests,
+all eight hosted Pantry Playwright journeys on mobile and desktop, strict
+typecheck, warning-free lint, production build, and `git diff --check`. Direct
+Chrome verification confirmed the derived disabled states, canonical
+`?status=use-soon` URL, `Filter (1)` count, and exclusion of an existing expired
+item; the browser was restored to the unfiltered Pantry afterward.
+
+Pantry alert banners now render only when their count is greater than zero and
+act as real filter controls instead of decorative cards. The attention banner
+links to the authoritative `Use soon` status, while the no-expiry banner links
+to `No expiry`; both retain compatible active search/category/sort controls,
+clear conflicting expiry state, reset pagination, expose native link semantics,
+and retain visible keyboard focus. A single remaining banner spans the alert
+row rather than leaving an empty column. The attention count now uses the same
+inclusive today-through-seven-days bounds as the Use soon inventory, so expired
+items no longer inflate wording that says "this week." Existing owner scoping,
+query count, bounded reads, partial-index-compatible predicates, caching,
+invalidation, schema, and rate-limit behavior are unchanged. Verified with 127
+unit/integration tests, all eight hosted Pantry Playwright journeys on mobile
+and desktop (including both alert destinations and zero-count suppression),
+strict typecheck, warning-free lint, production build, and `git diff --check`.
+
+Pantry add/update success feedback now follows the shared BiteWise Sonner toast
+convention. The Pantry view no longer stores or renders a persistent page-level
+success strip; successful server-action results close the adaptive form and
+call `toast.success(...)` through the existing global toaster. Server validation
+and persistence errors remain inline within the open form so they stay adjacent
+to the controls requiring correction. This presentation-only correction does
+not change mutations, validation, queries, caching, invalidation, database
+schema, or rate limits. Verified with 127 unit/integration tests, all eight
+hosted Pantry Playwright journeys on mobile and desktop (including assertions
+that add/update feedback renders in a Sonner toast and not in `<main>`), strict
+typecheck, warning-free lint, production build, and `git diff --check`.
+
+Native date inputs now open their calendar picker when the user clicks anywhere
+on the field, rather than requiring a precise click on the browser's calendar
+icon. A shared client-side `DateInput` preserves native date entry, keyboard
+focus, consumer click handlers, and disabled/read-only behavior while invoking
+`showPicker()` only when supported. It is applied consistently to Pantry expiry
+and the Leftovers Prepared and Use by fields. This interaction-only refinement
+does not change form values, server validation, mutations, queries, caching,
+invalidation, database schema, or rate limits. Verified with 129 unit/integration
+tests, all eight hosted Pantry/Leftovers Playwright journeys on mobile and
+desktop (including whole-field picker activation), strict typecheck,
+warning-free lint, production build, and `git diff --check`.

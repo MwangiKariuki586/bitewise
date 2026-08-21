@@ -169,6 +169,8 @@ export async function getPlanCandidates(
     .from("pantry_items")
     .select("ingredient_id,quantity,unit,expiry_date")
     .eq("user_id", userId)
+    .is("archived_at", null)
+    .gt("quantity", 0)
     .order("id")
     .limit(500);
   const candidatePromises = mealTypes.map((mealType) =>

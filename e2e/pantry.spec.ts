@@ -42,7 +42,7 @@ test.describe("pantry inventory and isolation", () => {
     await Promise.all([userAId, userBId].filter(Boolean).map((id) => admin.auth.admin.deleteUser(id)));
   });
 
-  test("a user can add, search, edit, and remove a pantry item", async ({ page }) => {
+  test("a user can add, filter, search, edit, and remove a pantry item", async ({ page }, testInfo) => {
     test.setTimeout(120_000);
     await page.goto("/auth/sign-in");
     await page.getByLabel("Email address").fill(emailA);
@@ -51,24 +51,131 @@ test.describe("pantry inventory and isolation", () => {
     await expect(page).toHaveURL(/\/eat-now$/);
     await page.goto("/my-kitchen");
 
-    await page.getByLabel("Ingredient").selectOption({ label: "Tomato" });
-    await page.getByLabel("Quantity").fill("4");
+    await page.getByRole("button", { name: "Add ingredient" }).click();
+    const ingredientDialog = page.getByRole("dialog", { name: "What’s in your kitchen?" });
+    await expect(ingredientDialog).toBeVisible();
+    const dialogBox = await ingredientDialog.boundingBox();
+    const viewport = page.viewportSize();
+    expect(dialogBox).not.toBeNull();
+    expect(viewport).not.toBeNull();
+    if (testInfo.project.name === "mobile-chromium") {
+      expect(dialogBox!.width).toBeGreaterThanOrEqual(viewport!.width - 2);
+    } else {
+      expect(dialogBox!.width).toBeLessThan(viewport!.width / 2);
+      expect(dialogBox!.x + dialogBox!.width).toBeGreaterThanOrEqual(viewport!.width - 2);
+    }
+    await ingredientDialog.getByLabel("Ingredient", { exact: true }).selectOption({ label: "Tomato" });
+    const quantityInput = page.getByLabel("Quantity");
+    await expect(quantityInput).toHaveAttribute("required", "");
+    await expect(quantityInput).toHaveAttribute("min", "0.001");
+    expect(await quantityInput.evaluate((input: HTMLInputElement) => input.validity.valueMissing)).toBe(true);
+    await quantityInput.fill("4");
+    const soonExpiry = new Date();
+    soonExpiry.setUTCDate(soonExpiry.getUTCDate() + 2);
+    const expiryDateInput = page.getByLabel(/Expiry date/);
+    await expiryDateInput.evaluate((input: HTMLInputElement) => {
+      input.showPicker = () => { input.dataset.calendarOpened = "true"; };
+    });
+    await expiryDateInput.click();
+    await expect(expiryDateInput).toHaveAttribute("data-calendar-opened", "true");
+    await expiryDateInput.fill(soonExpiry.toISOString().slice(0, 10));
     await page.getByRole("button", { name: "Add to pantry" }).click();
-    await expect(page.getByText("Added to your pantry.")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Tomato" })).toBeVisible();
+    await expect(page.locator("[data-sonner-toast]").filter({ hasText: "Added to your pantry." }).last()).toBeVisible();
+    await expect(page.locator("main").getByText("Added to your pantry.", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "All ingredients" }).getByRole("heading", { name: "Tomato" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Use soon" }).getByRole("heading", { name: "Tomato" })).toBeVisible();
+    const attentionAlert = page.getByRole("link", { name: "1 item needs attention this week" });
+    await expect(attentionAlert).toHaveAttribute("href", "/my-kitchen?status=use-soon");
+    await expect(page.getByText(/0 items have no expiry date/)).toHaveCount(0);
+    await attentionAlert.click();
+    await expect(page).toHaveURL(/\/my-kitchen\?status=use-soon$/);
+    await expect(page.getByRole("button", { name: /Filter.*1/ })).toBeVisible();
+    await page.goto("/my-kitchen");
+
+    await page.getByRole("button", { name: "Add ingredient" }).click();
+    await page.getByRole("dialog", { name: "What’s in your kitchen?" }).getByLabel("Ingredient", { exact: true }).selectOption({ label: "Garlic" });
+    await page.getByLabel("Quantity").fill("1");
+    await page.getByRole("button", { name: "Add to pantry" }).click();
+    const noExpiryAlert = page.getByRole("link", { name: "1 item has no expiry date" });
+    await expect(noExpiryAlert).toHaveAttribute("href", "/my-kitchen?status=no-expiry");
+    await noExpiryAlert.click();
+    await expect(page).toHaveURL(/\/my-kitchen\?status=no-expiry$/);
+    await expect(page.getByRole("region", { name: "All ingredients" }).getByRole("heading", { name: "Garlic" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Filter.*1/ })).toBeVisible();
+    await page.goto("/my-kitchen");
+
+    await page.getByRole("button", { name: /^Filter/ }).click();
+    const filters = page.getByRole("dialog", { name: "Filters" });
+    const expiryFilter = filters.locator('select[name="expiry"]');
+    await expiryFilter.selectOption("7-days");
+    await filters.getByRole("radio", { name: "No expiry", exact: true }).check({ force: true });
+    await expect(expiryFilter).toBeDisabled();
+    await expect(expiryFilter).toHaveValue("no-expiry");
+    await expect(filters.getByText("No expiry shows items without an expiry date.")).toBeVisible();
+    await filters.getByRole("radio", { name: "All", exact: true }).check({ force: true });
+    await expect(expiryFilter).toBeEnabled();
+    await expect(expiryFilter).toHaveValue("");
+    await filters.getByRole("radio", { name: "Use soon", exact: true }).check({ force: true });
+    await expect(expiryFilter).toBeDisabled();
+    await expect(expiryFilter).toHaveValue("7-days");
+    await expect(filters.getByText("Use soon includes items expiring today through the next 7 days.")).toBeVisible();
+    await filters.getByRole("radio", { name: "All", exact: true }).check({ force: true });
+    await expect(expiryFilter).toBeEnabled();
+    await expiryFilter.selectOption("7-days");
+    await filters.getByLabel("Category").selectOption("dairy");
+    await filters.getByRole("button", { name: "Apply filters" }).click();
+    await expect(page.getByRole("button", { name: /Filter.*2/ })).toBeVisible();
+    await expect(page.getByText("Nothing matches these pantry controls.")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Use soon" })).toHaveCount(0);
+    await expect(page.getByText(/items? need attention this week/)).toHaveCount(0);
+    await page.getByRole("button", { name: /Filter.*2/ }).click();
+    await page.getByRole("dialog", { name: "Filters" }).getByRole("button", { name: "Clear all" }).click();
+    await expect(page).toHaveURL(/\/my-kitchen$/);
 
     await page.getByPlaceholder("Search your pantry").fill("Tomato");
     await page.getByPlaceholder("Search your pantry").press("Enter");
-    await expect(page.getByRole("heading", { name: "Tomato" })).toBeVisible();
-    await page.getByRole("link", { name: "Edit Tomato" }).click();
-    await expect(page.getByLabel("Ingredient").locator("option:checked")).toHaveText("Tomato");
+    await expect(page.getByRole("region", { name: "All ingredients" }).getByRole("heading", { name: "Tomato" })).toBeVisible();
+    await page.getByRole("link", { name: "Edit Tomato" }).first().click();
+    await expect(page.getByRole("dialog", { name: "Keep it accurate" })).toBeVisible();
+    await expect(page.getByLabel("Ingredient", { exact: true }).locator("option:checked")).toHaveText("Tomato");
     await page.getByLabel("Quantity").fill("6");
     await page.getByRole("button", { name: "Update pantry item" }).click();
-    await expect(page.getByText("Pantry item updated.")).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Tomato" })).toBeVisible();
+    await expect(page.locator("[data-sonner-toast]").filter({ hasText: "Pantry item updated." }).last()).toBeVisible();
+    await expect(page.locator("main").getByText("Pantry item updated.", { exact: true })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "All ingredients" }).getByRole("heading", { name: "Tomato" })).toBeVisible();
 
-    await page.getByRole("button", { name: "Delete Tomato" }).click();
-    await expect(page.getByText("Your pantry is ready for its first item.")).toBeVisible();
+    await page.getByRole("region", { name: "All ingredients" }).getByRole("button", { name: "Delete Tomato" }).click();
+    await expect(page.getByText("Nothing matches these pantry controls.")).toBeVisible();
+  });
+
+  test("same-ingredient batches are grouped and zero quantities stay opt-in", async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.goto("/auth/sign-in");
+    await page.getByLabel("Email address").fill(emailA);
+    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Sign in" }).click();
+    await expect(page).toHaveURL(/\/eat-now$/);
+    await page.goto("/my-kitchen");
+
+    for (const [quantity, expiry] of [["2", "2026-11-01"], ["1", "2026-12-01"]] as const) {
+      await page.getByRole("button", { name: "Add ingredient" }).click();
+      await page.getByRole("dialog", { name: "What’s in your kitchen?" }).getByLabel("Ingredient", { exact: true }).selectOption({ label: "Avocado" });
+      await page.getByLabel("Quantity").fill(quantity);
+      await page.getByLabel(/Expiry date/).fill(expiry);
+      await page.getByRole("button", { name: "Add to pantry" }).click();
+      await expect(page.locator("[data-sonner-toast]").filter({ hasText: "Added to your pantry." }).last()).toBeVisible();
+    }
+    await expect(page.getByText("2 batches")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Avocado" })).toHaveCount(1);
+
+    await page.getByRole("link", { name: "Edit Avocado" }).first().click();
+    await page.getByLabel("Quantity").fill("0");
+    await page.getByRole("button", { name: "Update pantry item" }).click();
+    await page.getByRole("button", { name: /^Filter/ }).click();
+    await page.getByRole("dialog", { name: "Filters" }).getByText("Show zero quantity").click();
+    await page.getByRole("dialog", { name: "Filters" }).getByRole("button", { name: "Apply filters" }).click();
+    await expect(page.getByText("Out of stock")).toBeVisible();
+
   });
 
   test("a user can save, edit, and remove a leftover", async ({ page }) => {

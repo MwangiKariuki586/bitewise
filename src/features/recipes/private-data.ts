@@ -13,6 +13,8 @@ export async function getRecipePantryItems(
     .from("pantry_items")
     .select("ingredient_id,quantity,unit,expiry_date")
     .eq("user_id", userId)
+    .is("archived_at", null)
+    .gt("quantity", 0)
     .in("ingredient_id", ingredientIds)
     .order("id")
     .limit(500);
